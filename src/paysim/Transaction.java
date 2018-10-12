@@ -61,12 +61,6 @@ public class Transaction implements Serializable {
 		return isFraud;
 	}
 
-	ClientBeta clientBetaOrigBefore = new ClientBeta();
-	
-
-	ClientBeta clientBetaOrigAfter = new ClientBeta();
-	ClientBeta clientBetaDestBefore = new ClientBeta();
-	ClientBeta clientBetaDestAfter = new ClientBeta();
 	Merchant merchantBefore = new Merchant();
 	public Merchant getMerchantBefore() {
 		return merchantBefore;
@@ -159,32 +153,7 @@ public class Transaction implements Serializable {
 		this.amount = amount;
 		this.description = description;
 	}
-	
-	public Transaction(Long step, ClientBeta clientOriginalBefore, ClientBeta clientOrigAfter, int type, double amount,
-			String description) {
-		super();
-		this.step = step;
-		this.clientBetaOrigBefore.setClientBeta(clientOriginalBefore);
-		this.clientBetaOrigAfter.setClientBeta(clientOrigAfter);
-		
-		this.newBalanceOrig = this.clientOrigBefore.getBalance();
-		this.newBalanceDest = clientOrigAfter.balance;
-		
-		this.type = type;
-		this.amount = amount;
-		this.description = description;
-	}
 
-	public Transaction(Long step, ClientBeta clientOrig, int type, double amount,
-			String description) {
-		super();
-		this.step = step;
-		this.clientBetaOrigBefore.setClientBeta(clientOrig);;
-		this.newBalanceOrig = clientOrig.balance;
-		this.type = type;
-		this.amount = amount;
-		this.description = description;
-	}
 //	public Transaction(Long step, Client clientOrig, Client clientDest,
 //			int type, double amount, String description, int fraudster) {
 //		super();
@@ -250,14 +219,6 @@ public class Transaction implements Serializable {
 		this.clientDestAfter = clientDestAfter;
 	}
 
-	public void setClientBetaDestBefore(ClientBeta clientBetaDestBefore) {
-		this.clientBetaDestBefore = clientBetaDestBefore;
-	}
-
-	public void setClientBetaDestAfter(ClientBeta clientBetaDestAfter) {
-		this.clientBetaDestAfter = clientBetaDestAfter;
-	}
-	
 	public String toString() {
 		String ps = null;
 

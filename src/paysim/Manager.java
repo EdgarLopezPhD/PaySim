@@ -92,22 +92,11 @@ public class Manager implements Steppable {
         }
 
         for (int i = 0; i < nrOfClients; i++) {
-
-            //Handle if normal Client
-            if (!paysim.clientBetaFlag) {
-                Client c = this.generateClient(probArr, aProbList, paysim, currStep);
-                if (c.getStepsToRepeat().size() != 0) {
-                    paysim.getClients().add(c);
-                }
-                paysim.schedule.scheduleOnce(c);
-            } else {
-                //Handle if beta clients
-                ClientBeta c = this.generateClientBeta(probArr, aProbList, paysim, currStep);
-                if (c.getStepsToRepeat().size() != 0) {
-                    paysim.getClientsBeta().add(c);
-                }
-                paysim.schedule.scheduleOnce(c);
+            Client c = this.generateClient(probArr, aProbList, paysim, currStep);
+            if (c.getStepsToRepeat().size() != 0) {
+                paysim.getClients().add(c);
             }
+            paysim.schedule.scheduleOnce(c);
         }
 
         updatePaysimOutputs(paysim);
@@ -143,59 +132,6 @@ public class Manager implements Steppable {
             //paysim.writeDatabaseLog();
         }
         paysim.resetVariables();
-
-    }
-
-    private ClientBeta generateClientBeta(double probArr[], ArrayList<ActionProbability> aProbList, PaySim paysim, int currStep) {
-        double max = 0;
-        //Create the client
-        ClientBeta generatedClient = new ClientBeta();
-        generatedClient.setStepHandler(this.stepHandler);
-        generatedClient.setParamFile(paysim.getParamFileList());
-        generatedClient.setProbabilityArr(probArr);
-        generatedClient.setProbList(aProbList);
-        generatedClient.setName(String.valueOf(generatedClient.hashCode()));
-        generatedClient.setBalance(this.balanceHandler.getBalance());
-        generatedClient.setCurrDay(this.currDay);
-        generatedClient.setCurrHour(this.currHour);
-        generatedClient.setTransferMaxHandler(this.transferMaxHandler);
-
-
-        RepetitionContainer cont = this.repHandler.getRepetition();
-        //Check whether the action is to be repeated
-        if (cont.getLow() == 1 && cont.getHigh() == 1) {
-            return generatedClient;
-        } else {
-            int nrOfTimesToRepeat = 0;
-
-            //Get how many times to repeat
-            if ((cont.getLow() - cont.getHigh()) == 0) {
-                nrOfTimesToRepeat = (int) cont.getLow();
-            } else {
-                int randNr = paysim.random.nextInt() % ((int) (cont.getHigh() - cont.getLow()));
-                if (randNr < 0) {
-                    randNr *= -1;
-                }
-                nrOfTimesToRepeat = (int) (cont.getLow() + randNr);
-                //Check if the randomized nr of times to be repeated exceeds the max
-                max = this.transferMaxHandler.getMaxGivenType(cont.getType());
-                if (nrOfTimesToRepeat > max) {
-                    nrOfTimesToRepeat = (int) max;
-                }
-                //System.out.println("High:\t" + cont.getHigh() + "\tLow:\t" + cont.getLow() + "\tRandomizedInBetween:\t" + nrOfTimesToRepeat + "\n");
-
-            }
-            nrOfTimesToRepeat *= paysim.getMultiplier();
-            ArrayList<Integer> stepsToRepeat = this.stepHandler.getSteps(currStep, nrOfTimesToRepeat);
-            if (stepsToRepeat == null) {
-                return generatedClient;
-            }
-            this.nrOfClientRepeat += nrOfTimesToRepeat;
-            generatedClient.setStepsToRepeat(stepsToRepeat);
-            generatedClient.setCont(cont);
-            return generatedClient;
-        }
-
 
     }
 

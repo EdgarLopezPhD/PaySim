@@ -31,7 +31,6 @@ public class PaySim extends SimState{
 	ArrayList<Merchant> merchants = new ArrayList<Merchant>();
 	ArrayList<Fraudster> fraudsters = new ArrayList<Fraudster>();
 	ArrayList<Client> clients = new ArrayList<Client>();
-	ArrayList<ClientBeta> clientsBeta = new ArrayList<ClientBeta>();
 	
 
 	ArrayList<String> paramFileList = new ArrayList<String>();
@@ -85,7 +84,6 @@ public class PaySim extends SimState{
 	String transferFreqModInit = "";
 	boolean debugFlag = false;
 	boolean saveToDbFlag = false;
-	boolean clientBetaFlag = false;
 	boolean networkFlag = false;
 	RepetitionFreqHandler repFreqHandler = new RepetitionFreqHandler();
 
@@ -401,12 +399,6 @@ public class PaySim extends SimState{
 			flagRepresentation += "saveNetwork=" + "1\n";
 		}else{
 			flagRepresentation += "saveNetwork=" + "0\n";
-		}
-		
-		if(this.clientBetaFlag){
-			flagRepresentation += "clientBeta=" + "1\n";
-		}else{
-			flagRepresentation += "clientBeta=" + "0\n";
 		}
 		return flagRepresentation;
 	}
@@ -827,13 +819,6 @@ public class PaySim extends SimState{
 		}else{
 			this.saveToDbFlag = false;
 		}
-		
-		if(this.paramters.getProperty("clientBeta").equals("1")){
-			this.clientBetaFlag = true;
-		}else{
-			this.clientBetaFlag = false;
-		}
-		
 	}
 	
 	//Loads paramters from a given filepath in the argument list of the invocation
@@ -1314,14 +1299,6 @@ public class PaySim extends SimState{
 
 	public void setTagName(String tagName) {
 		this.tagName = tagName;
-	}
-
-	public ArrayList<ClientBeta> getClientsBeta() {
-		return clientsBeta;
-	}
-
-	public void setClientsBeta(ArrayList<ClientBeta> clientsBeta) {
-		this.clientsBeta = clientsBeta;
 	}
 
 	public double getMultiplier() {
