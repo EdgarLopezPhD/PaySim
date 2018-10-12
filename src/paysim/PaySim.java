@@ -13,6 +13,13 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import paysim.actors.Client;
+import paysim.actors.Fraudster;
+import paysim.actors.Merchant;
+import paysim.aggregation.AggregateDumpAnalyzer;
+import paysim.aggregation.AggregateDumpHandler;
+import paysim.aggregation.AggregateParamFileCreator;
+import paysim.aggregation.AggregateTransactionRecord;
 import sim.engine.SimState;
 
 public class PaySim extends SimState {
@@ -25,7 +32,7 @@ public class PaySim extends SimState {
     ArrayList<Transaction> trans = new ArrayList<>();
     ArrayList<Merchant> merchants = new ArrayList<>();
     ArrayList<Fraudster> fraudsters = new ArrayList<>();
-    ArrayList<Client> clients = new ArrayList<>();
+    public ArrayList<Client> clients = new ArrayList<>();
 
     ArrayList<String> paramFileList = new ArrayList<>();
     ArrayList<String> actionTypes = new ArrayList<>();
@@ -56,7 +63,7 @@ public class PaySim extends SimState {
     int nrOfClients = 0;
     int nrOfMerchants = 0;
     int numFraudsters = 0;
-    double transferLimit = 100000;
+    public double transferLimit = 100000;
     Properties paramters;
     private double day, hour;
     String parameterFilePath = "";
@@ -73,7 +80,7 @@ public class PaySim extends SimState {
     String networkPath = "";
     String transferFreqMod = "";
     String transferFreqModInit = "";
-    boolean debugFlag = false;
+    public boolean debugFlag = false;
     boolean saveToDbFlag = false;
     boolean networkFlag = false;
     RepetitionFreqHandler repFreqHandler = new RepetitionFreqHandler();

@@ -1,7 +1,9 @@
-package paysim;
+package paysim.actors;
 
 import java.util.ArrayList;
 
+import paysim.*;
+import paysim.aggregation.AggregateTransactionRecord;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 

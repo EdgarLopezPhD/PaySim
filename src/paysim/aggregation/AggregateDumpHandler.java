@@ -1,4 +1,4 @@
-package paysim;
+package paysim.aggregation;
 
 import java.text.DecimalFormat;
 

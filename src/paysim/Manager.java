@@ -2,6 +2,8 @@ package paysim;
 
 import java.util.ArrayList;
 
+import paysim.actors.Client;
+import paysim.aggregation.AggregateTransactionRecord;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 

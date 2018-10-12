@@ -1,9 +1,10 @@
-package paysim;
+package paysim.aggregation;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import paysim.Transaction;
 import paysim.Transaction.TransactionType;
 
 public class AggregateParamFileCreator {

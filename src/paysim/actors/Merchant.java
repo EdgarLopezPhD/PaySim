@@ -1,4 +1,4 @@
-package paysim;
+package paysim.actors;
 
 public class Merchant extends SuperClient {
     private int nrOfSales;

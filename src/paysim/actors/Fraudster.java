@@ -1,11 +1,12 @@
-package paysim;
+package paysim.actors;
 
+import paysim.PaySim;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
 public class Fraudster implements Steppable {
-	double profit = 0;
-	double clientsAffected = 0;
+	public double profit = 0;
+	public double clientsAffected = 0;
 
 	@Override
 	public void step(SimState state) {

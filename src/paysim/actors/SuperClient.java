@@ -1,4 +1,8 @@
-package paysim;
+package paysim.actors;
+
+import paysim.PaySim;
+import paysim.RepetitionContainer;
+import paysim.TransferMaxHandler;
 
 public class SuperClient {
     private boolean isFraud = false;
@@ -7,7 +11,7 @@ public class SuperClient {
     int numTransfers = 0;
     int currDay = 0;
     int currHour = 0;
-    double balance = 0;
+    public double balance = 0;
     int currStep = 0;
     RepetitionContainer cont = null;
     TransferMaxHandler transferMaxHandler;

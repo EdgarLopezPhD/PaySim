@@ -1,10 +1,10 @@
-package paysim;
+package paysim.aggregation;
 
 public class AggregateTransactionRecord implements Comparable<AggregateTransactionRecord> {
     String type, month, tDay, tHour, tCount, tSum, tAvg, tStd, tStep;
 
-    AggregateTransactionRecord(String type, String month, String tDay, String tHour, String tCount,
-                               String tSum, String tAvg, String tStd, String tStep) {
+    public AggregateTransactionRecord(String type, String month, String tDay, String tHour, String tCount,
+                                      String tSum, String tAvg, String tStd, String tStep) {
         this.type = type;
         this.month = month;
         this.tDay = tDay;

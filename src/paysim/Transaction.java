@@ -1,5 +1,8 @@
 package paysim;
 
+import paysim.actors.Client;
+import paysim.actors.Merchant;
+
 import java.io.Serializable;
 import java.util.Arrays;
 

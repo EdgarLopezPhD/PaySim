@@ -3,6 +3,7 @@ package paysim;
 import java.util.ArrayList;
 
 import paysim.Transaction.TransactionType;
+import paysim.aggregation.AggregateTransactionRecord;
 
 public class CurrentStepHandler {
     String UNKNOWN_STEP = "";
