@@ -2,7 +2,6 @@ package paysim;
 
 public class SuperClient {
     private boolean isFraud = false;
-    private boolean isVictim = false;
     int numDeposits = 0;
     int numWithdraws = 0;
     int numTransfers = 0;
@@ -45,10 +44,6 @@ public class SuperClient {
     public void transfer(Client cOne, Client cTwo, double amount) {
         cOne.withdraw(amount);
         cTwo.deposit(amount);
-    }
-
-    public void setVictim(boolean isVictim) {
-        this.isVictim = isVictim;
     }
 
     public boolean isFraud() {

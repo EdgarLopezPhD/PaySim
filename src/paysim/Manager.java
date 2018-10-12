@@ -143,7 +143,7 @@ public class Manager implements Steppable {
         generatedClient.setParamFile(paysim.getParamFileList());
         generatedClient.setProbabilityArr(probArr);
         generatedClient.setProbList(aProbList);
-        generatedClient.setName(String.valueOf(String.valueOf(System.currentTimeMillis()).hashCode()));
+        generatedClient.setName("C" + String.valueOf(String.valueOf(System.currentTimeMillis()).hashCode()));
         generatedClient.setBalance(this.balanceHandler.getBalance());
         generatedClient.setCurrDay(this.currDay);
         generatedClient.setCurrHour(this.currHour);
