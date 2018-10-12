@@ -1,7 +1,7 @@
 package paysim;
 
 public class ActionProbability {
-    String type;
+    private String type;
     private double month;
     private double day;
     private double hour;

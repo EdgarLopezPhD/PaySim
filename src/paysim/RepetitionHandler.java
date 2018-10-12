@@ -113,27 +113,3 @@ public class RepetitionHandler {
         return -1;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

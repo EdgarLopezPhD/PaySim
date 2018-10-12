@@ -64,7 +64,7 @@ public class PaySim extends SimState {
     int nrOfMerchants = 0;
     int numFraudsters = 0;
     public double transferLimit = 100000;
-    Properties paramters;
+    Properties parameters;
     private double day, hour;
     String parameterFilePath = "";
     String pathOutput = "/outputs/";
@@ -214,28 +214,8 @@ public class PaySim extends SimState {
         }
     }
 
-    public ArrayList<Fraudster> getFraudsters() {
-        return fraudsters;
-    }
-
-    public void setFraudsters(ArrayList<Fraudster> fraudsters) {
-        this.fraudsters = fraudsters;
-    }
-
     public double getFraudProbability() {
         return fraudProbability;
-    }
-
-    public void setFraudProbability(double fraudProbability) {
-        this.fraudProbability = fraudProbability;
-    }
-
-    public int getNumFraudsters() {
-        return numFraudsters;
-    }
-
-    public void setNumFraudsters(int numFraudsters) {
-        this.numFraudsters = numFraudsters;
     }
 
     private double getTotalFromType(String type, ArrayList<RepetitionFreqContainer> contList) {
@@ -614,11 +594,6 @@ public class PaySim extends SimState {
         return step;
     }
 
-    private void reformatAggrList() {
-
-    }
-
-
     public void initSimulation() {
         System.out.println("InInit  TagName:\t" + this.tagName + "\nNrOfMerchants:\t" + nrOfMerchants + "\nSeed:\t" + seed + "\nparameterFilePath\t" + parameterFilePath + "\n");
         this.setSeed(this.seed);
@@ -694,7 +669,7 @@ public class PaySim extends SimState {
 
     private void initSeed() {
 
-        String seedString = String.valueOf(this.paramters.getProperty("seed"));
+        String seedString = String.valueOf(this.parameters.getProperty("seed"));
         if (seedString.equals("time")) {
             this.seed = System.currentTimeMillis();
         } else {
@@ -703,56 +678,42 @@ public class PaySim extends SimState {
     }
 
     private void initFlags() {
-        if (this.paramters.getProperty("debugFlag").equals("1")) {
-            this.debugFlag = true;
-        } else {
-            this.debugFlag = false;
-        }
-
-        if (this.paramters.getProperty("saveNetwork").equals("1")) {
-            this.networkFlag = true;
-        } else {
-            this.networkFlag = false;
-        }
-
-        if (this.paramters.getProperty("saveToDbFlag").equals("1")) {
-            this.saveToDbFlag = true;
-        } else {
-            this.saveToDbFlag = false;
-        }
+        debugFlag = parameters.getProperty("debugFlag").equals("1");
+        networkFlag = parameters.getProperty("saveNetwork").equals("1");
+        saveToDbFlag = parameters.getProperty("saveToDbFlag").equals("1");
     }
 
-    //Loads paramters from a given filepath in the argument list of the invocation
+    //Loads parameters from a given filepath in the argument list of the invocation
     public void loadParametersFromFile() {
         try {
-            this.paramters = new Properties();
+            this.parameters = new Properties();
             InputStream inputStream = new FileInputStream(new File(this.propertiesPath));
 
             if (inputStream != null) {
-                this.paramters.load(inputStream);
+                this.parameters.load(inputStream);
             }
 
             // get the property value and print it out
-//			this.nrOfClients = Integer.parseInt(this.paramters.getProperty("nrOfClients"));
-//			this.nrOfMerchants = Integer.parseInt(this.paramters.getProperty("nrOfMerchants"));
-//			this.nrOfSteps = Integer.parseInt(this.paramters.getProperty("nrOfSteps"));
-            this.nrOfMerchants = Integer.parseInt(this.paramters.getProperty("nrOfMerchants"));
-            this.numFraudsters = Integer.parseInt(this.paramters.getProperty("numFraudsters"));
-            this.fraudProbability = Double.parseDouble(this.paramters.getProperty("fraudProbability"));
-            this.transferLimit = Double.parseDouble(this.paramters.getProperty("transferLimit"));
-            this.parameterFilePath = System.getProperty("user.dir") + this.paramters.getProperty("parameterFilePath");
-            this.logPath = this.paramters.getProperty("logPath");
-            this.aggregateParameterPath = System.getProperty("user.dir") + this.paramters.getProperty("aggregateParameterFilePath");
-            this.setMultiplier(Double.parseDouble(this.paramters.getProperty("multiplier")));
-            this.transferMaxPath = System.getProperty("user.dir") + this.paramters.getProperty("transferMaxPath");
-            this.paramFileHistoryPath = this.paramters.getProperty("paramFileHistory");
-            this.dbUser = this.paramters.getProperty("dbUser");
-            this.dbPassword = this.paramters.getProperty("dbPassword");
-            this.dbUrl = this.paramters.getProperty("dbUrl");
-            this.balanceHandlerFilePath = System.getProperty("user.dir") + this.paramters.getProperty("balanceHandler");
-            this.networkPath = this.paramters.getProperty("networkFolderPath");
-            this.transferFreqMod = System.getProperty("user.dir") + this.paramters.getProperty("transferFreqMod");
-            this.transferFreqModInit = System.getProperty("user.dir") + this.paramters.getProperty("transferFreqModInit");
+//			this.nrOfClients = Integer.parseInt(this.parameters.getProperty("nrOfClients"));
+//			this.nrOfMerchants = Integer.parseInt(this.parameters.getProperty("nrOfMerchants"));
+//			this.nrOfSteps = Integer.parseInt(this.parameters.getProperty("nrOfSteps"));
+            this.nrOfMerchants = Integer.parseInt(this.parameters.getProperty("nrOfMerchants"));
+            this.numFraudsters = Integer.parseInt(this.parameters.getProperty("numFraudsters"));
+            this.fraudProbability = Double.parseDouble(this.parameters.getProperty("fraudProbability"));
+            this.transferLimit = Double.parseDouble(this.parameters.getProperty("transferLimit"));
+            this.parameterFilePath = System.getProperty("user.dir") + this.parameters.getProperty("parameterFilePath");
+            this.logPath = this.parameters.getProperty("logPath");
+            this.aggregateParameterPath = System.getProperty("user.dir") + this.parameters.getProperty("aggregateParameterFilePath");
+            this.setMultiplier(Double.parseDouble(this.parameters.getProperty("multiplier")));
+            this.transferMaxPath = System.getProperty("user.dir") + this.parameters.getProperty("transferMaxPath");
+            this.paramFileHistoryPath = this.parameters.getProperty("paramFileHistory");
+            this.dbUser = this.parameters.getProperty("dbUser");
+            this.dbPassword = this.parameters.getProperty("dbPassword");
+            this.dbUrl = this.parameters.getProperty("dbUrl");
+            this.balanceHandlerFilePath = System.getProperty("user.dir") + this.parameters.getProperty("balanceHandler");
+            this.networkPath = this.parameters.getProperty("networkFolderPath");
+            this.transferFreqMod = System.getProperty("user.dir") + this.parameters.getProperty("transferFreqMod");
+            this.transferFreqModInit = System.getProperty("user.dir") + this.parameters.getProperty("transferFreqModInit");
 
             initSeed();
             initFlags();
@@ -777,40 +738,6 @@ public class PaySim extends SimState {
             ProbabilityArr[i] = currProb;
         }
         return ProbabilityArr;
-    }
-
-    private void parseActionParams(String paramName) {
-        String paramToknes[] = paramName.split(",");
-
-        //Assign the params from the splitted array
-        this.probDoDeposit = Double.parseDouble(paramToknes[0]);
-        this.probDoWithdraw = Double.parseDouble(paramToknes[1]);
-        this.probDoTransfer = Double.parseDouble(paramToknes[2]);
-        this.probDoFromVoucher = Double.parseDouble(paramToknes[3]);
-        this.probDoToVoucher = Double.parseDouble(paramToknes[4]);
-        this.probDoPayment = Double.parseDouble(paramToknes[5]);
-        this.probDoExpireVoucher = Double.parseDouble(paramToknes[6]);
-
-        double sum = this.probDoDeposit + this.probDoWithdraw + this.probDoTransfer + this.probDoFromVoucher
-                + this.probDoToVoucher + this.probDoPayment + this.probDoExpireVoucher;
-        if (debugFlag) {
-            System.out.println(sum + "\n");
-        }
-
-        if (sum <= 0.9999 || sum >= 1) {
-            if (debugFlag) {
-                System.out.println("IsNotOne");
-            }
-
-            try {
-                throw new Exception("Incorrect param insertion - Make sure that the sum of all action params = 1 \n");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-
-        }
-
     }
 
     private void writeNetworkResults() {
@@ -1017,10 +944,6 @@ public class PaySim extends SimState {
 
     public ArrayList<Merchant> getMerchants() {
         return this.merchants;
-    }
-
-    public String getTransferMaxPath() {
-        return transferMaxPath;
     }
 
     public ArrayList<AggregateTransactionRecord> getAggrTransRecordList() {

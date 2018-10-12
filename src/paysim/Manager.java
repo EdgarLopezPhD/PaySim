@@ -94,7 +94,6 @@ public class Manager implements Steppable {
 
         updatePaysimOutputs(paysim);
 
-
     }
 
     private void updatePaysimOutputs(PaySim paysim) {
@@ -170,7 +169,6 @@ public class Manager implements Steppable {
             generatedClient.setCont(cont);
             return generatedClient;
         }
-
 
     }
 
