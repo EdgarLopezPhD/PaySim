@@ -19,7 +19,7 @@ public class ParameterizedPaySim extends PaySim{
 	String filePath = "";
 	long begin = 0;
 	long end = 0;
-	static long numOfSteps = 1;
+	static int numOfSteps = 1;
 	int numOfRepeat = 0;
 	public static int currentLoop = 0;
 	double incRepeat = 0;
@@ -49,15 +49,13 @@ public class ParameterizedPaySim extends PaySim{
 
 				//Gets the number of steps
 			} else if (args[x].equals("-for")) {
-				
-				numOfSteps = Long.parseLong(args[x + 1].toString());
-				
+				numOfSteps = Integer.parseInt(args[x + 1]);
 				//Gets the number of repetitions
 			} else if (args[x].equals("-r")) {
-				numOfRepeat = Integer.parseInt(args[x + 1].toString());
+				numOfRepeat = Integer.parseInt(args[x + 1]);
 				//Gets the number of incrementations for each repetition
 			} else if (args[x].equals("-inc")) {
-				incRepeat = Double.parseDouble(args[x + 1].toString());
+				incRepeat = Double.parseDouble(args[x + 1]);
 			}
 		}
 	}

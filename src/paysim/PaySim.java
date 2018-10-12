@@ -22,9 +22,6 @@ public class PaySim extends SimState{
 	public static final double PAYSIM_VERSION = 1.0; 
 	private static double multiplier = 1.0;
 	public static int numberOfClientsCreated = 0;
-	public double width = 100;
-	public double height = 100;
-	public Continuous2D land = new Continuous2D(1.0, width, height);
 	double probArr[] = null;
 	ArrayList<AggregateTransactionRecord> aggrTransRecordList = new ArrayList<AggregateTransactionRecord>();
 	AggregateParamFileCreator aggregateCreator = new AggregateParamFileCreator();
@@ -50,7 +47,7 @@ public class PaySim extends SimState{
 	
 	
 	long seed = 0;
-	long nrOfSteps = 0;
+	int nrOfSteps = 0;
 	long startTime = 0;
 	long endTime = 0;
 	double probDoDeposit = 0;
@@ -475,7 +472,7 @@ public class PaySim extends SimState{
 		}
 		
 		
-		AggregatedumpHandler aggrHandler = new AggregatedumpHandler();
+		AggregateDumpHandler aggrHandler = new AggregateDumpHandler();
 		AggregateDumpAnalyzer analyzerOrig = new AggregateDumpAnalyzer(filePathOrig);
 		AggregateDumpAnalyzer analyzerSynth= new AggregateDumpAnalyzer(filePathSynth);
 		analyzerOrig.analyze();
@@ -531,7 +528,7 @@ public class PaySim extends SimState{
 //	 * 5:	PAYMENT ***
 //	 * 6:	TRANSFER
 	
-	private String getTypeFromNumber(short number){
+	private String getTypeFromNumber(int number){
 		
 		switch(number){
 		case 1:
@@ -1210,7 +1207,7 @@ public class PaySim extends SimState{
 		return nrOfSteps;
 	}
 
-	public void setNrOfSteps(long numOfSteps) {
+	public void setNrOfSteps(int numOfSteps) {
 		this.nrOfSteps = numOfSteps;
 	}
 

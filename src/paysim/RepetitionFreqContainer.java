@@ -1,68 +1,66 @@
 package paysim;
 
-public class RepetitionFreqContainer implements Comparable<RepetitionFreqContainer>{
-	
-	RepetitionContainer cont;
-	double typeNr = 0;
-	int freq;
-	
-	public RepetitionFreqContainer(){
-		this.freq = 0;
-		this.cont = new RepetitionContainer();
-	}
-	
-	public String toString(){
-		return this.cont.getType() + "," + ((int)this.cont.getLow())  + ","+ ((int)this.cont.getHigh()) + "," + this.freq;
-	}
-	
-	public RepetitionContainer getCont() {
-		return cont;
-	}
-	public void setCont(RepetitionContainer cont) {
-		this.cont = cont;
-		switch(cont.getType()){
-		case "CASH_IN":
-			this.typeNr = 1000000000;
-			break;
-			
-		case "CASH_OUT":
-			this.typeNr = 9000000;
-			break;
-			
-		case "DEBIT":
-			this.typeNr = 300000;
-			break;
-			
-		case "PAYMENT":
-			this.typeNr = 100;
-			break;
-			
-		case "TRANSFER":
-			this.typeNr = -1;
-			break;
-		}
-	}
-	public int getFreq() {
-		return freq;
-	}
-	public void setFreq(int freq) {
-		this.freq = freq;
-	}
+public class RepetitionFreqContainer implements Comparable<RepetitionFreqContainer> {
+    private RepetitionContainer cont;
+    private double typeNr;
+    private int freq;
 
-	public void incrementFrequency(){
-		this.freq++;
-	}
+    public RepetitionFreqContainer() {
+        cont = new RepetitionContainer();
+        typeNr = 0;
+        freq = 0;
+    }
 
-	@Override
-	public int compareTo(RepetitionFreqContainer r) {
-		if((this.typeNr ) > 
-			(r.typeNr )){
-			return -1;
-			
-		}else if((this.typeNr) < 
-		(r.typeNr )){
-			return 1;
-		}
-		return 0;
-	}
+    public String toString() {
+        return cont.getType() + "," + ((int) cont.getLow()) + "," + ((int) cont.getHigh()) + "," + freq;
+    }
+
+
+    public void setCont(RepetitionContainer cont) {
+        this.cont = cont;
+        switch (cont.getType()) {
+            case "CASH_IN":
+                this.typeNr = 1000000000;
+                break;
+
+            case "CASH_OUT":
+                this.typeNr = 9000000;
+                break;
+
+            case "DEBIT":
+                this.typeNr = 300000;
+                break;
+
+            case "PAYMENT":
+                this.typeNr = 100;
+                break;
+
+            case "TRANSFER":
+                this.typeNr = -1;
+                break;
+        }
+    }
+
+    public void incrementFrequency() {
+        freq++;
+    }
+
+    @Override
+    public int compareTo(RepetitionFreqContainer r) {
+        if (this.typeNr > r.typeNr) {
+            return -1;
+
+        } else if (this.typeNr < r.typeNr) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public RepetitionContainer getCont() {
+        return cont;
+    }
+
+    public int getFreq() {
+        return freq;
+    }
 }

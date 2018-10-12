@@ -36,9 +36,6 @@ public class TransferMaxHandler {
 		cashOutMax = Integer.parseInt(fileContents.get(1).split(",")[1]);
 		debitMax = Integer.parseInt(fileContents.get(2).split(",")[1]);
 		depositMax = Integer.parseInt(fileContents.get(7).split(",")[1]);
-		
-
-		
 	}
 	
 	@Override
@@ -71,14 +68,7 @@ public class TransferMaxHandler {
 		
 		case "CASH_IN":
 			this.cashInCounter++;
-			//////system.out.println("CashInCounter:\t" + this.cashInCounter + "\tMax:\t" + (this.multiplier * this.getMax(action)) + "\n");
-			if(this.cashInCounter > (this.multiplier *cashInMax)){
-				////system.out.println("CASH_IN:\tCAN NOOT REPEAT BECAUSE:\t" + this.cashInCounter + " > " + (this.multiplier * this.getMax(action)) + "\n");
-				return false;
-			}else{
-				////system.out.println("CASH_IN:\tCAN REPEAT BECAUSE:\t" + this.cashInCounter + " > " + (this.multiplier * this.getMax(action)) + "\n");
-				return true;
-			}
+			return !(this.cashInCounter > (this.multiplier * cashInMax));
 		
 		case "TRANSFER":			
 			this.transferCounter++;
@@ -224,19 +214,4 @@ public class TransferMaxHandler {
 		
 		}
 	}
-	
-	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

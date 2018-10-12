@@ -12,9 +12,9 @@ public class ClientBeta extends SuperClient implements Steppable{
 	boolean failed = false;
 	private double[] probabilityArr;
 	private ArrayList<ActionProbability> probList;
-	private ArrayList<Long> stepsToRepeat = new ArrayList<Long>();
-	private long nrOfStepsToRepeat = 0;
-	private ArrayList<String> paramFile = new ArrayList<String>();
+	private ArrayList<Integer> stepsToRepeat = new ArrayList<>();
+	private int nrOfStepsToRepeat = 0;
+	private ArrayList<String> paramFile = new ArrayList<>();
 	String currType = "";
 	private CurrentStepHandler stepHandler = null;
 	private double x;
@@ -78,11 +78,11 @@ public class ClientBeta extends SuperClient implements Steppable{
 		//System.out.println(this.name + "\tFinished\n");
 	}
 	
-	public long getNrOfStepsToRepeat() {
+	public int getNrOfStepsToRepeat() {
 		return nrOfStepsToRepeat;
 	}
 
-	public void setNrOfStepsToRepeat(long nrOfStepsToRepeat) {
+	public void setNrOfStepsToRepeat(int nrOfStepsToRepeat) {
 		this.nrOfStepsToRepeat = nrOfStepsToRepeat;
 	}
 
@@ -106,8 +106,6 @@ public class ClientBeta extends SuperClient implements Steppable{
 
 		// CASH_IN
 		case 1:
-//			Manager.cashInCounter++;
-//			System.out.println("CashInCounter is:\t" + Manager.cashInCounter + "\n");
 			handleCashIn(paysim);
 			break;
 
@@ -146,7 +144,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		//Based on the nr of times to repeat, make the repetition
 		for(int i=0; i<this.stepsToRepeat.size(); i++){
 			//System.out.println("Type:\t" + cont.getType() + "\n");
-			long currentStep = this.stepsToRepeat.get(i);
+			int currentStep = this.stepsToRepeat.get(i);
 			this.currDay = (int)(currentStep/24) + 1;
 			this.currHour = (int)  (currentStep - ((this.currDay - 1) * 24));
 
@@ -196,7 +194,6 @@ public class ClientBeta extends SuperClient implements Steppable{
 	
 	public void setClientBeta(ClientBeta c){
 		this.balance = c.getBalance();
-		this.currency = c.getCurrency();
 		this.currStep = c.getCurrStep();
 		this.name = c.getName();
 		this.numDeposits = c.getNumDeposits();
@@ -252,7 +249,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			ClientBetaToTransferAfter.withdraw(amount);
 			this.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)1, amount, "CashIn");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 1, amount, "CashIn");
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 			t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 			t2.setDay(this.currDay);
@@ -289,7 +286,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.withdraw(amount);
 			ClientBetaToTransferAfter.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)2, amount, "CashOut");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 2, amount, "CashOut");
 			t2.setDay(this.currDay);
 			t2.setHour(this.currHour);
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
@@ -332,7 +329,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.deposit(amount);
 			this.numDeposits++;
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)4, amount, "Deposit");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 4, amount, "Deposit");
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 			t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 			t2.setDay(this.currDay);
@@ -367,7 +364,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.withdraw(amount);
 			mAfter.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this , (short)5, amount, "Payment");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this , 5, amount, "Payment");
 			t2.setMerchantAfter(mAfter);
 			t2.setMerchantBefore(merchantToTransferBefore);
 			t2.setDay(this.currDay);
@@ -402,7 +399,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.withdraw(amount);
 			ClientBetaToTransferAfter.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)6, amount, "Transfer");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 6, amount, "Transfer");
 			t2.setDay(this.currDay);
 			t2.setHour(this.currHour);
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
@@ -437,7 +434,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.withdraw(amount);
 			ClientBetaToTransferAfter.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)3, amount, "Debit");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 3, amount, "Debit");
 			t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 			t2.setDay(this.currDay);
@@ -475,7 +472,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		ClientBetaToTransferAfter.withdraw(amount);
 		this.deposit(amount);
 		
-		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)1, amount, "CashIn");
+		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 1, amount, "CashIn");
 		t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 		t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 		t2.setDay(this.currDay);
@@ -499,7 +496,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		this.withdraw(amount);
 		ClientBetaToTransferAfter.deposit(amount);
 		
-		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)2, amount, "CashOut");
+		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 2, amount, "CashOut");
 		t2.setDay(this.currDay);
 		t2.setHour(this.currHour);
 		t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
@@ -522,7 +519,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		this.withdraw(amount);
 		ClientBetaToTransferAfter.deposit(amount);
 		
-		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)3, amount, "Debit");
+		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 3, amount, "Debit");
 		t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 		t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 		t2.setDay(this.currDay);
@@ -547,7 +544,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		this.deposit(amount);
 		this.numDeposits++;
 		
-		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)4, amount, "Deposit");
+		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 4, amount, "Deposit");
 		t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
 		t2.setClientBetaDestBefore(ClientBetaToTransferBefore);
 		t2.setDay(this.currDay);
@@ -571,7 +568,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 		this.withdraw(amount);
 		mAfter.deposit(amount);
 		
-		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this , (short)5, amount, "Payment");
+		Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this , 5, amount, "Payment");
 		t2.setMerchantAfter(mAfter);
 		t2.setMerchantBefore(merchantToTransferBefore);
 		t2.setDay(this.currDay);
@@ -594,7 +591,7 @@ public class ClientBeta extends SuperClient implements Steppable{
 			this.withdraw(amount);
 			ClientBetaToTransferAfter.deposit(amount);
 			
-			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, (short)6, amount, "Transfer");
+			Transaction t2 = new Transaction(paysim.schedule.getSteps(), before, this, 6, amount, "Transfer");
 			t2.setDay(this.currDay);
 			t2.setHour(this.currHour);
 			t2.setClientBetaDestAfter(ClientBetaToTransferAfter);
@@ -679,11 +676,11 @@ public class ClientBeta extends SuperClient implements Steppable{
 		return amount;
 	}
 	
-	public ArrayList<Long> getStepsToRepeat() {
+	public ArrayList<Integer> getStepsToRepeat() {
 		return stepsToRepeat;
 	}
 
-	public void setStepsToRepeat(ArrayList<Long> stepsToRepeat) {
+	public void setStepsToRepeat(ArrayList<Integer> stepsToRepeat) {
 		this.stepsToRepeat = stepsToRepeat;
 	}
 	

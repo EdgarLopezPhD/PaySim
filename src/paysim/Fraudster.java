@@ -2,8 +2,6 @@ package paysim;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
-import sim.util.Bag;
-import sim.util.Double2D;
 
 public class Fraudster implements Steppable {
 	double profit = 0;
@@ -12,10 +10,6 @@ public class Fraudster implements Steppable {
 	@Override
 	public void step(SimState state) {
 		PaySim paysim = (PaySim) state;
-		// TODO Auto-generated method stub
-		Bag neighbors = null;
-		int numCardsStolen = 0;
-		Double2D loc = paysim.land.getObjectLocation(this);
 		double randNr = paysim.random.nextDouble();
 		if (randNr < paysim.getFraudProbability()
 				&& paysim.schedule.getSteps() > 0) {
@@ -24,7 +18,6 @@ public class Fraudster implements Steppable {
 				System.out.println(this.getName() + " Do Fraud on client "
 						+ c.toString() + " " + c.getBalance());
 			}
-			c.setVictim(true);
 			c.setFraud(true);
 			double balance = c.getBalance();
 			// create mule client
@@ -62,5 +55,4 @@ public class Fraudster implements Steppable {
 	public String toString() {
 		return "F" + Integer.toString(this.hashCode());
 	}
-
 }

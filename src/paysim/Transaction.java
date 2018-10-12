@@ -1,13 +1,45 @@
 package paysim;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class Transaction implements Serializable {
-	/**
-	 * 
-	 */
+    public enum TransactionType {
+        CASH_IN(1, "CASH_IN"), CASH_OUT(2, "CASH_OUT"), DEBIT(3, "DEBIT"),
+        DEPOSIT(4, "DEPOSIT"), PAYMENT(5, "PAYMENT"), TRANSFER(6, "TRANSFER");
+
+        private final int id;
+        private final String name;
+
+        TransactionType(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public int getValue() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public static String nameOf(int id) {
+            return Arrays.stream(values())
+                    .filter(t -> t.id == id)
+                    .findFirst()
+                    .map(TransactionType::getName)
+                    .orElse(null);
+        }
+
+        public static boolean isValid(String name){
+            return Arrays.stream(values())
+                    .map(TransactionType::getName)
+                    .anyMatch(n -> n.equals(name));
+        }
+    }
 	private static final long serialVersionUID = 1L;
-	short type;
+	int type;
 	double amount;
 	String description;
 	Client clientOrigBefore = new Client();
@@ -85,7 +117,7 @@ public class Transaction implements Serializable {
 	}
 
 //	public Transaction(Long step, Client clientOrig, Client clientDest,
-//			short type, double amount, String description) {
+//			int type, double amount, String description) {
 //		super();
 //		this.step = step;
 //		this.clientOrig = clientOrig;
@@ -101,7 +133,7 @@ public class Transaction implements Serializable {
 //
 	
 	//The constructor used in my agent
-	public Transaction(Long step, Client clientOrig, short type, double amount,
+	public Transaction(Long step, Client clientOrig, int type, double amount,
 			String description) {
 		super();
 		this.step = step;
@@ -113,7 +145,7 @@ public class Transaction implements Serializable {
 	}
 	
 	//Used for transfer
-	public Transaction(Long step, Client clientOriginalBefore, Client clientOrigAfter, short type, double amount,
+	public Transaction(Long step, Client clientOriginalBefore, Client clientOrigAfter, int type, double amount,
 			String description) {
 		super();
 		this.step = step;
@@ -128,7 +160,7 @@ public class Transaction implements Serializable {
 		this.description = description;
 	}
 	
-	public Transaction(Long step, ClientBeta clientOriginalBefore, ClientBeta clientOrigAfter, short type, double amount,
+	public Transaction(Long step, ClientBeta clientOriginalBefore, ClientBeta clientOrigAfter, int type, double amount,
 			String description) {
 		super();
 		this.step = step;
@@ -143,7 +175,7 @@ public class Transaction implements Serializable {
 		this.description = description;
 	}
 
-	public Transaction(Long step, ClientBeta clientOrig, short type, double amount,
+	public Transaction(Long step, ClientBeta clientOrig, int type, double amount,
 			String description) {
 		super();
 		this.step = step;
@@ -154,7 +186,7 @@ public class Transaction implements Serializable {
 		this.description = description;
 	}
 //	public Transaction(Long step, Client clientOrig, Client clientDest,
-//			short type, double amount, String description, int fraudster) {
+//			int type, double amount, String description, int fraudster) {
 //		super();
 //		this.step = step;
 //		this.clientOrig = clientOrig;
@@ -169,7 +201,7 @@ public class Transaction implements Serializable {
 //		this.fraudster = fraudster;
 //	}
 //
-//	public Transaction(Long step, Client clientOrig, short type, double amount,
+//	public Transaction(Long step, Client clientOrig, int type, double amount,
 //			String description, int fraudster) {
 //		super();
 //		this.step = step;
@@ -182,11 +214,11 @@ public class Transaction implements Serializable {
 //		this.fraudster = fraudster;
 //	}
 
-	public short getType() {
+	public int getType() {
 		return type;
 	}
 
-	public void setType(short type) {
+	public void setType(int type) {
 		this.type = type;
 	}
 
@@ -194,34 +226,12 @@ public class Transaction implements Serializable {
 		return amount;
 	}
 
-	public void setAmount(long amount) {
-		this.amount = amount;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	
-
 	public Client getClientOrigBefore() {
 		return clientOrigBefore;
 	}
 
-	public void setClientOrigBefore(Client clientOrigBefore) {
-		this.clientOrigBefore = clientOrigBefore;
-	}
-
 	public Client getClientOrigAfter() {
 		return clientOrigAfter;
-	}
-
-	public void setClientOrigAfter(Client clientOrigAfter) {
-		this.clientOrigAfter = clientOrigAfter;
 	}
 
 	public Client getClientDestBefore() {
@@ -240,32 +250,8 @@ public class Transaction implements Serializable {
 		this.clientDestAfter = clientDestAfter;
 	}
 
-	public ClientBeta getClientBetaOrigBefore() {
-		return clientBetaOrigBefore;
-	}
-
-	public void setClientBetaOrigBefore(ClientBeta clientBetaOrigBefore) {
-		this.clientBetaOrigBefore = clientBetaOrigBefore;
-	}
-
-	public ClientBeta getClientBetaOrigAfter() {
-		return clientBetaOrigAfter;
-	}
-
-	public void setClientBetaOrigAfter(ClientBeta clientBetaOrigAfter) {
-		this.clientBetaOrigAfter = clientBetaOrigAfter;
-	}
-
-	public ClientBeta getClientBetaDestBefore() {
-		return clientBetaDestBefore;
-	}
-
 	public void setClientBetaDestBefore(ClientBeta clientBetaDestBefore) {
 		this.clientBetaDestBefore = clientBetaDestBefore;
-	}
-
-	public ClientBeta getClientBetaDestAfter() {
-		return clientBetaDestAfter;
 	}
 
 	public void setClientBetaDestAfter(ClientBeta clientBetaDestAfter) {
@@ -287,23 +273,6 @@ public class Transaction implements Serializable {
 		}
 		
 		return ps;
-	}
-	
-	
-	public void setNewBalanceDest(double balance){
-		this.newBalanceDest = balance;
-	}
-	
-	public void setNewBalanceOrig(double balance){
-		this.newBalanceOrig = balance;
-	}
-	
-	public double getNewBalanceOrig(){
-		return this.newBalanceOrig;
-	}
-	
-	public double getNewBalanceDest(){
-		return this.newBalanceDest;
 	}
 
 	public int getDay() {
@@ -330,7 +299,7 @@ public class Transaction implements Serializable {
 //		String ps = null;
 //		ps = Long.toString(step) + ",'" + clientOrig + "','" + clientOrig.age + "','"
 //				+ profileOrig + "','" + clientOrig.getLocation()
-//				+ "'," + Short.toString(type) + "," + Double.toString(amount)
+//				+ "'," + Integer.toString(type) + "," + Double.toString(amount)
 //				+ "," + Double.toString(newBalanceOrig) + ",'";
 //		if (clientDest != null) {
 //			ps += clientDest + "','" + profileDest + "'," + "'"

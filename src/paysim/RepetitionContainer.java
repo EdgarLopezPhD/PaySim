@@ -1,87 +1,61 @@
 package paysim;
 
 public class RepetitionContainer {
-	
-	private String type="";
-	private double low;
-	private double high;
-	@Override
-	public String toString() {
-		return "RepetitionContainer [type=" + type + ", low=" + low + ", high="
-				+ high + ", count=" + count + ", avg=" + avg + ", std=" + std
-				+ "]" ;
-	}
+    private String type;
+    private double low, high, count, avg, std;
 
-	private double count;
-	private double avg;
-	private double std;
-	
-	public RepetitionContainer(){
-		this.type ="";
-		this.low = 0;
-		this.high = 0;
-		this.count = 0;
-		this.avg = 0;
-		this.std = 0;
-	}
+    public RepetitionContainer() {
+        type = "";
+        low = 0;
+        high = 0;
+        count = 0;
+        avg = 0;
+        std = 0;
+    }
 
-	
-	public boolean equals(RepetitionContainer cont){
-		if(this.type.equals(cont.getType()) &&
-				this.low == cont.getLow() &&
-				this.high == cont.getHigh())
-		{
-			return true;
-		}
-		return false;
-	}
-	
-	public String getType() {
-		return type;
-	}
+    @Override
+    public String toString() {
+        return "RepetitionContainer [type=" + type + ", low=" + low + ", high="
+                + high + ", count=" + count + ", avg=" + avg + ", std=" + std
+                + "]";
+    }
 
-	public void setType(String type) {
-		this.type = type;
-	}
+    public boolean equals(RepetitionContainer cont) {
+        return type.equals(cont.getType()) &&
+                low == cont.getLow() &&
+                high == cont.getHigh();
+    }
 
-	public double getLow() {
-		return low;
-	}
+    public String getType() {
+        return type;
+    }
 
-	public void setLow(double low) {
-		this.low = low;
-	}
+    public void setType(String type) {
+        this.type = type;
+    }
 
-	public double getHigh() {
-		return high;
-	}
+    public double getLow() {
+        return low;
+    }
 
-	public void setHigh(double high) {
-		this.high = high;
-	}
+    public void setLow(double low) {
+        this.low = low;
+    }
 
-	public double getCount() {
-		return count;
-	}
+    public double getHigh() {
+        return high;
+    }
 
-	public void setCount(double count) {
-		this.count = count;
-	}
+    public void setHigh(double high) {
+        this.high = high;
+    }
 
-	public double getAvg() {
-		return avg;
-	}
+    public void setAvg(double avg) {
+        this.avg = avg;
+    }
 
-	public void setAvg(double avg) {
-		this.avg = avg;
-	}
-
-	public double getStd() {
-		return std;
-	}
-
-	public void setStd(double std) {
-		this.std = std;
-	}
+    public void setStd(double std) {
+        this.std = std;
+    }
 
 }
