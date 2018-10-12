@@ -6,9 +6,6 @@ import sim.engine.SimState;
 import sim.engine.Steppable;
 
 public class Manager implements Steppable {
-
-    private int nrOfClientRepeat = 0;
-
     //For debugging purposes
     public static int trueNrOfClients = 0;
     public static int trueNrOfRepetitions = 0;
@@ -85,12 +82,6 @@ public class Manager implements Steppable {
 //			}
         }
 
-        if (nrOfClients < 0) {
-            this.nrOfClientRepeat = nrOfClients * -1;
-        } else {
-            this.nrOfClientRepeat = 0;
-        }
-
         for (int i = 0; i < nrOfClients; i++) {
             Client c = this.generateClient(probArr, aProbList, paysim, currStep);
             if (c.getStepsToRepeat().size() != 0) {
@@ -105,13 +96,6 @@ public class Manager implements Steppable {
     }
 
     private void updatePaysimOutputs(PaySim paysim) {
-
-//		for(Transaction t: paysim.getTrans()){
-//			if(t.getDay() == 4 && t.getHour() == 16){
-//				System.out.println(paysim.schedule.getSteps() + "\t" + t.toString() + "\nGOT ILLEGAL STEP\n\n");
-//			}
-//		}
-
         if (paysim.debugFlag) {
             System.out.println("Updating\n");
         }
@@ -180,7 +164,6 @@ public class Manager implements Steppable {
             if (stepsToRepeat == null) {
                 return generatedClient;
             }
-            this.nrOfClientRepeat += nrOfTimesToRepeat;
             generatedClient.setStepsToRepeat(stepsToRepeat);
             generatedClient.setCont(cont);
             return generatedClient;
@@ -193,37 +176,21 @@ public class Manager implements Steppable {
         this.nrOfStepsTotal = nrOfStepsTotal;
     }
 
-    public boolean doesRepeat(PaySim paysim) {
-        int randNr = paysim.random.nextInt() % 10;
-        while (randNr <= 0) {
-            randNr = paysim.random.nextInt() % 10;
-        }
-
-        //Indicates 10% chance
-        if (randNr == 1) {
-            return true;
-        }
-
-        return false;
-    }
-
     public ArrayList<ActionProbability> getActionProbabilityFromStep(int step, PaySim paysim) {
-        ArrayList<ActionProbability> probList = new ArrayList<ActionProbability>();
-        int day = (int) (step / 24) + 1;
-        int hour = (int) (step - ((day - 1) * 24));
-        this.currDay = day;
-        this.currHour = hour;
+        int day = (step / 24) + 1;
+        int hour = step - ((day - 1) * 24);
+        currDay = day;
+        currHour = hour;
 
-        //FIX THIS		CHANGE THIS TO GET DIRECTLY FROM THE CACHED CONTAINER
-        ProbabilityRecordContainer cont = this.probabilityHandler.getList().get(((int) step - 1));
-        probList = cont.getProbList();
+        //FIX THIS CHANGE THIS TO GET DIRECTLY FROM THE CACHED CONTAINER
+        ProbabilityRecordContainer cont = probabilityHandler.getList().get(step - 1);
+        ArrayList<ActionProbability> probList = cont.getProbList();
 
         if (paysim.debugFlag) {
             System.out.println("Was searching for step:\t" + step + " And got from origAggrTransList:\n");
             for (ActionProbability temp : probList) {
                 System.out.println(temp.toString() + "\n\n");
             }
-
         }
 
         return probList;

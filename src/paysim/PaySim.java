@@ -29,7 +29,6 @@ public class PaySim extends SimState {
 
     ArrayList<String> paramFileList = new ArrayList<>();
     ArrayList<String> actionTypes = new ArrayList<>();
-    ArrayList<ActionProbability> aProbList = new ArrayList<>();
     BufferedWriter writer;
     String logFileName = "";
 
@@ -104,7 +103,6 @@ public class PaySim extends SimState {
         clients = new ArrayList<>();
         paramFileList = new ArrayList<>();
         actionTypes = new ArrayList<>();
-        aProbList = new ArrayList<>();
         balanceHandler = null;
         handlerMax = null;
         stepHandler = null;
@@ -680,56 +678,6 @@ public class PaySim extends SimState {
 
     public String welcome() {
         return "PAYSIM: Financial Simulator v" + this.PAYSIM_VERSION + " \n ";
-
-    }
-
-    //Based based on a specefic line in the param file retrive the corresponding ActionProbability object
-    private ActionProbability getActionProb(String line) {
-        String tokens[] = line.split(",");
-        ActionProbability prob = new ActionProbability();
-
-        prob.setType(tokens[0]);
-        prob.setMonth(Double.parseDouble(tokens[1]));
-        prob.setDay(Double.parseDouble(tokens[2]));
-        prob.setHour(Double.parseDouble(tokens[3]));
-        prob.setNrOfTransactions(Double.parseDouble(tokens[4]));
-        prob.setTotalSum(Double.parseDouble(tokens[5]));
-        prob.setAverage(Double.parseDouble(tokens[6]));
-        prob.setStd(Double.parseDouble(tokens[7]));
-
-        return prob;
-    }
-
-    //Based on the current day/hour loaded, load the corresponding actions from the paramfile
-    public ArrayList<ActionProbability> getActionProbabilityList(long step) {
-        int i = 0;
-        //System.out.println("Day:\t" + day + "\tHour:\t" + hour + "\n");
-        ArrayList<ActionProbability> aProbList = new ArrayList<ActionProbability>();
-        //Looping through all of the action types
-        for (String action : this.actionTypes) {
-            //For each action type, loop through the entire list, and, get the line for the current day/hour
-            for (i = 1; i < this.paramFileList.size(); i++) {
-                String line = this.paramFileList.get(i);
-                //Split the current line
-                String splitted[] = line.split(",");
-
-                double currDay = Double.parseDouble(splitted[2]);
-                double currHour = Double.parseDouble(splitted[3]);
-                String currType = splitted[0];
-                String stepSplitted = splitted[8];
-
-                //Check if this line contains the current day/hours/type
-                if (stepSplitted.equals(String.valueOf(step)) &&
-                        currType.equals(action)) {
-                    ActionProbability p = this.getActionProb(line);
-
-                    aProbList.add(p);
-                    break;
-                }
-            }
-        }
-
-        return aProbList;
 
     }
 
