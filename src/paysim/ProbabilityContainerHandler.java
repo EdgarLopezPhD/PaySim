@@ -36,9 +36,9 @@ public class ProbabilityContainerHandler {
     private ActionProbability getActionProbabilityFromStep(String type, int step, ArrayList<String> paramFile) {
         ActionProbability probToReturn = new ActionProbability();
         for (String s : paramFile) {
-            String splitted[] = s.split(",");
-            if (String.valueOf(step).equals(splitted[8]) &&
-                    splitted[0].equals(type)) {
+            String split[] = s.split(",");
+            if (String.valueOf(step).equals(split[8]) &&
+                    split[0].equals(type)) {
                 probToReturn = getActionProb(s);
             }
         }

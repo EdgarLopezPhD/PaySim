@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import paysim.Transaction;
-import paysim.Transaction.TransactionType;
+import paysim.parameters.TransactionParameters;
 
 public class AggregateParamFileCreator {
     private static int HOUR_IN_DAY = 24;
@@ -16,10 +16,10 @@ public class AggregateParamFileCreator {
 
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
-        for (TransactionType type : TransactionType.values()) {
+        for (String type : TransactionParameters.getTypes()) {
             for (int day = 0; day < DAY_IN_MONTH; day++) {
                 for (int hour = 0; hour < HOUR_IN_DAY; hour++) {
-                    AggregateTransactionRecord partialRecord = getAggregateRecord(type.getValue(), day, hour, transactionList);
+                    AggregateTransactionRecord partialRecord = getAggregateRecord(TransactionParameters.indexOf(type), day, hour, transactionList);
                     if (partialRecord != null) {
                         aggrTransRecord.add(partialRecord);
                     }
@@ -56,12 +56,8 @@ public class AggregateParamFileCreator {
                 }
             }
             i = counter - 1;
-            if (tempList.size() > 1) {
-                AggregateTransactionRecord compacted = compactAggrRecord(tempList);
-                reformedList.add(compacted);
-            } else {
-                reformedList.add(temp);
-            }
+            AggregateTransactionRecord compacted = compactAggrRecord(tempList);
+            reformedList.add(compacted);
         }
 
         return reformedList;

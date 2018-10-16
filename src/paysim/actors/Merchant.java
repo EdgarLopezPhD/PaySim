@@ -1,7 +1,8 @@
 package paysim.actors;
 
+import static java.lang.Math.abs;
+
 public class Merchant extends SuperClient {
-    private int nrOfSales;
     private double balance;
     private String name = "";
 
@@ -17,7 +18,6 @@ public class Merchant extends SuperClient {
 
     public void setMerchant(Merchant m) {
         this.balance = m.getBalance();
-        this.nrOfSales = m.getNrOfSales();
         this.name = m.getName();
     }
 
@@ -29,11 +29,7 @@ public class Merchant extends SuperClient {
         this.balance = balance;
     }
 
-    public int getNrOfSales() {
-        return nrOfSales;
-    }
-
     public String toString() {
-        return "M" + Integer.toString(this.hashCode());
+        return "M" + Integer.toString(abs(this.hashCode()));
     }
 }

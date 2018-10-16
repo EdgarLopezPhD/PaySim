@@ -1,5 +1,8 @@
 package paysim;
 
+import paysim.parameters.Parameters;
+import paysim.parameters.TransactionParameters;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,35 +11,20 @@ import java.util.Random;
 
 public class RepetitionHandler {
     private ArrayList<String> freqParams;
-    private ArrayList<Double> probActions;
     private Random r;
 
-    public RepetitionHandler(long seed, PaySim p) {
+    public RepetitionHandler(long seed) {
         freqParams = new ArrayList<>();
-        probActions = new ArrayList<>();
-        init(p);
+        init();
         r = new Random(seed);
     }
 
-    private void init(PaySim paysim) {
-        loadFreqParams(paysim);
+    private void init() {
+        loadFreqParams();
     }
 
-    private void loadFreqParams(PaySim paysim) {
-        // Init probability of actions
-        File f1 = new File(paysim.transferFreqModInit);
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(f1));
-            String line = "";
-            while ((line = reader.readLine()) != null) {
-                probActions.add(Double.parseDouble(line.split(",")[1]));
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        File f = new File(paysim.transferFreqMod);
+    private void loadFreqParams() {
+        File f = new File(Parameters.transferFreqMod);
         try {
             BufferedReader reader = new BufferedReader(new FileReader(f));
             String line = "";
@@ -53,7 +41,7 @@ public class RepetitionHandler {
     private int getAction() {
         int actionGenerated = -1;
         while (actionGenerated == -1)
-            actionGenerated = randomEvent(probActions);
+            actionGenerated = randomEvent(TransactionParameters.getProbabilities());
 
         return actionGenerated;
     }

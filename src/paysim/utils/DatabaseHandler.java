@@ -1,4 +1,7 @@
-package paysim;
+package paysim.utils;
+
+import paysim.PaySim;
+import paysim.Transaction;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,7 +40,7 @@ public class DatabaseHandler {
                     + "cliTo,pOldBalanceTo,pNewBalanceTo,isFraud,isFlaggedFraud,step) "
                     + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
             PreparedStatement st = con.prepareStatement(sql);
-            st.setString(1, ParameterizedPaySim.simulatorName);
+            st.setString(1, PaySim.simulatorName);
             st.setString(2, trans.getType() + "");
             st.setDouble(3, trans.getAmount());
             st.setString(4, trans.getClientOrigBefore().getName());

@@ -4,44 +4,8 @@ import paysim.actors.Client;
 import paysim.actors.Merchant;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class Transaction implements Serializable {
-    public enum TransactionType {
-        CASH_IN(1, "CASH_IN"), CASH_OUT(2, "CASH_OUT"), DEBIT(3, "DEBIT"),
-        DEPOSIT(4, "DEPOSIT"), PAYMENT(5, "PAYMENT"), TRANSFER(6, "TRANSFER");
-
-        private final int id;
-        private final String name;
-
-        TransactionType(int id, String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public int getValue() {
-            return id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public static String nameOf(int id) {
-            return Arrays.stream(values())
-                    .filter(t -> t.id == id)
-                    .findFirst()
-                    .map(TransactionType::getName)
-                    .orElse(null);
-        }
-
-        public static boolean isValid(String name) {
-            return Arrays.stream(values())
-                    .map(TransactionType::getName)
-                    .anyMatch(n -> n.equals(name));
-        }
-    }
-
     private static final long serialVersionUID = 1L;
     int type;
     double amount;

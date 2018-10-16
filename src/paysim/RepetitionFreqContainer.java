@@ -63,4 +63,8 @@ public class RepetitionFreqContainer implements Comparable<RepetitionFreqContain
     public int getFreq() {
         return freq;
     }
+
+    public boolean match(String type, int high, int low){
+        return cont.getType().equals(type) && cont.getHigh() == high && cont.getLow() == low;
+    }
 }

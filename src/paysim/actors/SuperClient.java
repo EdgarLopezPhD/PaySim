@@ -2,7 +2,6 @@ package paysim.actors;
 
 import paysim.PaySim;
 import paysim.RepetitionContainer;
-import paysim.TransferMaxHandler;
 
 public class SuperClient {
     private boolean isFraud = false;
@@ -14,7 +13,6 @@ public class SuperClient {
     public double balance = 0;
     int currStep = 0;
     RepetitionContainer cont = null;
-    TransferMaxHandler transferMaxHandler;
 
     public int chooseAction(PaySim paysim, double probArr[]) {
         double randNr = paysim.random.nextDouble();
@@ -23,8 +21,7 @@ public class SuperClient {
         for (int i = 0; i < probArr.length; i++) {
             double currProb = probArr[i];
 
-            if (randNr >= total &&
-                    randNr <= (total + currProb)) {
+            if (total <= randNr && randNr <= (total + currProb)) {
                 return i + 1;
             } else {
                 total += currProb;
@@ -56,10 +53,6 @@ public class SuperClient {
 
     public void setFraud(boolean isFraud) {
         this.isFraud = isFraud;
-    }
-
-    public void setTransferMaxHandler(TransferMaxHandler transferMaxHandler) {
-        this.transferMaxHandler = transferMaxHandler;
     }
 
     public void setCont(RepetitionContainer cont) {

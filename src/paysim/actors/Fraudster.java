@@ -1,36 +1,39 @@
 package paysim.actors;
 
 import paysim.PaySim;
+import paysim.parameters.Parameters;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
+import static java.lang.Math.abs;
+
 public class Fraudster implements Steppable {
-    public double profit = 0;
-    public double clientsAffected = 0;
+    private String name = "";
+    public double profit = 0, clientsAffected = 0;
 
     @Override
     public void step(SimState state) {
         PaySim paysim = (PaySim) state;
         double randNr = paysim.random.nextDouble();
-        if (randNr < paysim.getFraudProbability()
+        if (randNr < Parameters.fraudProbability
                 && paysim.schedule.getSteps() > 0) {
             Client c = paysim.getRandomClient();
-            if (paysim.debugFlag) {
-                System.out.println(this.getName() + " Do Fraud on client "
-                        + c.toString() + " " + c.getBalance());
+            if (c == null) {
+                System.out.println("Fraudster tried to act but where was no client, skipping.");
+                return;
             }
             c.setFraud(true);
             double balance = c.getBalance();
             // create mule client
             if (balance > 0) {
-                int loops = (int) Math.ceil(balance / paysim.transferLimit);
+                int loops = (int) Math.ceil(balance / Parameters.transferLimit);
                 for (int i = 0; i < loops; i++) {
                     Client muleClient = new Client();
                     muleClient.setFraud(true);
-                    if (balance > paysim.transferLimit) {
+                    if (balance > Parameters.transferLimit) {
                         c.handleTransfer(paysim, muleClient,
-                                paysim.transferLimit);
-                        balance -= paysim.transferLimit;
+                                Parameters.transferLimit);
+                        balance -= Parameters.transferLimit;
                     } else {
                         c.handleTransfer(paysim, muleClient, balance);
                         balance = 0;
@@ -50,10 +53,12 @@ public class Fraudster implements Steppable {
     }
 
     public String getName() {
-        return this.toString();
+        if (this.name.equals(""))
+            this.name = this.toString();
+        return this.name;
     }
 
     public String toString() {
-        return "F" + Integer.toString(this.hashCode());
+        return "F" + Integer.toString(abs(this.hashCode()));
     }
 }

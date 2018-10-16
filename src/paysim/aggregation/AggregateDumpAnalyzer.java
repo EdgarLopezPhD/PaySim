@@ -1,12 +1,14 @@
 package paysim.aggregation;
 
+import paysim.parameters.TransactionParameters;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-import paysim.Transaction.TransactionType;
+import static paysim.utils.Output.formatDouble;
+
 
 public class AggregateDumpAnalyzer {
     //The total number of transactions made for each type
@@ -61,35 +63,33 @@ public class AggregateDumpAnalyzer {
     }
 
     private void computeTotal() {
-        totNrOfCashIn = getCount(TransactionType.CASH_IN.getValue());
-        totNrOfCashOut = getCount(TransactionType.CASH_OUT.getValue());
-        totNrOfDebit = getCount(TransactionType.DEBIT.getValue());
-        totNrOfDeposit = getCount(TransactionType.DEPOSIT.getValue());
-        totNrOfPayments = getCount(TransactionType.PAYMENT.getValue());
-        totNrOfTransfer = getCount(TransactionType.TRANSFER.getValue());
+        totNrOfCashIn = getCount(TransactionParameters.indexOf("CASH_IN"));
+        totNrOfCashOut = getCount(TransactionParameters.indexOf("CASH_OUT"));
+        totNrOfDebit = getCount(TransactionParameters.indexOf("DEBIT"));
+        totNrOfDeposit = getCount(TransactionParameters.indexOf("DEPOSIT"));
+        totNrOfPayments = getCount(TransactionParameters.indexOf("PAYMENT"));
+        totNrOfTransfer = getCount(TransactionParameters.indexOf("TRANSFER"));
     }
 
     private void computeAvgAvg() {
-        avgAvgCashIn = getAvgAvg(TransactionType.CASH_IN.getValue());
-        avgAvgCashOut = getAvgAvg(TransactionType.CASH_OUT.getValue());
-        avgAvgDebit = getAvgAvg(TransactionType.DEBIT.getValue());
-        avgAvgDeposit = getAvgAvg(TransactionType.DEPOSIT.getValue());
-        avgAvgPayments = getAvgAvg(TransactionType.PAYMENT.getValue());
-        avgAvgTransfer = getAvgAvg(TransactionType.TRANSFER.getValue());
+        avgAvgCashIn = getAvgAvg(TransactionParameters.indexOf("CASH_IN"));
+        avgAvgCashOut = getAvgAvg(TransactionParameters.indexOf("CASH_OUT"));
+        avgAvgDebit = getAvgAvg(TransactionParameters.indexOf("DEBIT"));
+        avgAvgDeposit = getAvgAvg(TransactionParameters.indexOf("DEPOSIT"));
+        avgAvgPayments = getAvgAvg(TransactionParameters.indexOf("PAYMENT"));
+        avgAvgTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
     }
 
     private void computeAvgStd() {
-        avgStdCashIn = getAvgStd(TransactionType.CASH_IN.getValue());
-        avgStdCashOut = getAvgStd(TransactionType.CASH_OUT.getValue());
-        avgStdDebit = getAvgStd(TransactionType.DEBIT.getValue());
-        avgStdDeposit = getAvgStd(TransactionType.DEPOSIT.getValue());
-        avgStdPayment = getAvgStd(TransactionType.PAYMENT.getValue());
-        avgStdTransfer = getAvgAvg(TransactionType.TRANSFER.getValue());
+        avgStdCashIn = getAvgStd(TransactionParameters.indexOf("CASH_IN"));
+        avgStdCashOut = getAvgStd(TransactionParameters.indexOf("CASH_OUT"));
+        avgStdDebit = getAvgStd(TransactionParameters.indexOf("DEBIT"));
+        avgStdDeposit = getAvgStd(TransactionParameters.indexOf("DEPOSIT"));
+        avgStdPayment = getAvgStd(TransactionParameters.indexOf("PAYMENT"));
+        avgStdTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
     }
 
     public void printSummary() {
-        DecimalFormat format = new DecimalFormat("#.##########");
-
         String split[] = this.toString().split(",");
         for (String s : split) {
             System.out.println(s + "\n");
@@ -97,7 +97,7 @@ public class AggregateDumpAnalyzer {
 
         double total = this.totNrOfCashIn + this.totNrOfCashOut + this.totNrOfDebit +
                 this.totNrOfDeposit + this.totNrOfPayments + this.totNrOfTransfer;
-        System.out.println("\n\nTot\t" + format.format(total) + "\n");
+        System.out.println("\n\nTot\t" + formatDouble(10, total) + "\n");
     }
 
     private boolean isNumber(String type) {
@@ -119,7 +119,7 @@ public class AggregateDumpAnalyzer {
 
             //Handle from the original aggregate file
             if (!isNumber(type)) {
-                String receivedType = TransactionType.nameOf(typeNr);
+                String receivedType = TransactionParameters.getType(typeNr);
                 if (receivedType.equals(type)) {
                     count += Double.parseDouble(split[4]);
                 }
@@ -143,7 +143,7 @@ public class AggregateDumpAnalyzer {
 
             //Handle from the original aggregate file
             if (!isNumber(type)) {
-                String receivedType = TransactionType.nameOf(typeNr);
+                String receivedType = TransactionParameters.getType(typeNr);
                 if (receivedType.equals(type)) {
                     avg += Double.parseDouble(split[6]);
                     nr++;
@@ -165,21 +165,21 @@ public class AggregateDumpAnalyzer {
         double avgStd = 0;
         double nr = 0;
 
-        for (String s : this.fileContents) {
-            String splitted[] = s.split(",");
-            String type = splitted[0];
+        for (String s : fileContents) {
+            String split[] = s.split(",");
+            String type = split[0];
 
             //Handle from the original aggregate file
             if (!isNumber(type)) {
-                String receivedType = TransactionType.nameOf(typeNr);
+                String receivedType = TransactionParameters.getType(typeNr);
                 if (receivedType.equals(type)) {
-                    avgStd += Double.parseDouble(splitted[7]);
+                    avgStd += Double.parseDouble(split[7]);
                     nr++;
                 }
             } else {
                 //Handle from the generated aggregate file
                 if (Double.parseDouble(type) == typeNr) {
-                    avgStd += Double.parseDouble(splitted[7]);
+                    avgStd += Double.parseDouble(split[7]);
                     nr++;
                 }
             }

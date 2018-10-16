@@ -2,8 +2,8 @@ package paysim;
 
 import java.util.ArrayList;
 
-import paysim.Transaction.TransactionType;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.parameters.TransactionParameters;
 
 public class CurrentStepHandler {
     String UNKNOWN_STEP = "";
@@ -72,13 +72,14 @@ public class CurrentStepHandler {
                 for (String csvLine : aggregateParameters) {
                     String line[] = csvLine.split(",");
                     try {
-                        if (TransactionType.isValid(line[COLUMN_TYPE]) &&
+                        if (TransactionParameters.isValidType(line[COLUMN_TYPE]) &&
                                 Integer.parseInt(line[COLUMN_DAY]) == day &&
                                 Integer.parseInt(line[COLUMN_HOUR]) == hour) {
                             count += Integer.parseInt(line[COLUMN_COUNT]);
                         }
                     } catch (Exception e) {
                         System.out.println("initStepCount - Could not parse line " + csvLine);
+                        e.printStackTrace();
                         continue;
                     }
                 }

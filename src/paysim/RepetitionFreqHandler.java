@@ -1,6 +1,7 @@
 package paysim;
 
-import java.text.DecimalFormat;
+import static paysim.utils.Output.formatDouble;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -38,12 +39,15 @@ public class RepetitionFreqHandler {
     public String getFrequencyList() {
         String toReturn = "";
         double tot = getTotalFreq();
-        DecimalFormat format = new DecimalFormat("#.######");
 
         Collections.sort(freqContList);
         for (RepetitionFreqContainer f : freqContList) {
-            toReturn += f.toString() + "," + format.format((f.getFreq()) / tot) + "\n";
+            toReturn += f.toString() + "," + formatDouble(6, f.getFreq() / tot) + "\n";
         }
         return toReturn;
+    }
+
+    public ArrayList<RepetitionFreqContainer> getFreqContList() {
+        return freqContList;
     }
 }

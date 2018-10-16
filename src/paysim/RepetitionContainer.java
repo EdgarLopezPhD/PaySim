@@ -1,5 +1,7 @@
 package paysim;
 
+import java.util.Objects;
+
 public class RepetitionContainer {
     private String type;
     private double low, high, count, avg, std;
@@ -20,11 +22,7 @@ public class RepetitionContainer {
                 + "]";
     }
 
-    public boolean equals(RepetitionContainer cont) {
-        return type.equals(cont.getType()) &&
-                low == cont.getLow() &&
-                high == cont.getHigh();
-    }
+
 
     public String getType() {
         return type;
@@ -58,4 +56,18 @@ public class RepetitionContainer {
         this.std = std;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RepetitionContainer that = (RepetitionContainer) o;
+        return Double.compare(that.low, low) == 0 &&
+                Double.compare(that.high, high) == 0 &&
+                Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, low, high);
+    }
 }

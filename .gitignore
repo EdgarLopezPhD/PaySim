@@ -25,3 +25,6 @@ hs_err_pid*
 # IntelliJ Files
 *.iml
 .idea/
+
+# Default output folder
+outputs/
