@@ -16,7 +16,7 @@ public class AggregateParamFileCreator {
 
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
-        for (String type : TransactionParameters.getTypes()) {
+        for (String type : TransactionParameters.getActions()) {
             for (int day = 0; day < DAY_IN_MONTH; day++) {
                 for (int hour = 0; hour < HOUR_IN_DAY; hour++) {
                     AggregateTransactionRecord partialRecord = getAggregateRecord(TransactionParameters.indexOf(type), day, hour, transactionList);
@@ -129,11 +129,12 @@ public class AggregateParamFileCreator {
 
     public static double getStd(ArrayList<Transaction> list, double average) {
         // Bessel corrected deviation https://en.wikipedia.org/wiki/Bessel%27s_correction
-        return list.stream()
+        return Math.sqrt(list.stream()
                 .map(Transaction::getAmount)
                 .map(val -> val - average)
                 .mapToDouble(val -> Math.pow(val, 2))
-                .sum() / (list.size() - 1);
+                .sum())
+                / (list.size() - 1);
     }
 
     private double getTotalAmount(ArrayList<Transaction> transactionList) {

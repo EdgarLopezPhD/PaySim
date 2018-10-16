@@ -1,5 +1,8 @@
 package paysim;
 
+import paysim.parameters.Parameters;
+import paysim.parameters.TransactionParameters;
+
 import java.util.ArrayList;
 
 public class ProbabilityContainerHandler {
@@ -14,16 +17,11 @@ public class ProbabilityContainerHandler {
     }
 
     public void initRecordList(ArrayList<String> fileContents) {
-        ArrayList<String> actionTypes = new ArrayList<>();
         ArrayList<ActionProbability> aProbListTemp = new ArrayList<>();
-        actionTypes.add("CASH_IN");
-        actionTypes.add("CASH_OUT");
-        actionTypes.add("DEBIT");
-        actionTypes.add("PAYMENT");
-        actionTypes.add("TRANSFER");
-        for (int i = 1; i <= 744; i++) {
-            for (int j = 0; j < actionTypes.size(); j++) {
-                ActionProbability probTemp = getActionProbabilityFromStep(actionTypes.get(j), i, fileContents);
+
+        for (int i = 1; i <= Parameters.nbSteps; i++) {
+            for (String actionType : TransactionParameters.getActions()) {
+                ActionProbability probTemp = getActionProbabilityFromStep(actionType, i, fileContents);
                 aProbListTemp.add(probTemp);
             }
             ProbabilityRecordContainer record = new ProbabilityRecordContainer(i, aProbListTemp);

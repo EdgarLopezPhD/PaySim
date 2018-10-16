@@ -1,7 +1,7 @@
 package paysim.utils;
 
 import paysim.PaySim;
-import paysim.RepetitionFreqContainer;
+import paysim.Repetition;
 import paysim.Transaction;
 import paysim.actors.Fraudster;
 import paysim.aggregation.AggregateDumpAnalyzer;
@@ -13,8 +13,11 @@ import java.io.*;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.Map;
 
 import static paysim.PaySim.getCumulative;
+import static paysim.parameters.TransactionParameters.getCountCallAction;
+import static paysim.parameters.TransactionParameters.getCountCallRepetition;
 
 public class Output {
     private static int PRECISION_OUTPUT = 2;
@@ -162,34 +165,26 @@ public class Output {
         return aggrHandler.getTotalErrorRate();
     }
 
-    public static void dumpRepetitionFreq(String filename, PaySim simulation) {
-        ArrayList<RepetitionFreqContainer> contList = simulation.getRepFreqHandler().getFreqContList();
-        ArrayList<String> allProbs = simulation.listOfProbs();
+    public static void dumpRepetitionFreq(String filename) {
+        Map<String, Integer> countPerAction = getCountCallAction();
+        Map<Repetition, Integer> countPerRepetition = getCountCallRepetition();
+
         File f = new File(filename);
         try {
             FileWriter fWriter = new FileWriter(f);
             BufferedWriter bufWriter = new BufferedWriter(fWriter);
             bufWriter.write("type,high,low,total,freq" + "\n");
 
-            //Loop through the entire list of repetionContainers and find the match
-            for (int i = 1; i < allProbs.size(); i++) {
-                String s = allProbs.get(i);
-                String split[] = s.split(",");
-                int low = Integer.parseInt(split[1]);
-                int high = Integer.parseInt(split[2]);
-                double total = simulation.getTotalFromType(split[0], contList);
-                RepetitionFreqContainer contHarnessed = contList.stream()
-                        .filter(c -> c.match(split[0], high, low))
-                        .findFirst()
-                        .orElse(null);
-                if (contHarnessed != null) {
-                    bufWriter.write(split[0] + "," + low + "," + high + ","
-                            + contHarnessed.getFreq() + ","
-                            + formatDouble(3, (((double) contHarnessed.getFreq()) / total))
-                            + "\n");
-                } else {
-                    bufWriter.write(split[0] + "," + low + "," + high + "," + "0" + "," + 0 + "\n");
-                }
+            for (Map.Entry<Repetition, Integer> counterRep : countPerRepetition.entrySet()) {
+                Repetition repetition = counterRep.getKey();
+                String type = repetition.getType();
+                int count = counterRep.getValue();
+                int totalAction = countPerAction.get(type);
+                double probability = totalAction != 0 ? ((double) count) / totalAction : 0;
+
+                bufWriter.write(type + "," + repetition.getLow() + "," + repetition.getHigh() + ","
+                        + count + "," + formatDouble(3, probability)
+                        + "\n");
             }
             bufWriter.close();
             fWriter.close();
@@ -234,7 +229,7 @@ public class Output {
         double countSynth = 0;
         double sumOrig = 0;
         double sumSynth = 0;
-        for (String type : TransactionParameters.getTypes()) {
+        for (String type : TransactionParameters.getActions()) {
             sumOrig += getCumulative(type, 5, fileContentsOrig);
             sumSynth += getCumulative(String.valueOf(TransactionParameters.indexOf(type) + 1), 5, fileContentsSynth);
             result += type + spaceBegin.substring(type.length())
@@ -245,7 +240,7 @@ public class Output {
         result += "-----------------------------------------------------------------------------\n";
         result += spaceBegin + "Count" + spaceBegin + "\tCount" + spaceBegin + "\n";
 
-        for (String type : TransactionParameters.getTypes()) {
+        for (String type : TransactionParameters.getActions()) {
             countOrig += getCumulative(type, 4, fileContentsOrig);
             countSynth += getCumulative(String.valueOf(TransactionParameters.indexOf(type) + 1), 4, fileContentsSynth);
 

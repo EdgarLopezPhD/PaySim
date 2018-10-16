@@ -22,10 +22,8 @@ public class Manager implements Steppable {
 
     int currDay = 0;
     int currHour = 0;
-    RepetitionHandler repHandler;
     private InitBalanceHandler balanceHandler;
     private CurrentStepHandler stepHandler;
-    RepetitionFreqHandler repFreqHandler = new RepetitionFreqHandler();
 
     public void step(SimState state) {
         /*
@@ -36,7 +34,6 @@ public class Manager implements Steppable {
          * 3) For each client that is created, make sure there is a 10% chance of that client to re-enter after x-amount of steps
          */
         PaySim paysim = (PaySim) state;
-        repHandler = new RepetitionHandler(Parameters.seed);
 
         //Get the current step number in the simulation
         int currStep = (int) paysim.schedule.getSteps() + 1;
@@ -102,8 +99,7 @@ public class Manager implements Steppable {
         generatedClient.setCurrHour(currHour);
 
 
-        RepetitionContainer cont = repHandler.getRepetition();
-        this.repFreqHandler.add(cont);
+        Repetition cont = TransactionParameters.getRepetition();
         //Check whether the action is to be repeated
         if (cont.getLow() == 1 && cont.getHigh() == 1) {
             return generatedClient;
@@ -173,9 +169,4 @@ public class Manager implements Steppable {
     public void setProbabilityHandler(ProbabilityContainerHandler probabilityHandler) {
         this.probabilityHandler = probabilityHandler;
     }
-
-    public void setRepFreqHandler(RepetitionFreqHandler repFreqHandler) {
-        this.repFreqHandler = repFreqHandler;
-    }
-
 }

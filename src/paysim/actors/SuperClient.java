@@ -1,7 +1,7 @@
 package paysim.actors;
 
 import paysim.PaySim;
-import paysim.RepetitionContainer;
+import paysim.Repetition;
 
 public class SuperClient {
     private boolean isFraud = false;
@@ -12,7 +12,7 @@ public class SuperClient {
     int currHour = 0;
     public double balance = 0;
     int currStep = 0;
-    RepetitionContainer cont = null;
+    Repetition cont = null;
 
     public int chooseAction(PaySim paysim, double probArr[]) {
         double randNr = paysim.random.nextDouble();
@@ -55,7 +55,7 @@ public class SuperClient {
         this.isFraud = isFraud;
     }
 
-    public void setCont(RepetitionContainer cont) {
+    public void setCont(Repetition cont) {
         this.cont = cont;
     }
 

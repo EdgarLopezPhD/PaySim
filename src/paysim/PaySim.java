@@ -41,12 +41,6 @@ public class PaySim extends SimState {
     public static String simulatorName = "";
     private ArrayList<String> paramFile = new ArrayList<>();
 
-    public RepetitionFreqHandler getRepFreqHandler() {
-        return repFreqHandler;
-    }
-
-    RepetitionFreqHandler repFreqHandler = new RepetitionFreqHandler();
-
     public PaySim() {
         super(0);
     }
@@ -74,7 +68,7 @@ public class PaySim extends SimState {
         logFileName = System.getProperty("user.dir") + "//outputs//" + simulatorName
                 + "//" + simulatorName + "_log.csv";
         createLogFile(logFileName);
-        setActionTypes(TransactionParameters.getTypes());
+        setActionTypes(TransactionParameters.getActions());
     }
 
     public void runSimulation() {
@@ -131,7 +125,8 @@ public class PaySim extends SimState {
         setSeed(seed);
         balanceHandler = new InitBalanceHandler(Parameters.balanceHandlerFilePath);
         System.out.println("Inputting this paramfile:\n");
-        TransactionParameters.loadTransferFreq4ModInit(Parameters.transferFreqModInit);
+        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
+        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
         stepHandler = new CurrentStepHandler(paramFile, Parameters.multiplier);
 
         balanceHandler.setPaysim(this);
@@ -140,7 +135,6 @@ public class PaySim extends SimState {
         manager.setBalanceHandler(balanceHandler);
         manager.setStepHandler(stepHandler);
         manager.setProbabilityHandler(probabilityContainerHandler);
-        manager.setRepFreqHandler(repFreqHandler);
         TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
 
         //Add the merchants
@@ -188,7 +182,7 @@ public class PaySim extends SimState {
         Output.writeSummaryFile(filenameParamAggregate, filenameOutputAggregate, filenameSummary, this);
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
         Output.appendSimulationSummary(filenameSummary2, summary);
-        Output.dumpRepetitionFreq(filenameFreqOutput, this);
+        Output.dumpRepetitionFreq(filenameFreqOutput);
         System.out.println("NrOfTrueClients:\t" + (Manager.trueNrOfClients * Parameters.multiplier) + "\n"
                 + "NrOfDaysParticipated\t" + Manager.nrOfDaysParticipated + "\n");
 
@@ -205,34 +199,6 @@ public class PaySim extends SimState {
         }
         return null;
     }
-
-    public double getTotalFromType(String type, ArrayList<RepetitionFreqContainer> contList) {
-        double total = 0;
-        for (RepetitionFreqContainer s : contList) {
-            if (s.getCont().getType().equals(type)) {
-                total += s.getFreq();
-            }
-        }
-        return total;
-    }
-
-    public ArrayList<String> listOfProbs() {
-        ArrayList<String> allContents = new ArrayList<String>();
-        File f = new File(Parameters.transferFreqMod);
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(f));
-            String line = "";
-            while ((line = reader.readLine()) != null) {
-                allContents.add(line);
-            }
-            reader.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return allContents;
-    }
-
 
     public int generateStep(AggregateTransactionRecord record) {
         int step = 0;
