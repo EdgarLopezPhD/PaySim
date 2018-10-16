@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 import paysim.actors.Client;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.base.Repetition;
+import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
@@ -22,7 +24,6 @@ public class Manager implements Steppable {
 
     int currDay = 0;
     int currHour = 0;
-    private InitBalanceHandler balanceHandler;
     private CurrentStepHandler stepHandler;
 
     public void step(SimState state) {
@@ -94,7 +95,7 @@ public class Manager implements Steppable {
         generatedClient.setProbabilityArr(probArr);
         generatedClient.setProbList(aProbList);
         generatedClient.setName("C" + String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode())));
-        generatedClient.setBalance(balanceHandler.getBalance());
+        generatedClient.setBalance(BalanceClients.getBalance(paysim));
         generatedClient.setCurrDay(currDay);
         generatedClient.setCurrHour(currHour);
 
@@ -146,10 +147,6 @@ public class Manager implements Steppable {
         ArrayList<ActionProbability> probList = cont.getProbList();
 
         return probList;
-    }
-
-    public void setBalanceHandler(InitBalanceHandler balanceHandler) {
-        this.balanceHandler = balanceHandler;
     }
 
     public int getNrOfClients(ArrayList<ActionProbability> probList) {

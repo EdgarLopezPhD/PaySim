@@ -1,6 +1,6 @@
 package paysim.parameters;
 
-import paysim.Repetition;
+import paysim.base.Repetition;
 import paysim.utils.CSVReader;
 import paysim.utils.RandomCollection;
 
@@ -18,7 +18,6 @@ public class TransactionParameters {
     private static ArrayList<Integer> maxOccurrencesPerAction = new ArrayList<>();
     private static ArrayList<RandomCollection<Repetition>> repetitionPickerPerAction = new ArrayList<>();
 
-    //TODO: Move elsewhere
     private static Map<String, Integer> countCallAction = new HashMap<>();
     private static Map<Repetition, Integer> countCallRepetition = new HashMap<>();
 
@@ -96,16 +95,14 @@ public class TransactionParameters {
         return actions;
     }
 
-    // TODO : moves all the functions under this line elsewhere
-    public static String getNextAction(){
+    public static String getNextAction() {
         String action = actionPicker.next();
         int count = countCallAction.get(action);
         countCallAction.put(action, count + 1);
         return action;
-
     }
 
-    public static Repetition getNextRepetition(String action){
+    public static Repetition getNextRepetition(String action) {
         return repetitionPickerPerAction.get(indexOf(action)).next();
     }
 

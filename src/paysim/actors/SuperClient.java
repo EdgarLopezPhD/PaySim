@@ -1,7 +1,7 @@
 package paysim.actors;
 
 import paysim.PaySim;
-import paysim.Repetition;
+import paysim.base.Repetition;
 
 public class SuperClient {
     private boolean isFraud = false;

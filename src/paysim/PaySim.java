@@ -10,6 +10,7 @@ import paysim.actors.Merchant;
 
 import paysim.aggregation.AggregateParamFileCreator;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
@@ -32,7 +33,6 @@ public class PaySim extends SimState {
     ArrayList<String> actionTypes = new ArrayList<>();
     String logFileName = "";
 
-    InitBalanceHandler balanceHandler;
     CurrentStepHandler stepHandler;
 
     public long startTime = 0;
@@ -123,16 +123,13 @@ public class PaySim extends SimState {
     public void initSimulation() {
         System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed + "\n");
         setSeed(seed);
-        balanceHandler = new InitBalanceHandler(Parameters.balanceHandlerFilePath);
-        System.out.println("Inputting this paramfile:\n");
+        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
         TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
         TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
         stepHandler = new CurrentStepHandler(paramFile, Parameters.multiplier);
 
-        balanceHandler.setPaysim(this);
         probabilityContainerHandler.initRecordList(paramFile);
         Manager manager = new Manager();
-        manager.setBalanceHandler(balanceHandler);
         manager.setStepHandler(stepHandler);
         manager.setProbabilityHandler(probabilityContainerHandler);
         TransactionParameters.loadTransferMax(Parameters.transferMaxPath);

@@ -1,7 +1,7 @@
 package paysim.utils;
 
 import paysim.PaySim;
-import paysim.Repetition;
+import paysim.base.Repetition;
 import paysim.Transaction;
 import paysim.actors.Fraudster;
 import paysim.aggregation.AggregateDumpAnalyzer;
