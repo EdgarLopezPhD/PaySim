@@ -53,7 +53,6 @@ public class PaySim extends SimState {
             for (int x = 0; x < args.length - 1; x++) {
                 if (args[x].equals("-file")) {
                     p.setPropertiesFile(args[x + 1]);
-                    //Gets the number of steps
                 }
             }
             p.initParameters();
@@ -180,7 +179,7 @@ public class PaySim extends SimState {
         Output.appendSimulationSummary(filenameSummary2, summary);
         Output.dumpRepetitionFreq(filenameFreqOutput);
         System.out.println("NrOfTrueClients:\t" + (Manager.trueNrOfClients * Parameters.multiplier) + "\n"
-                + "NrOfDaysParticipated\t" + Manager.nrOfDaysParticipated + "\n");
+                + "NrStepParticipated\t" + Manager.nbStepParticipated + "\n");
 
     }
 
@@ -194,12 +193,6 @@ public class PaySim extends SimState {
             return c;
         }
         return null;
-    }
-
-    public int generateStep(AggregateTransactionRecord record) {
-        int step = 0;
-        step = (int) (((Double.parseDouble(record.gettDay()) - 1) * 24) + (Double.parseDouble(record.gettHour()) + 1));
-        return step;
     }
 
     public void resetVariables() {
@@ -238,24 +231,13 @@ public class PaySim extends SimState {
     }
 
     public static double getCumulative(String type, int rowIndex, ArrayList<String> fileContents) {
-        boolean isInt = false;
-        try {
-            Integer.parseInt(type);
-            isInt = true;
-        } catch (Exception e) {
-
-        }
-
         double aggr = 0;
         for (int i = 0; i < fileContents.size(); i++) {
             String row = fileContents.get(i);
             String split[] = row.split(",");
             String currType = split[0];
-            if (isInt) {
-                double alterDouble = Double.parseDouble(currType);
-                int alterInt = (int) alterDouble;
-                currType = String.valueOf(alterInt);
-            }
+
+            System.out.println(currType);
             if (currType.equals(type)) {
                 aggr += Double.parseDouble(split[rowIndex]);
             }

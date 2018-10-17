@@ -18,13 +18,10 @@ import static java.lang.Math.abs;
 public class Manager implements Steppable {
     //For debugging purposes
     static int trueNrOfClients = 0;
-    static int nrOfDaysParticipated = 0;
+    static int nbStepParticipated = 0;
 
     private ProbabilityContainerHandler probabilityHandler = new ProbabilityContainerHandler();
     private CurrentStepHandler stepHandler;
-
-    int currDay = 0;
-    int currHour = 0;
 
     public void step(SimState state) {
         /*
@@ -57,7 +54,6 @@ public class Manager implements Steppable {
         if (remainingAssignements != -1) {
             nrOfClients -= remainingAssignements;
         }
-
         for (int i = 0; i < nrOfClients; i++) {
             Client c = this.generateClient(probArr, aProbList, paysim, currStep);
             if (c.getStepsToRepeat().size() != 0) {
@@ -74,7 +70,7 @@ public class Manager implements Steppable {
                 generateAggregateParamFile(paysim.getTrans());
 
         if (records.size() > 0) {
-            Manager.nrOfDaysParticipated++;
+            Manager.nbStepParticipated++;
         }
         for (int i = 0; i < records.size(); i++) {
             paysim.getAggrTransRecordList().add(records.get(i));
@@ -95,8 +91,7 @@ public class Manager implements Steppable {
         generatedClient.setProbList(aProbList);
         generatedClient.setName("C" + String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode())));
         generatedClient.setBalance(BalanceClients.getBalance(paysim));
-        generatedClient.setCurrDay(currDay);
-        generatedClient.setCurrHour(currHour);
+        generatedClient.setCurrStep(currStep);
 
         Repetition cont = TransactionParameters.getRepetition();
         //Check whether the action is to be repeated
@@ -129,12 +124,6 @@ public class Manager implements Steppable {
     }
 
     public ArrayList<ActionProbability> getActionProbabilityFromStep(int step) {
-        int day = (step / 24) + 1;
-        int hour = step - ((day - 1) * 24);
-        currDay = day;
-        currHour = hour;
-
-        //FIX THIS CHANGE THIS TO GET DIRECTLY FROM THE CACHED CONTAINER
         ProbabilityRecordContainer cont = probabilityHandler.getList().get(step - 1);
         ArrayList<ActionProbability> probList = cont.getProbList();
 

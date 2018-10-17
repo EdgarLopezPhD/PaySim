@@ -1,9 +1,9 @@
 package paysim;
 
-public class CurrentStepContainer {
+public class StepCounter {
     private int currentStep, maxCount, countAssigned;
 
-    CurrentStepContainer(int currentStep) {
+    StepCounter(int currentStep) {
         this.currentStep = currentStep;
         this.maxCount = 0;
         this.countAssigned = 0;
@@ -13,14 +13,14 @@ public class CurrentStepContainer {
         return countAssigned < maxCount;
     }
 
-    @Override
-    public String toString() {
-        return "CurrentStepContainer [currentStep=" + currentStep
-                + ", maxCount=" + maxCount + ", countAssigned=" + countAssigned + "]";
-    }
-
     public void increment() {
         countAssigned++;
+    }
+
+    @Override
+    public String toString() {
+        return "StepCounter [currentStep=" + currentStep
+                + ", maxCount=" + maxCount + ", countAssigned=" + countAssigned + "]";
     }
 
     public int getCountAssigned() {

@@ -8,8 +8,6 @@ public class SuperClient {
     int numDeposits = 0;
     int numWithdraws = 0;
     int numTransfers = 0;
-    int currDay = 0;
-    int currHour = 0;
     public double balance = 0;
     int currStep = 0;
     Repetition cont = null;
@@ -47,6 +45,10 @@ public class SuperClient {
         cTwo.deposit(amount);
     }
 
+    public void setCurrStep(int currStep) {
+        this.currStep = currStep;
+    }
+
     public boolean isFraud() {
         return isFraud;
     }
@@ -57,30 +59,6 @@ public class SuperClient {
 
     public void setCont(Repetition cont) {
         this.cont = cont;
-    }
-
-    public void setCurrDay(int currDay) {
-        this.currDay = currDay;
-    }
-
-    public void setCurrHour(int currHour) {
-        this.currHour = currHour;
-    }
-
-    public int getCurrStep() {
-        return this.currStep;
-    }
-
-    public int getNumDeposits() {
-        return numDeposits;
-    }
-
-    public int getNumWithdraws() {
-        return numWithdraws;
-    }
-
-    public int getNumTransfers() {
-        return numTransfers;
     }
 
     public double getBalance() {

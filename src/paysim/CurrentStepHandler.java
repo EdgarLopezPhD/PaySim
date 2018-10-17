@@ -3,12 +3,10 @@ package paysim;
 import java.util.ArrayList;
 
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
 public class CurrentStepHandler {
-    String UNKNOWN_STEP = "";
-    int STEP_NB = 744;
-    private static int HOUR_IN_DAY = 24;
     private static int COLUMN_TYPE = 0,
             COLUMN_MONTH = 1,
             COLUMN_DAY = 2,
@@ -20,12 +18,12 @@ public class CurrentStepHandler {
             COLUMN_STEP = 8;
     private ArrayList<String> aggregateParameters = new ArrayList<>();
     private ArrayList<AggregateTransactionRecord> aggrRecordList = new ArrayList<>();
-    private ArrayList<CurrentStepContainer> stepHandler = new ArrayList<>();
+    private ArrayList<StepCounter> stepHandler = new ArrayList<>();
 
     public CurrentStepHandler(ArrayList<String> aggregateParameters, double mult) {
         setAggregateParameters(aggregateParameters);
         initAggregateRecordList();
-        initStepHandler(STEP_NB);
+        initStepHandler(Parameters.nbSteps);
         initStepCount();
         removeEmptySteps();
         modifyWithMultiplier(mult);
@@ -49,32 +47,29 @@ public class CurrentStepHandler {
                     split[COLUMN_SUM],
                     split[COLUMN_AVG],
                     split[COLUMN_STD],
-                    UNKNOWN_STEP);
+                    split[COLUMN_STEP]);
             aggrRecordList.add(record);
         }
     }
 
     private void initStepHandler(int stepNb) {
         for (int i = 0; i < stepNb; i++) {
-            CurrentStepContainer container = new CurrentStepContainer(i);
+            StepCounter container = new StepCounter(i);
             stepHandler.add(container);
         }
     }
 
     private void initStepCount() {
-        for (CurrentStepContainer stepContainer : stepHandler) {
+        for (StepCounter stepContainer : stepHandler) {
             int step = stepContainer.getCurrentStep();
-            int day = step / HOUR_IN_DAY + 1;
-            int hour = step % HOUR_IN_DAY;
 
-            if (isInAggrRecordList(day, hour)) {
+            if (isInAggrRecordList(step)) {
                 int count = 0;
                 for (String csvLine : aggregateParameters) {
                     String line[] = csvLine.split(",");
                     try {
                         if (TransactionParameters.isValidType(line[COLUMN_TYPE]) &&
-                                Integer.parseInt(line[COLUMN_DAY]) == day &&
-                                Integer.parseInt(line[COLUMN_HOUR]) == hour) {
+                                Integer.parseInt(line[COLUMN_STEP]) == step) {
                             count += Integer.parseInt(line[COLUMN_COUNT]);
                         }
                     } catch (Exception e) {
@@ -93,28 +88,25 @@ public class CurrentStepHandler {
     }
 
     private void modifyWithMultiplier(double mult) {
-        for (CurrentStepContainer stepContainer : stepHandler) {
+        for (StepCounter stepContainer : stepHandler) {
             int newMaxCount = stepContainer.getMaxCount();
             newMaxCount = Math.toIntExact(Math.round(newMaxCount * mult));
             stepContainer.setMaxCount(newMaxCount);
         }
     }
 
-    private boolean isInAggrRecordList(int day, int hour) {
+    private boolean isInAggrRecordList(int step) {
         for (AggregateTransactionRecord t : aggrRecordList) {
-            if (t.gettDay().equals(String.valueOf(day)) &&
-                    t.gettHour().equals(String.valueOf(hour))) {
+            if (t.gettStep().equals(Integer.toString(step))) {
                 return true;
             }
         }
         return false;
     }
 
-    public AggregateTransactionRecord getRecord(String type, int day, int hour) {
+    public AggregateTransactionRecord getRecord(String type, int step) {
         for (AggregateTransactionRecord t : aggrRecordList) {
-            if (t.getType().equals(type) &&
-                    t.gettDay().equals(String.valueOf(day)) &&
-                    t.gettHour().equals(String.valueOf(hour))) {
+            if (t.getType().equals(type) && t.gettStep().equals(Integer.toString(step))) {
                 return t;
             }
         }
@@ -123,10 +115,10 @@ public class CurrentStepHandler {
 
 
     public int getRemainingAssignements(int stepNumber) {
-        for (CurrentStepContainer stepContainer : stepHandler) {
+        for (StepCounter stepContainer : stepHandler) {
             if (stepContainer.getCurrentStep() == stepNumber) {
-                int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
-                return remains;
+                //int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
+                return stepContainer.getCountAssigned();
             }
         }
         return -1;
@@ -142,7 +134,7 @@ public class CurrentStepHandler {
             if (index == 0 && isFull(currentStep)) {
                     return null;
             }
-            CurrentStepContainer step = stepHandler.get(index);
+            StepCounter step = stepHandler.get(index);
             if (step.canBeAssigned() && step.getCurrentStep() >= currentStep) {
                 stepHandler.get(index).increment();
                 stepsToBeRepeated.add(step.getCurrentStep());
@@ -155,7 +147,7 @@ public class CurrentStepHandler {
     }
 
     private boolean isFull(int currentStep) {
-        for (CurrentStepContainer stepContainer : stepHandler) {
+        for (StepCounter stepContainer : stepHandler) {
             if (stepContainer.getCurrentStep() >= currentStep &&
                     stepContainer.canBeAssigned()) {
                 return false;

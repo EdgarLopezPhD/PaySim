@@ -1,21 +1,51 @@
 package paysim;
 
-import paysim.actors.Client;
-import paysim.actors.Merchant;
-
 import java.io.Serializable;
 
 public class Transaction implements Serializable {
     private static final long serialVersionUID = 1L;
-    int type;
-    double amount;
-    String description;
-    Client clientOrigBefore = new Client();
-    Client clientOrigAfter = new Client();
-    Client clientDestBefore = new Client();
-    Client clientDestAfter = new Client();
-    boolean isFraud = false;
-    boolean isFlaggedFraud = false;
+    private long step;
+    private String type;
+    private double amount;
+
+    private String nameOrig;
+    private double oldBalanceOrig;
+    private double newBalanceOrig;
+
+    private String nameDest;
+    private double oldBalanceDest ;
+    private double newBalanceDest;
+
+    private boolean isFraud = false;
+    private boolean isFlaggedFraud = false;
+
+    public Transaction(long step, String type, double amount, String nameOrig, double oldBalanceOrig,
+                       double newBalanceOrig, String nameDest, double oldBalanceDest, double newBalanceDest) {
+        this.step = step;
+        this.type = type;
+        this.amount = amount;
+        this.nameOrig = nameOrig;
+        this.oldBalanceOrig = oldBalanceOrig;
+        this.newBalanceOrig = newBalanceOrig;
+        this.nameDest = nameDest;
+        this.oldBalanceDest = oldBalanceDest;
+        this.newBalanceDest = newBalanceDest;
+    }
+
+    public String toString() {
+        String ps = "";
+
+        /**if (this.newBalanceDest == 0) {
+            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + "Amount:\t" + Double.toString(amount)
+                    + "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "\n";
+        } else {
+            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + this.clientOrigBefore.toString() + "(" + this.newBalanceOrig
+                    + ") Transfered: " + Double.toString(amount) + " to " + this.clientOrigAfter.toString() + " (" + this.newBalanceDest + ")\t" +
+                    "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "\n";
+        }**/
+
+        return ps;
+    }
 
     public boolean isFlaggedFraud() {
         return isFlaggedFraud;
@@ -29,41 +59,6 @@ public class Transaction implements Serializable {
         return isFraud;
     }
 
-    Merchant merchantBefore = new Merchant();
-
-    public Merchant getMerchantBefore() {
-        return merchantBefore;
-    }
-
-    public void setMerchantBefore(Merchant merchantBefore) {
-        this.merchantBefore = merchantBefore;
-    }
-
-    public Merchant getMerchantAfter() {
-        return merchantAfter;
-    }
-
-    public void setMerchantAfter(Merchant merchantAfter) {
-        this.merchantAfter = merchantAfter;
-    }
-
-    Merchant merchantAfter = new Merchant();
-    int fraudster = 0;
-    double newBalanceDest = 0;
-    double newBalanceOrig = 0;
-    long step;
-    String profileOrig, profileDest;
-    int day = 0;
-    int hour = 0;
-
-    public int getFraudster() {
-        return fraudster;
-    }
-
-    public void setFraudster(int fraudster) {
-        this.fraudster = fraudster;
-    }
-
     public long getStep() {
         return step;
     }
@@ -72,92 +67,11 @@ public class Transaction implements Serializable {
         this.step = step;
     }
 
-    public Transaction() {
-        this.type = 0;
-        this.amount = 0;
-        this.newBalanceDest = 0;
-        this.newBalanceOrig = 0;
-    }
-
-//	public Transaction(Long step, Client clientOrig, Client clientDest,
-//			int type, double amount, String description) {
-//		super();
-//		this.step = step;
-//		this.clientOrig = clientOrig;
-//		this.newBalanceOrig = clientOrig.balance;
-//		this.profileOrig = clientOrig.profile.toString();
-//		this.clientDest = clientDest;
-//		this.newBalanceDest = clientDest.balance;
-//		this.profileDest = clientDest.profile.toString();
-//		this.type = type;
-//		this.amount = amount;
-//		this.description = description;
-//	}
-//
-
-    //The constructor used in my agent
-    public Transaction(Long step, Client clientOrig, int type, double amount,
-                       String description) {
-        super();
-        this.step = step;
-        this.clientOrigBefore.setClient(clientOrig);
-        ;
-        this.newBalanceOrig = clientOrig.balance;
-        this.type = type;
-        this.amount = amount;
-        this.description = description;
-    }
-
-    //Used for transfer
-    public Transaction(Long step, Client clientOriginalBefore, Client clientOrigAfter, int type, double amount,
-                       String description) {
-        super();
-        this.step = step;
-        this.clientOrigBefore.setClient(clientOriginalBefore);
-        this.clientOrigAfter.setClient(clientOrigAfter);
-
-        this.newBalanceOrig = this.clientOrigBefore.getBalance();
-        this.newBalanceDest = clientOrigAfter.balance;
-
-        this.type = type;
-        this.amount = amount;
-        this.description = description;
-    }
-
-//	public Transaction(Long step, Client clientOrig, Client clientDest,
-//			int type, double amount, String description, int fraudster) {
-//		super();
-//		this.step = step;
-//		this.clientOrig = clientOrig;
-//		this.newBalanceOrig = clientOrig.balance;
-//		this.profileOrig = clientOrig.profile.toString();
-//		this.clientDest = clientDest;
-//		this.newBalanceDest = clientDest.balance;
-//		this.profileDest = clientDest.profile.toString();
-//		this.type = type;
-//		this.amount = amount;
-//		this.description = description;
-//		this.fraudster = fraudster;
-//	}
-//
-//	public Transaction(Long step, Client clientOrig, int type, double amount,
-//			String description, int fraudster) {
-//		super();
-//		this.step = step;
-//		this.clientOrig = clientOrig;
-//		this.newBalanceOrig = clientOrig.balance;
-//		this.profileOrig = clientOrig.profile.toString();
-//		this.type = type;
-//		this.amount = amount;
-//		this.description = description;
-//		this.fraudster = fraudster;
-//	}
-
-    public int getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(int type) {
+    public void setType(String type) {
         this.type = type;
     }
 
@@ -165,82 +79,31 @@ public class Transaction implements Serializable {
         return amount;
     }
 
-    public Client getClientOrigBefore() {
-        return clientOrigBefore;
-    }
-
-    public Client getClientOrigAfter() {
-        return clientOrigAfter;
-    }
-
-    public Client getClientDestBefore() {
-        return clientDestBefore;
-    }
-
-    public void setClientDestBefore(Client clientDestBefore) {
-        this.clientDestBefore = clientDestBefore;
-    }
-
-    public Client getClientDestAfter() {
-        return clientDestAfter;
-    }
-
-    public void setClientDestAfter(Client clientDestAfter) {
-        this.clientDestAfter = clientDestAfter;
-    }
-
-    public String toString() {
-        String ps = null;
-
-        if (this.newBalanceDest == 0) {
-            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + "Amount:\t" + Double.toString(amount)
-                    + "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "Action: " + this.description +
-                    "Day:\t" + this.day + "\tHour:\t" + this.hour + "\n";
-        } else {
-            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + this.clientOrigBefore.toString() + "(" + this.newBalanceOrig
-                    + ") Transfered: " + Double.toString(amount) + " to " + this.clientOrigAfter.toString() + " (" + this.newBalanceDest + ")\t" +
-                    "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "Action: " + this.description +
-                    "Day:\t" + this.day + "\tHour:\t" + this.hour + "\n";
-        }
-
-        return ps;
-    }
-
-    public int getDay() {
-        return day;
-    }
-
-    public void setDay(int day) {
-        this.day = day;
-    }
-
-    public int getHour() {
-        return hour;
-    }
-
-    public void setHour(int hour) {
-        this.hour = hour;
-    }
-
     public void setFraud(boolean isFraud) {
         this.isFraud = isFraud;
     }
 
-//	public String getRecord() {
-//		String ps = null;
-//		ps = Long.toString(step) + ",'" + clientOrig + "','" + clientOrig.age + "','"
-//				+ profileOrig + "','" + clientOrig.getLocation()
-//				+ "'," + Integer.toString(type) + "," + Double.toString(amount)
-//				+ "," + Double.toString(newBalanceOrig) + ",'";
-//		if (clientDest != null) {
-//			ps += clientDest + "','" + profileDest + "'," + "'"
-//					+ clientDest.getLocation() + "',"
-//					+ Double.toString(newBalanceDest) + ",";
-//		} else {
-//			ps += "null','null','null',0,";
-//		}
-//		ps += fraudster + "";
-//		return ps;
-//	}
+    public String getNameOrig() {
+        return nameOrig;
+    }
 
+    public double getOldBalanceOrig() {
+        return oldBalanceOrig;
+    }
+
+    public double getNewBalanceOrig() {
+        return newBalanceOrig;
+    }
+
+    public String getNameDest() {
+        return nameDest;
+    }
+
+    public double getOldBalanceDest() {
+        return oldBalanceDest;
+    }
+
+    public double getNewBalanceDest() {
+        return newBalanceDest;
+    }
 }

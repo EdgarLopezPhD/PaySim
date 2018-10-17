@@ -40,7 +40,7 @@ public class Fraudster implements Steppable {
                     }
 
                     profit += muleClient.getBalance();
-                    muleClient.handleCashOut(paysim, paysim.getRandomClient(),
+                    muleClient.handleCashOut(paysim, paysim.getRandomMerchant(),
                             muleClient.getBalance());
                     clientsAffected++;
                     paysim.clients.add(muleClient);

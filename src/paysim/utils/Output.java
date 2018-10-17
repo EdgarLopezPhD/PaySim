@@ -21,41 +21,25 @@ import static paysim.parameters.TransactionParameters.getCountCallRepetition;
 
 public class Output {
     private static int PRECISION_OUTPUT = 2;
+
     public static void writeLog(String logFilename, ArrayList<Transaction> trans) {
         try {
             FileWriter writer1 = new FileWriter(new File(logFilename), true);
             BufferedWriter bufWriter = new BufferedWriter(writer1);
             //Append the logs to the file
-            for (int i = 0; i < trans.size(); i++) {
-                Transaction temp = trans.get(i);
-                String typeFromNumber = TransactionParameters.getType(temp.getType());
-                if (typeFromNumber.equals("PAYMENT")) {
-                    bufWriter.write(
-                            temp.getStep() +
-                                    "," + TransactionParameters.getType(temp.getType()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getAmount()) +
-                                    "," + temp.getClientOrigBefore().getName() +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientOrigBefore().getBalance()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientOrigAfter().getBalance()) +
-                                    "," + temp.getMerchantBefore().getName() +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getMerchantBefore().getBalance()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getMerchantAfter().getBalance()) +
-                                    "," + (temp.isFraud() ? 1 : 0) +
-                                    "," + (temp.isFlaggedFraud() ? 1 : 0) + "\n");
-                } else {
-                    bufWriter.write(
-                            temp.getStep() +
-                                    "," + TransactionParameters.getType(temp.getType()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getAmount()) +
-                                    "," + temp.getClientOrigBefore().getName() +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientOrigBefore().getBalance()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientOrigAfter().getBalance()) +
-                                    "," + temp.getClientDestAfter().getName() +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientDestBefore().getBalance()) +
-                                    "," + formatDouble(PRECISION_OUTPUT, temp.getClientDestAfter().getBalance()) +
-                                    "," + (temp.isFraud() ? 1 : 0) +
-                                    "," + (temp.isFlaggedFraud() ? 1 : 0) + "\n");
-                }
+            for (Transaction t : trans) {
+                bufWriter.write(
+                        t.getStep() +
+                                "," + t.getType() +
+                                "," + formatDouble(PRECISION_OUTPUT, t.getAmount()) +
+                                "," + t.getNameOrig() +
+                                "," + formatDouble(PRECISION_OUTPUT, t.getOldBalanceOrig()) +
+                                "," + formatDouble(PRECISION_OUTPUT, t.getNewBalanceOrig()) +
+                                "," + t.getNameDest() +
+                                "," + formatDouble(PRECISION_OUTPUT, t.getOldBalanceDest()) +
+                                "," + formatDouble(PRECISION_OUTPUT, t.getNewBalanceDest()) +
+                                "," + (t.isFraud() ? 1 : 0) +
+                                "," + (t.isFlaggedFraud() ? 1 : 0) + "\n");
             }
             bufWriter.close();
         } catch (IOException e) {
@@ -101,7 +85,7 @@ public class Output {
                         formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettSum())) + "," +
                         formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettAvg())) + "," +
                         formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettStd())) + "," +
-                        simulation.generateStep(record) + "\n"
+                        record.gettStep() + "\n"
                 );
             }
             paramDump.close();
@@ -120,23 +104,23 @@ public class Output {
             BufferedWriter bufWrtier = new BufferedWriter(writer);
 
             String toWrite = ""; /**
-                    "nrOfMerchants=" + simulation.nrOfMerchants + "\n" +
-                            "seed=" + simulation.seed + "\n" +
-                            "multiplier=" + simulation.getMultiplier() + "\n" +
-                            "parameterFilePath=" + simulation.parameterFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "aggregateParameterFilePath=" + simulation.aggregateParameterPath.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "transferMaxPath=" + simulation.transferMaxPath.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "logPath=" + simulation.logPath.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "balanceHandler=" + simulation.balanceHandlerFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "transferFreqMod=" + simulation.transferFreqMod.replace(System.getProperty("user.dir"), "") + "\n" +
-                            "networkFolderPath=" + simulation.networkPath + "\n" +
-                            "dbUrl=" + simulation.dbUrl + "\n" +
-                            "dbUser=" + simulation.dbUser + "\n" +
-                            "dbPassword=" + simulation.dbPassword + "\n" +
-                            "fraudProbability=" + simulation.fraudProbability + "\n" +
-                            "transferLimit=" + simulation.transferLimit + "\n" +
-                            "numFraudsters=" + simulation.numFraudsters + "\n" +
-                            Parameters.getFlags();**/
+             "nrOfMerchants=" + simulation.nrOfMerchants + "\n" +
+             "seed=" + simulation.seed + "\n" +
+             "multiplier=" + simulation.getMultiplier() + "\n" +
+             "parameterFilePath=" + simulation.parameterFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
+             "aggregateParameterFilePath=" + simulation.aggregateParameterPath.replace(System.getProperty("user.dir"), "") + "\n" +
+             "transferMaxPath=" + simulation.transferMaxPath.replace(System.getProperty("user.dir"), "") + "\n" +
+             "logPath=" + simulation.logPath.replace(System.getProperty("user.dir"), "") + "\n" +
+             "balanceHandler=" + simulation.balanceHandlerFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
+             "transferFreqMod=" + simulation.transferFreqMod.replace(System.getProperty("user.dir"), "") + "\n" +
+             "networkFolderPath=" + simulation.networkPath + "\n" +
+             "dbUrl=" + simulation.dbUrl + "\n" +
+             "dbUser=" + simulation.dbUser + "\n" +
+             "dbPassword=" + simulation.dbPassword + "\n" +
+             "fraudProbability=" + simulation.fraudProbability + "\n" +
+             "transferLimit=" + simulation.transferLimit + "\n" +
+             "numFraudsters=" + simulation.numFraudsters + "\n" +
+             Parameters.getFlags();**/
             bufWrtier.write(toWrite);
             bufWrtier.close();
         } catch (Exception e) {
@@ -231,7 +215,7 @@ public class Output {
         double sumSynth = 0;
         for (String type : TransactionParameters.getActions()) {
             sumOrig += getCumulative(type, 5, fileContentsOrig);
-            sumSynth += getCumulative(String.valueOf(TransactionParameters.indexOf(type) + 1), 5, fileContentsSynth);
+            sumSynth += getCumulative(type, 5, fileContentsSynth);
             result += type + spaceBegin.substring(type.length())
                     + formatDouble(14, sumOrig) + spaceBegin.substring(String.valueOf(sumOrig).length())
                     + "\t\t" + formatDouble(14, sumSynth) + "\n";
@@ -242,7 +226,7 @@ public class Output {
 
         for (String type : TransactionParameters.getActions()) {
             countOrig += getCumulative(type, 4, fileContentsOrig);
-            countSynth += getCumulative(String.valueOf(TransactionParameters.indexOf(type) + 1), 4, fileContentsSynth);
+            countSynth += getCumulative(type, 4, fileContentsSynth);
 
             simulation.updateTotalTransactionsMade(countSynth);
             result += type + spaceBegin.substring(type.length())
@@ -368,7 +352,7 @@ public class Output {
         }
     }
 
-    public static String formatDouble(int precision, double d){
+    public static String formatDouble(int precision, double d) {
         // See https://stackoverflow.com/questions/2255500/can-i-multiply-strings-in-java-to-repeat-sequences
         // & https://stackoverflow.com/questions/8742645/decimalformat-depending-on-system-settings
         DecimalFormat format = new DecimalFormat("0." + new String(new char[precision]).replace("\0", "0"));

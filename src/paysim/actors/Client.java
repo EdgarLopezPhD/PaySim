@@ -6,7 +6,6 @@ import paysim.*;
 import paysim.aggregation.AggregateTransactionRecord;
 import paysim.base.ActionProbability;
 import paysim.parameters.Parameters;
-import paysim.parameters.TransactionParameters;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
@@ -36,37 +35,27 @@ public class Client extends SuperClient implements Steppable {
         PaySim paysim = (PaySim) state;
         int action = 0;
 
-        // Based on the calculated probability, an action is chosen
         do {
             action = chooseAction(paysim, probabilityArr);
         } while (action == -1);
 
         ActionProbability prob;
         switch (action) {
-            // CASH_IN
             case 1:
-                handleCashIn(paysim, paysim.getRandomClient());
+                handleCashIn(paysim, paysim.getRandomMerchant());
                 break;
-
-            // CASH_OUT
             case 2:
                 prob = getProb("CASH_OUT");
                 if (prob != null)
-                    handleCashOut(paysim, paysim.getRandomClient(),
+                    handleCashOut(paysim, paysim.getRandomMerchant(),
                             this.getAmount(prob, paysim));
                 break;
-
-            // DEBIT
             case 3:
                 handleDebit(paysim);
                 break;
-
-            // PAYMENT
             case 4:
                 handlePayment(paysim);
                 break;
-
-            // TRANSFER
             case 5:
                 prob = getProb("TRANSFER");
 
@@ -87,14 +76,16 @@ public class Client extends SuperClient implements Steppable {
                     }
                 }
                 break;
+            case 6:
+                handleDeposit(paysim);
+                break;
         }
     }
 
     public void handleRepetition(SimState state) {
         PaySim paysim = (PaySim) state;
         for (int currentStep : stepsToRepeat) {
-            currDay = currentStep / 24 + 1;
-            currHour = currentStep % 24;
+            currStep = currentStep;
 
             switch (this.cont.getType()) {
                 case "CASH_IN":
@@ -109,10 +100,6 @@ public class Client extends SuperClient implements Steppable {
                     this.currType = "DEBIT";
                     handleDebitRepetition(paysim);
                     break;
-                case "DEPOSIT":
-                    this.currType = "DEPOSIT";
-                    handleDepositRepetition(paysim);
-                    break;
                 case "PAYMENT":
                     this.currType = "PAYMENT";
                     handlePaymentRepetition(paysim);
@@ -121,355 +108,308 @@ public class Client extends SuperClient implements Steppable {
                     this.currType = "TRANSFER";
                     handleTransferRepetition(paysim);
                     break;
+                case "DEPOSIT":
+                    this.currType = "DEPOSIT";
+                    handleDepositRepetition(paysim);
+                    break;
             }
         }
 
     }
 
-    public void handleCashIn(PaySim paysim, SuperClient clientTo) {
-        // Get the probabilities that correspond to that current day
-        ActionProbability prob = getProb("CASH_IN");
+    public void handleCashIn(PaySim paysim, Merchant merchantTo) {
+        String type = "CASH_IN";
+        ActionProbability prob = getProb(type);
 
-        // With the probability for that day gained, get the next random number
-        // in that distribution
         if (prob != null) {
-            double amount = this.getAmount(prob, paysim);
-            Client clientToTransferAfter = (Client) clientTo;
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
+            String nameOrig = this.getName();
+            String nameDest = merchantTo.getName();
+            double oldBalanceOrig = this.getBalance();
+            double oldBalanceDest = merchantTo.getBalance();
 
-            Client before = new Client();
-            before.setClient(this);
-            clientToTransferAfter.withdraw(amount);
+            double amount = this.getAmount(prob, paysim);
             this.deposit(amount);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("CASH_IN"), amount, "CashIn");
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setClientDestBefore(clientToTransferBefore);
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            paysim.getTrans().add(t2);
-        } else {
-            System.out.println("CASH_IN FAILED");
-            printActionProbability();
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = merchantTo.getBalance();
+
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+            paysim.getTrans().add(t);
         }
     }
 
-    public void handleCashOut(PaySim paysim, Client clientTo, double amount) {
-        Client clientToTransferAfter = clientTo;
-        Client clientToTransferBefore = new Client();
-        clientToTransferBefore.setClient(clientToTransferAfter);
+    public void handleCashOut(PaySim paysim, Merchant merchantTo, double amount) {
+        String type = "CASH_OUT";
 
-        Client before = new Client();
-        before.setClient(this);
+        String nameOrig = this.getName();
+        String nameDest = merchantTo.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
+
         this.withdraw(amount);
-        clientToTransferAfter.deposit(amount);
 
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("CASH_OUT"), amount, "CashOut");
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        t2.setClientDestAfter(clientToTransferAfter);
-        t2.setClientDestBefore(clientToTransferBefore);
-        t2.setFraud(this.isFraud());
-        paysim.getTrans().add(t2);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
+
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+        t.setFraud(this.isFraud());
+        paysim.getTrans().add(t);
     }
 
-    public void handleDeposit(PaySim paysim) {
-        // Get the probabilities that correspond to that current day
-        // System.out.println("Dumping..\n\n");
-
-        // for(ActionProbability temp: paysim.getaProbList()){
-        // System.out.println(temp.toString() + "\n");
-        // }
-        ActionProbability prob = getProb("DEPOSIT");
+    public void handleDebit(PaySim paysim) {
+        String type = "DEBIT";
+        ActionProbability prob = getProb(type);
 
         if (prob != null) {
-            // With the probability for that day gained, get the next random
-            // number in that distribution
+            String nameOrig = this.getName();
+            String nameDest = this.getName();
+            double oldBalanceOrig = this.getBalance();
+            double oldBalanceDest = this.getBalance();
+
             double amount = this.getAmount(prob, paysim);
+            this.withdraw(amount);
 
-            // Store the client before the deposit to keep track of the previous
-            // balance
-            Client clientToTransferAfter = getRandomClient(amount, paysim);
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = this.getBalance();
 
-            Client before = new Client();
-            before.setClient(this);
-            clientToTransferAfter.withdraw(amount);
-            this.deposit(amount);
-            this.numDeposits++;
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("DEPOSIT"), amount, "Deposit");
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setClientDestBefore(clientToTransferBefore);
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            paysim.getTrans().add(t2);
-            // System.out.println("Lenght of prob arr CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // printActionProbability();
-        } else {
-            // System.out.println("Lenght of prob arr NOT-CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // System.out.println("DEPOSIT FAILED");
-            // System.out.println("Curr Prob Type:\tDEPOSIT" + "\n"
-            // + "Day: " + this.currDay + "\tHour:" + this.currHour + "\n"
-            // );
-            printActionProbability();
+            paysim.getTrans().add(t);
         }
-
     }
 
     public void handlePayment(PaySim paysim) {
-
-        Merchant mAfter = paysim.getRandomMerchant();
-        Merchant merchantToTransferBefore = new Merchant();
-        merchantToTransferBefore.setMerchant(mAfter);
-        ActionProbability prob = getProb("PAYMENT");
-
+        String type = "PAYMENT";
+        ActionProbability prob = getProb(type);
         if (prob != null) {
+            Merchant merchantPayment = paysim.getRandomMerchant();
+
+            String nameOrig = this.getName();
+            String nameDest = merchantPayment.getName();
+            double oldBalanceOrig = this.getBalance();
+            double oldBalanceDest = merchantPayment.getBalance();
+
             double amount = this.getAmount(prob, paysim);
-
-            Client before = new Client();
-            before.setClient(this);
             this.withdraw(amount);
-            mAfter.deposit(amount);
+            merchantPayment.deposit(amount);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("PAYMENT"), amount, "Payment");
-            t2.setMerchantAfter(mAfter);
-            t2.setMerchantBefore(merchantToTransferBefore);
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            paysim.getTrans().add(t2);
-            // System.out.println("Lenght of prob arr CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // printActionProbability();
-        } else {
-            // System.out.println("Lenght of prob arr NOT-CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // System.out.println("PAYMENT FAILED");
-            // System.out.println("Curr Prob Type:\tPAYMENT" + "\n"
-            // + "Day: " + this.currDay + "\tHour:" + this.currHour + "\n"
-            // );
-            printActionProbability();
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = merchantPayment.getBalance();
+
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+            paysim.getTrans().add(t);
         }
-
     }
 
     public void handleTransfer(PaySim paysim, Client clientTo, double amount) {
-        // Get the probabilities that correspond to that current day
+        String type = "TRANSFER";
+        String nameOrig = this.getName();
+        String nameDest = clientTo.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = clientTo.getBalance();
+
         if (!this.checkBalanceDropping(Parameters.transferLimit, amount)) {
-            Client clientToTransferAfter = clientTo;
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
 
-            Client before = new Client();
-            before.setClient(this);
             this.withdraw(amount);
-            clientToTransferAfter.deposit(amount);
+            clientTo.deposit(amount);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("TRANSFER"), amount, "Transfer");
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setClientDestBefore(clientToTransferBefore);
-            t2.setFraud(this.isFraud());
-            paysim.getTrans().add(t2);
-        } else { // create the transaction but dont move any money
-            Client clientToTransferAfter = clientTo;
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = clientTo.getBalance();
 
-            Client before = new Client();
-            before.setClient(this);
-            // this.withdraw(amount);
-            // clientToTransferAfter.deposit(amount);
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("TRANSFER"), amount, "Transfer");
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setClientDestBefore(clientToTransferBefore);
-            t2.setFlaggedFraud(true);
-            t2.setFraud(this.isFraud());
-            paysim.getTrans().add(t2);
+            t.setFraud(this.isFraud());
+            paysim.getTrans().add(t);
+        } else { // create the transaction but don't move any money
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = clientTo.getBalance();
+
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+            t.setFlaggedFraud(true);
+            t.setFraud(this.isFraud());
+            paysim.getTrans().add(t);
+        }
+    }
+
+    public void handleDeposit(PaySim paysim) {
+        String type = "DEPOSIT";
+        ActionProbability prob = getProb(type);
+
+        if (prob != null) {
+            double amount = this.getAmount(prob, paysim);
+            Client clientToTransfer = getRandomClient(amount, paysim);
+
+            String nameOrig = this.getName();
+            String nameDest = clientToTransfer.getName();
+            double oldBalanceOrig = this.getBalance();
+            double oldBalanceDest = clientToTransfer.getBalance();
+
+
+            clientToTransfer.withdraw(amount);
+            this.deposit(amount);
+            this.numDeposits++;
+
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = clientToTransfer.getBalance();
+
+            Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+            paysim.getTrans().add(t);
         }
     }
 
     public void handleCashInRepetition(PaySim paysim) {
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
+        String type = "CASH_IN";
+        double amount = getAmountRepetition(currType, currStep, paysim);
         if (amount == -1) {
             return;
         }
+        Merchant merchantHandlingTransac = paysim.getRandomMerchant();
 
-        Client clientToTransferAfter = getRandomClient(amount, paysim);
-        Client clientToTransferBefore = new Client();
-        clientToTransferBefore.setClient(clientToTransferAfter);
+        String nameOrig = this.getName();
+        String nameDest = merchantHandlingTransac.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantHandlingTransac.getBalance();
 
-        Client before = new Client();
-        before.setClient(this);
-        clientToTransferAfter.withdraw(amount);
         this.deposit(amount);
 
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("CASH_IN"), amount, "CashIn");
-        t2.setClientDestAfter(clientToTransferAfter);
-        t2.setClientDestBefore(clientToTransferBefore);
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        paysim.getTrans().add(t2);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantHandlingTransac.getBalance();
+
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        paysim.getTrans().add(t);
     }
 
     public void handleCashOutRepetition(PaySim paysim) {
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
+        String type = "CASH_OUT";
+        double amount = getAmountRepetition(currType, currStep, paysim);
         if (amount == -1) {
             return;
         }
+        Merchant merchantHandlingTransac = paysim.getRandomMerchant();
 
-        Client clientToTransferAfter = getRandomClient(amount, paysim);
-        Client clientToTransferBefore = new Client();
-        clientToTransferBefore.setClient(clientToTransferAfter);
+        String nameOrig = this.getName();
+        String nameDest = merchantHandlingTransac.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantHandlingTransac.getBalance();
 
-        Client before = new Client();
-        before.setClient(this);
         this.withdraw(amount);
-        clientToTransferAfter.deposit(amount);
 
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("CASH_OUT"), amount, "CashOut");
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        t2.setClientDestAfter(clientToTransferAfter);
-        t2.setClientDestBefore(clientToTransferBefore);
-        paysim.getTrans().add(t2);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantHandlingTransac.getBalance();
+
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        t.setFraud(this.isFraud());
+        paysim.getTrans().add(t);
     }
 
     public void handleDebitRepetition(PaySim paysim) {
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
+        String type = "DEBIT";
+        double amount = getAmountRepetition(currType, currStep, paysim);
         if (amount == -1) {
             return;
         }
+        String nameOrig = this.getName();
+        String nameDest = this.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = this.getBalance();
 
-        Client clientToTransferAfter = getRandomClient(amount, paysim);
-        Client clientToTransferBefore = new Client();
-        clientToTransferBefore.setClient(clientToTransferAfter);
-
-        Client before = new Client();
-        before.setClient(this);
         this.withdraw(amount);
-        clientToTransferAfter.deposit(amount);
 
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("DEBIT"), amount, "Debit");
-        t2.setClientDestBefore(clientToTransferBefore);
-        t2.setClientDestAfter(clientToTransferAfter);
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        paysim.getTrans().add(t2);
-    }
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = this.getBalance();
 
-    public void handleDepositRepetition(PaySim paysim) {
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
-        if (amount == -1) {
-            return;
-        }
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
-        // Store the client before the deposit to keep track of the previous
-        // balance
-        Client clientToTransferAfter = getRandomClient(amount, paysim);
-        Client clientToTransferBefore = new Client();
-        clientToTransferBefore.setClient(clientToTransferAfter);
-
-        Client before = new Client();
-        before.setClient(this);
-        clientToTransferAfter.withdraw(amount);
-        this.deposit(amount);
-        this.numDeposits++;
-
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("DEPOSIT"), amount, "Deposit");
-        t2.setClientDestAfter(clientToTransferAfter);
-        t2.setClientDestBefore(clientToTransferBefore);
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        paysim.getTrans().add(t2);
+        paysim.getTrans().add(t);
     }
 
     public void handlePaymentRepetition(PaySim paysim) {
-
-        Merchant mAfter = paysim.getRandomMerchant();
-        Merchant merchantToTransferBefore = new Merchant();
-        merchantToTransferBefore.setMerchant(mAfter);
-
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
+        String type = "PAYMENT";
+        double amount = this.getAmountRepetition(currType, currStep, paysim);
         if (amount == -1) {
             return;
         }
+        Merchant merchantPayment = paysim.getRandomMerchant();
 
-        Client before = new Client();
-        before.setClient(this);
+        String nameOrig = this.getName();
+        String nameDest = merchantPayment.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantPayment.getBalance();
+
         this.withdraw(amount);
-        mAfter.deposit(amount);
+        merchantPayment.deposit(amount);
 
-        Transaction t2 = new Transaction(paysim.schedule.getSteps(), before,
-                this, TransactionParameters.indexOf("PAYMENT"), amount, "Payment");
-        t2.setMerchantAfter(mAfter);
-        t2.setMerchantBefore(merchantToTransferBefore);
-        t2.setDay(this.currDay);
-        t2.setHour(this.currHour);
-        paysim.getTrans().add(t2);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantPayment.getBalance();
+
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        paysim.getTrans().add(t);
     }
 
     public void handleTransferRepetition(PaySim paysim) {
-        double amount = this.getAmountRepetition(this.currType, this.currDay,
-                this.currHour, paysim);
+        String type = "TRANSFER";
+        double amount = this.getAmountRepetition(currType, currStep, paysim);
         if (amount == -1) {
             return;
         }
-        try {
-            Client clientToTransferAfter = getRandomClient(amount, paysim);
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
+        double reducedAmount = amount;
+        int loops = (int) Math.ceil(amount / Parameters.transferLimit);
 
-            Client before = new Client();
-            before.setClient(this);
-            this.withdraw(amount);
-            clientToTransferAfter.deposit(amount);
+        Client clientDest = this.getRandomClient(amount, paysim);
 
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("TRANSFER"), amount, "Transfer");
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setClientDestBefore(clientToTransferBefore);
-            paysim.getTrans().add(t2);
-        } catch (Exception e) {
-            e.printStackTrace();
-            // System.out.println("returned\n");
-            return;
+        for (int i = 0; i < loops; i++) {
+            if (reducedAmount > Parameters.transferLimit) {
+                handleTransfer(paysim, clientDest,
+                        Parameters.transferLimit);
+                reducedAmount -= Parameters.transferLimit;
+            } else {
+                handleTransfer(paysim, clientDest,
+                        reducedAmount);
+            }
         }
-
     }
 
-    public void setClient(Client c) {
-        balance = c.getBalance();
-        currStep = c.getCurrStep();
-        name = c.getName();
-        numDeposits = c.getNumDeposits();
-        numTransfers = c.getNumTransfers();
-        numWithdraws = c.getNumWithdraws();
+    public void handleDepositRepetition(PaySim paysim) {
+        String type = "DEPOSIT";
+        double amount = getAmountRepetition(currType, currStep, paysim);
+        if (amount == -1) {
+            return;
+        }
+        Client clientToTransfer = getRandomClient(amount, paysim);
+
+        String nameOrig = this.getName();
+        String nameDest = clientToTransfer.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = clientToTransfer.getBalance();
+
+        clientToTransfer.withdraw(amount);
+        this.deposit(amount);
+        this.numDeposits++;
+
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = clientToTransfer.getBalance();
+
+        Transaction t = new Transaction(paysim.schedule.getSteps(), type, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        paysim.getTrans().add(t);
     }
 
     public void setProbabilityArr(double[] probabilityArr) {
@@ -508,45 +448,6 @@ public class Client extends SuperClient implements Steppable {
         return flag;
     }
 
-    public void handleDebit(PaySim paysim) {
-        // Get the probabilities that correspond to that current day
-        ActionProbability prob = getProb("DEBIT");
-
-        // With the probability for that day gained, get the next random number
-        // in that distribution
-        if (prob != null) {
-            double amount = this.getAmount(prob, paysim);
-            Client clientToTransferAfter = getRandomClient(amount, paysim);
-            Client clientToTransferBefore = new Client();
-            clientToTransferBefore.setClient(clientToTransferAfter);
-
-            Client before = new Client();
-            before.setClient(this);
-            this.withdraw(amount);
-            clientToTransferAfter.deposit(amount);
-
-            Transaction t2 = new Transaction(paysim.schedule.getSteps(),
-                    before, this, TransactionParameters.indexOf("DEBIT"), amount, "Debit");
-            t2.setClientDestBefore(clientToTransferBefore);
-            t2.setClientDestAfter(clientToTransferAfter);
-            t2.setDay(this.currDay);
-            t2.setHour(this.currHour);
-            paysim.getTrans().add(t2);
-            // System.out.println("Lenght of prob arr CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // printActionProbability();
-        } else {
-            // System.out.println("Lenght of prob arr NOT-CORRECT:\t" +
-            // this.probabilityArr.length + "\n");
-            // System.out.println("DEBIT FAILED");
-            // System.out.println("Curr Prob Type:\tDEBIT" + "\n"
-            // + "Day: " + this.currDay + "\tHour:" + this.currHour + "\n"
-            // );
-            printActionProbability();
-        }
-
-    }
-
     // Handler functions for repetition
 
     public Client getRandomClient(double amount, PaySim paysim) {
@@ -579,9 +480,8 @@ public class Client extends SuperClient implements Steppable {
         return amount;
     }
 
-    private double getAmountRepetition(String type, int day, int hour,
-                                       PaySim paysim) {
-        AggregateTransactionRecord transRecord = this.stepHandler.getRecord(type, day, hour);
+    private double getAmountRepetition(String type, int step, PaySim paysim) {
+        AggregateTransactionRecord transRecord = this.stepHandler.getRecord(type, step);
         if (transRecord == null) {
             return -1;
         }
@@ -610,15 +510,6 @@ public class Client extends SuperClient implements Steppable {
             }
         }
         return null;
-    }
-
-    private void printActionProbability() {
-        System.out.println("Printing prob\n");
-        for (ActionProbability p : this.probList) {
-            System.out.println(p.getType() + "\n" + p.getNrOfTransactions()
-                    + "\n");
-        }
-        System.out.println("\n\n");
     }
 
     public void setStepHandler(CurrentStepHandler stepHandler) {
