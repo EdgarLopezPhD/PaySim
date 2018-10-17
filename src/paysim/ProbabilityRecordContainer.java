@@ -1,5 +1,7 @@
 package paysim;
 
+import paysim.base.ActionProbability;
+
 import java.util.ArrayList;
 
 public class ProbabilityRecordContainer {

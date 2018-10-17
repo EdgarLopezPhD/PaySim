@@ -1,4 +1,4 @@
-package paysim;
+package paysim.base;
 
 public class ActionProbability {
     private String type;

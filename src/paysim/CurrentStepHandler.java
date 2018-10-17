@@ -83,20 +83,20 @@ public class CurrentStepHandler {
                         continue;
                     }
                 }
-                stepContainer.setCounter(count);
+                stepContainer.setMaxCount(count);
             }
         }
     }
 
     private void removeEmptySteps() {
-        stepHandler.removeIf(step -> step.getCounter() == 0);
+        stepHandler.removeIf(step -> step.getMaxCount() == 0);
     }
 
     private void modifyWithMultiplier(double mult) {
         for (CurrentStepContainer stepContainer : stepHandler) {
-            int newCounter = stepContainer.getCounter();
-            newCounter = Math.toIntExact(Math.round(newCounter * mult));
-            stepContainer.setCounter(newCounter);
+            int newMaxCount = stepContainer.getMaxCount();
+            newMaxCount = Math.toIntExact(Math.round(newMaxCount * mult));
+            stepContainer.setMaxCount(newMaxCount);
         }
     }
 
@@ -122,10 +122,11 @@ public class CurrentStepHandler {
     }
 
 
-    public int getNrOfTimesToReduce(int stepNumber) {
+    public int getRemainingAssignements(int stepNumber) {
         for (CurrentStepContainer stepContainer : stepHandler) {
             if (stepContainer.getCurrentStep() == stepNumber) {
-                return stepContainer.getNrReduced();
+                int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
+                return remains;
             }
         }
         return -1;
@@ -138,16 +139,13 @@ public class CurrentStepHandler {
         int index = 0;
         while (stepsGathered < nrOfSteps) {
             index = index % stepHandler.size();
-            if (index == 0) {
-                if (isFull(currentStep)) {
+            if (index == 0 && isFull(currentStep)) {
                     return null;
-                }
             }
-            CurrentStepContainer gottenOne = stepHandler.get(index);
-            if (gottenOne.canBeReduced()
-                    && gottenOne.getCurrentStep() >= currentStep) {
+            CurrentStepContainer step = stepHandler.get(index);
+            if (step.canBeAssigned() && step.getCurrentStep() >= currentStep) {
                 stepHandler.get(index).increment();
-                stepsToBeRepeated.add(gottenOne.getCurrentStep());
+                stepsToBeRepeated.add(step.getCurrentStep());
                 stepsGathered++;
             }
             index++;
@@ -159,7 +157,7 @@ public class CurrentStepHandler {
     private boolean isFull(int currentStep) {
         for (CurrentStepContainer stepContainer : stepHandler) {
             if (stepContainer.getCurrentStep() >= currentStep &&
-                    stepContainer.canBeReduced()) {
+                    stepContainer.canBeAssigned()) {
                 return false;
             }
         }

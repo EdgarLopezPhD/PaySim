@@ -10,6 +10,7 @@ import paysim.actors.Merchant;
 
 import paysim.aggregation.AggregateParamFileCreator;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.base.ActionProbability;
 import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
@@ -30,7 +31,6 @@ public class PaySim extends SimState {
     ArrayList<Fraudster> fraudsters = new ArrayList<>();
     public ArrayList<Client> clients = new ArrayList<>();
 
-    ArrayList<String> actionTypes = new ArrayList<>();
     String logFileName = "";
 
     CurrentStepHandler stepHandler;
@@ -68,7 +68,6 @@ public class PaySim extends SimState {
         logFileName = System.getProperty("user.dir") + "//outputs//" + simulatorName
                 + "//" + simulatorName + "_log.csv";
         createLogFile(logFileName);
-        setActionTypes(TransactionParameters.getActions());
     }
 
     public void runSimulation() {
@@ -274,10 +273,6 @@ public class PaySim extends SimState {
 
     public ArrayList<Client> getClients() {
         return clients;
-    }
-
-    public void setActionTypes(ArrayList<String> actionTypes) {
-        this.actionTypes = actionTypes;
     }
 
     public ArrayList<Merchant> getMerchants() {

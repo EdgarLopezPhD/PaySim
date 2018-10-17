@@ -1,5 +1,6 @@
 package paysim;
 
+import paysim.base.ActionProbability;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
@@ -17,16 +18,15 @@ public class ProbabilityContainerHandler {
     }
 
     public void initRecordList(ArrayList<String> fileContents) {
-        ArrayList<ActionProbability> aProbListTemp = new ArrayList<>();
 
         for (int i = 1; i <= Parameters.nbSteps; i++) {
+            ArrayList<ActionProbability> aProbListTemp = new ArrayList<>();
             for (String actionType : TransactionParameters.getActions()) {
                 ActionProbability probTemp = getActionProbabilityFromStep(actionType, i, fileContents);
                 aProbListTemp.add(probTemp);
             }
             ProbabilityRecordContainer record = new ProbabilityRecordContainer(i, aProbListTemp);
             list.add(record);
-            aProbListTemp = new ArrayList<>();
         }
 
     }

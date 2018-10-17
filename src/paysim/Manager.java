@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import paysim.actors.Client;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.base.ActionProbability;
 import paysim.base.Repetition;
 import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
@@ -16,15 +17,14 @@ import static java.lang.Math.abs;
 
 public class Manager implements Steppable {
     //For debugging purposes
-    public static int trueNrOfClients = 0;
-    public static int trueNrOfRepetitions = 0;
-    public static int nrOfDaysParticipated = 0;
+    static int trueNrOfClients = 0;
+    static int nrOfDaysParticipated = 0;
 
-    ProbabilityContainerHandler probabilityHandler = new ProbabilityContainerHandler();
+    private ProbabilityContainerHandler probabilityHandler = new ProbabilityContainerHandler();
+    private CurrentStepHandler stepHandler;
 
     int currDay = 0;
     int currHour = 0;
-    private CurrentStepHandler stepHandler;
 
     public void step(SimState state) {
         /*
@@ -53,11 +53,10 @@ public class Manager implements Steppable {
 
         //If there are no clients to repeat, "-1" is returned, hence, if its -1, nrOfClients should remain 0 because there are originally
         //no transactions to be executed at that step.
-        int nrOfTimesToReduce = stepHandler.getNrOfTimesToReduce(currStep);
-        if (nrOfTimesToReduce != -1) {
-            nrOfClients -= nrOfTimesToReduce;
+        int remainingAssignements = stepHandler.getRemainingAssignements(currStep);
+        if (remainingAssignements != -1) {
+            nrOfClients -= remainingAssignements;
         }
-        Manager.trueNrOfRepetitions += nrOfTimesToReduce;
 
         for (int i = 0; i < nrOfClients; i++) {
             Client c = this.generateClient(probArr, aProbList, paysim, currStep);
@@ -99,7 +98,6 @@ public class Manager implements Steppable {
         generatedClient.setCurrDay(currDay);
         generatedClient.setCurrHour(currHour);
 
-
         Repetition cont = TransactionParameters.getRepetition();
         //Check whether the action is to be repeated
         if (cont.getLow() == 1 && cont.getHigh() == 1) {
@@ -111,18 +109,13 @@ public class Manager implements Steppable {
             if ((cont.getLow() - cont.getHigh()) == 0) {
                 nrOfTimesToRepeat = (int) cont.getLow();
             } else {
-                int randNr = paysim.random.nextInt() % ((int) (cont.getHigh() - cont.getLow()));
-                if (randNr < 0) {
-                    randNr *= -1;
-                }
+                int randNr = abs(paysim.random.nextInt() % ((int) (cont.getHigh() - cont.getLow())));
                 nrOfTimesToRepeat = (int) (cont.getLow() + randNr);
                 //Check if the randomized nr of times to be repeated exceeds the max
                 int maxTimesType = TransactionParameters.getMaxOccurenceGivenType(cont.getType());
                 if (nrOfTimesToRepeat > maxTimesType) {
                     nrOfTimesToRepeat = maxTimesType;
                 }
-                //System.out.println("High:\t" + cont.getHigh() + "\tLow:\t" + cont.getLow() + "\tRandomizedInBetween:\t" + nrOfTimesToRepeat + "\n");
-
             }
             nrOfTimesToRepeat *= Parameters.multiplier;
             ArrayList<Integer> stepsToRepeat = this.stepHandler.getSteps(currStep, nrOfTimesToRepeat);
@@ -133,7 +126,6 @@ public class Manager implements Steppable {
             generatedClient.setCont(cont);
             return generatedClient;
         }
-
     }
 
     public ArrayList<ActionProbability> getActionProbabilityFromStep(int step) {

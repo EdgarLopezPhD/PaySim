@@ -1,41 +1,41 @@
 package paysim;
 
 public class CurrentStepContainer {
-    private int currentStep, counter, nrReduced;
+    private int currentStep, maxCount, countAssigned;
 
     CurrentStepContainer(int currentStep) {
         this.currentStep = currentStep;
-        this.counter = 0;
-        this.nrReduced = 0;
+        this.maxCount = 0;
+        this.countAssigned = 0;
     }
 
-    public boolean canBeReduced() {
-        return nrReduced < counter;
+    public boolean canBeAssigned() {
+        return countAssigned < maxCount;
     }
 
     @Override
     public String toString() {
         return "CurrentStepContainer [currentStep=" + currentStep
-                + ", counter=" + counter + ", nrReduced=" + nrReduced + "]";
+                + ", maxCount=" + maxCount + ", countAssigned=" + countAssigned + "]";
     }
 
     public void increment() {
-        this.nrReduced++;
+        countAssigned++;
     }
 
-    public int getNrReduced() {
-        return nrReduced;
+    public int getCountAssigned() {
+        return countAssigned;
     }
 
     public int getCurrentStep() {
         return currentStep;
     }
 
-    public int getCounter() {
-        return counter;
+    public int getMaxCount() {
+        return maxCount;
     }
 
-    public void setCounter(int counter) {
-        this.counter = counter;
+    public void setMaxCount(int maxCount) {
+        this.maxCount = maxCount;
     }
 }

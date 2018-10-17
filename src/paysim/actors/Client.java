@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import paysim.*;
 import paysim.aggregation.AggregateTransactionRecord;
+import paysim.base.ActionProbability;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 import sim.engine.SimState;
@@ -91,51 +92,35 @@ public class Client extends SuperClient implements Steppable {
 
     public void handleRepetition(SimState state) {
         PaySim paysim = (PaySim) state;
-
-        // Based on the nr of times to repeat, make the repetition
-        for (int i = 0; i < this.stepsToRepeat.size(); i++) {
-            // System.out.println("Type:\t" + cont.getType() + "\n");
-            int currentStep = this.stepsToRepeat.get(i);
-            this.currDay = (int) (currentStep / 24) + 1;
-            this.currHour = (int) (currentStep - ((this.currDay - 1) * 24));
+        for (int currentStep : stepsToRepeat) {
+            currDay = currentStep / 24 + 1;
+            currHour = currentStep % 24;
 
             switch (this.cont.getType()) {
-                // CASH_IN
                 case "CASH_IN":
                     this.currType = "CASH_IN";
                     handleCashInRepetition(paysim);
                     break;
-
-                // CASH_OUT
                 case "CASH_OUT":
                     this.currType = "CASH_OUT";
                     handleCashOutRepetition(paysim);
                     break;
-
-                // DEBIT
                 case "DEBIT":
                     this.currType = "DEBIT";
                     handleDebitRepetition(paysim);
                     break;
-
-                // DEPOSIT
                 case "DEPOSIT":
                     this.currType = "DEPOSIT";
                     handleDepositRepetition(paysim);
                     break;
-
-                // PAYMENT
                 case "PAYMENT":
                     this.currType = "PAYMENT";
                     handlePaymentRepetition(paysim);
                     break;
-
-                // TRANSFER
                 case "TRANSFER":
                     this.currType = "TRANSFER";
                     handleTransferRepetition(paysim);
                     break;
-
             }
         }
 
@@ -341,7 +326,6 @@ public class Client extends SuperClient implements Steppable {
         t2.setDay(this.currDay);
         t2.setHour(this.currHour);
         paysim.getTrans().add(t2);
-
     }
 
     public void handleCashOutRepetition(PaySim paysim) {
