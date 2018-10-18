@@ -26,14 +26,13 @@ public class PaySim extends SimState {
 
     public static long seed = 0;
     private String propertiesFile = "";
-    String logFileName = "";
 
     public long startTime = 0;
     private double totalTransactionsMade = 0;
 
     public static String simulatorName = "";
 
-    ArrayList<Transaction> transactions = new ArrayList<>();
+    private ArrayList<Transaction> transactions = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
     private ArrayList<Fraudster> fraudsters = new ArrayList<>();
     public ArrayList<Client> clients = new ArrayList<>();
@@ -59,12 +58,15 @@ public class PaySim extends SimState {
         }
     }
 
-    private void initParameters(){
+    private void initParameters() {
+        setSeed(seed);
         Parameters.loadPropertiesFile(propertiesFile);
-        initSimulatorName();
-        logFileName = System.getProperty("user.dir") + "//outputs//" + simulatorName
-                + "//" + simulatorName + "_log.csv";
-        createLogFile(logFileName);
+        Output.createLogFile(Parameters.filenameLog);
+        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
+        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
+        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
+        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
+        TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
     }
 
     private void runSimulation() {
@@ -74,7 +76,11 @@ public class PaySim extends SimState {
 
         startTime = System.currentTimeMillis();
         super.start();
-        initSimulation();
+        initActors();
+
+        //Start the manager
+        Manager manager = new Manager();
+        schedule.scheduleRepeating(manager);
 
         begin = System.currentTimeMillis();
         System.out.println("Starting PaySim Running for " + Parameters.nbSteps + " steps.");
@@ -97,33 +103,8 @@ public class PaySim extends SimState {
         System.out.println("Simulation name: " + simulatorName);
     }
 
-    private void createLogFile(String logFileName) {
-        try {
-            FileWriter writer = new FileWriter(new File(logFileName));
-            BufferedWriter bufWriter = new BufferedWriter(writer);
-            bufWriter.write("step,action,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isFraud,isFlaggedFraud\n");
-            bufWriter.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void initSimulatorName() {
-        Date d = new Date();
-        simulatorName = "PS_" + (d.getYear() + 1900) + (d.getMonth() + 1) + d.getDate() + d.getHours() + d.getMinutes()
-                + d.getSeconds() + "_" + seed;
-        File f = new File(System.getProperty("user.dir") + "//outputs//" + simulatorName);
-        f.mkdirs();
-    }
-
-    private void initSimulation() {
+    private void initActors() {
         System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed + "\n");
-        setSeed(seed);
-        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
-        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
-        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
-        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
-        TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
 
         //Add the merchants
         System.out.println("NbMerchants:\t" + Parameters.nbMerchants * Parameters.multiplier + "\n");
@@ -139,36 +120,21 @@ public class PaySim extends SimState {
             fraudsters.add(f);
             schedule.scheduleRepeating(f);
         }
-
-        //Start the manager
-        Manager manager = new Manager();
-        schedule.scheduleRepeating(manager);
     }
 
     public void finish() {
-        String outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + simulatorName + "//" + simulatorName;
-        String filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
+        Output.writeLog(Parameters.filenameLog, transactions);
+        Output.writeFraudsters(Parameters.filenameFraudsters, fraudsters);
 
-        String logFilename =  outputBaseString + "_log.csv";
-        String filenameFraudsters = outputBaseString + "_Fraudsters.csv";
-        String filenameHistory = outputBaseString + "_ParamHistory" + ".txt";
-        String filenameErrorTable = outputBaseString + "_ErrorTable.txt";
-        String filenameParamAggregate = System.getProperty("user.dir") + "/paramFiles/AggregateTransaction.csv";
-        String filenameSummary = outputBaseString + "_Summary.csv";
-        String filenameFreqOutput = outputBaseString + "_repetitionFrequency.csv";
-        String filenameSummary2 = System.getProperty("user.dir") + Parameters.outputPath + "summary.csv";
+        Output.writeParamfileHistory(Parameters.filenameHistory, this);
 
-        Output.writeLog(logFilename, transactions);
-        Output.writeFraudsters(filenameFraudsters, fraudsters);
+        double totalErrorRate = Output.writeErrorTable(Parameters.aggregateTransactionsParams,
+                Parameters.filenameOutputAggregate, Parameters.filenameErrorTable);
 
-        Output.writeParamfileHistory(filenameHistory, this);
-
-        double totalErrorRate = Output.writeErrorTable(filenameParamAggregate, filenameOutputAggregate, filenameErrorTable);
-
-        Output.writeSummaryFile(filenameParamAggregate, filenameOutputAggregate, filenameSummary, this);
+        Output.writeSummaryFile(Parameters.aggregateTransactionsParams, Parameters.filenameOutputAggregate, Parameters.filenameSummary, this);
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
-        Output.appendSimulationSummary(filenameSummary2, summary);
-        Output.dumpRepetitionFreq(filenameFreqOutput);
+        Output.appendSimulationSummary(Parameters.filenameGlobalSummary, summary);
+        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput);
         System.out.println("Nb of clients:\t" + clients.size() + "\n"
                 + "Nb of steps with transactions:\t" + Manager.nbStepParticipated + "\n");
 
@@ -202,24 +168,11 @@ public class PaySim extends SimState {
                 .toArray();
     }
 
-    public static double getCumulative(String action, int rowIndex, ArrayList<String> fileContents) {
-        double aggr = 0;
-        for (String line: fileContents) {
-            String split[] = line.split(",");
-            String currAction = split[0];
-
-            if (currAction.equals(action)) {
-                aggr += Double.parseDouble(split[rowIndex]);
-            }
-        }
-        return aggr;
-    }
-
-    public void updateTotalTransactionsMade(double cumulative){
+    public void updateTotalTransactionsMade(double cumulative) {
         totalTransactionsMade += cumulative;
     }
 
-    public String generateIdentifier(){
+    public String generateIdentifier() {
         return String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode()));
     }
 

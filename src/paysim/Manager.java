@@ -6,6 +6,7 @@ import java.util.Map;
 import paysim.actors.Client;
 import paysim.base.ActionProbability;
 import paysim.base.Repetition;
+import paysim.base.Transaction;
 import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
 import paysim.parameters.StepParameters;
@@ -61,13 +62,14 @@ public class Manager implements Steppable {
     }
 
     private void updatePaySimOutputs(PaySim paysim, int step) {
-        if (paysim.transactions.size() > 0) {
+        ArrayList<Transaction> transactions = paysim.getTransactions();
+        if (transactions.size() > 0) {
             Manager.nbStepParticipated++;
         }
 
-        Output.writeLog(paysim.logFileName, paysim.transactions);
+        Output.writeLog(Parameters.filenameLog, transactions);
         if (Parameters.saveToDB) {
-            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, paysim.transactions);
+            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, transactions);
         }
 
         String outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + paysim.simulatorName + "//" + paysim.simulatorName;

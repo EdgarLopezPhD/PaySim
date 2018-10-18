@@ -15,7 +15,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Map;
 
-import static paysim.PaySim.getCumulative;
 import static paysim.aggregation.AggregateParamFileCreator.generateAggregateParamFile;
 import static paysim.parameters.TransactionParameters.getCountCallAction;
 import static paysim.parameters.TransactionParameters.getCountCallRepetition;
@@ -245,8 +244,20 @@ public class Output {
 
     }
 
+    public static double getCumulative(String action, int rowIndex, ArrayList<String> fileContents) {
+        double aggr = 0;
+        for (String line : fileContents) {
+            String split[] = line.split(",");
+            String currAction = split[0];
+
+            if (currAction.equals(action)) {
+                aggr += Double.parseDouble(split[rowIndex]);
+            }
+        }
+        return aggr;
+    }
+
     public static void appendSimulationSummary(String filenameOutput, String summary) {
-        //SimulationLogName, NumSteps, totalTransactions, totalError
         String header = "name,steps,totNrOfTransactions,totNrOfClients,totError\n";
         File f = new File(filenameOutput);
         ArrayList<String> allContents = new ArrayList<>();
@@ -257,6 +268,8 @@ public class Output {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            header = "";
         }
         try {
             FileReader fWriter = new FileReader(f);
@@ -300,5 +313,16 @@ public class Output {
         ensureDot.setDecimalSeparator('.');
         format.setDecimalFormatSymbols(ensureDot);
         return format.format(d);
+    }
+
+    public static void createLogFile(String logFileName) {
+        try {
+            FileWriter writer = new FileWriter(new File(logFileName));
+            BufferedWriter bufWriter = new BufferedWriter(writer);
+            bufWriter.write("step,action,amount,nameOrig,oldbalanceOrg,newbalanceOrig,nameDest,oldbalanceDest,newbalanceDest,isFraud,isFlaggedFraud\n");
+            bufWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
