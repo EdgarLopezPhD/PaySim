@@ -10,7 +10,7 @@ import paysim.parameters.TransactionParameters;
 
 public class AggregateParamFileCreator {
     private static final int DOUBLE_PRECISION = 2;
-    private final String MONTH_TEN = "10";
+    private static final int HOURS_IN_DAY = 24, DAYS_IN_MONTH = 30;
 
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
@@ -87,7 +87,7 @@ public class AggregateParamFileCreator {
         AggregateTransactionRecord compacted =
                 new AggregateTransactionRecord(type,
                         month, day, hour,
-                        String.valueOf(totalCount),
+                        String.valueOf((int) totalCount),
                         String.valueOf(sum),
                         String.valueOf(avg),
                         String.valueOf(std),
@@ -107,11 +107,12 @@ public class AggregateParamFileCreator {
             double average = getTruncatedDouble(sum / (double) count);
             double tstd = getTruncatedDouble(getStd(subsetTransList, average));
 
-            int day = step / 24;
-            int hour = step % 24;
+            int month = step / (HOURS_IN_DAY * HOURS_IN_DAY);
+            int day = (step % (DAYS_IN_MONTH * HOURS_IN_DAY)) / HOURS_IN_DAY;
+            int hour = step % HOURS_IN_DAY;
 
             AggregateTransactionRecord recordToReturn = new AggregateTransactionRecord(String.valueOf(type),
-                    MONTH_TEN,
+                    String.valueOf(month),
                     String.valueOf(day),
                     String.valueOf(hour),
                     String.valueOf(count),
