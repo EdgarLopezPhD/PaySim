@@ -7,6 +7,7 @@ import paysim.base.Transaction;
 import paysim.actors.Fraudster;
 import paysim.aggregation.AggregateDumpAnalyzer;
 import paysim.aggregation.AggregateDumpHandler;
+import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
 import java.io.*;
@@ -48,7 +49,7 @@ public class Output {
     }
 
     public static void writeFraudsters(String filenameFraudsters, ArrayList<Fraudster> fraudsters) {
-        String header = "fname,numVictims,profit\n";
+        String header = "name,nbVictims,profit\n";
         try {
             File f = new File(filenameFraudsters);
             FileWriter writer = new FileWriter(f);
@@ -57,7 +58,7 @@ public class Output {
             bufWriter.write(header);
 
             for (Fraudster fraud : fraudsters) {
-                String row = fraud.getName() + "," + fraud.clientsAffected + "," + fraud.profit + "\n";
+                String row = fraud.getName() + "," + fraud.getClientsAffected() + "," + fraud.getProfit() + "\n";
                 bufWriter.write(row);
             }
             bufWriter.close();
@@ -93,32 +94,29 @@ public class Output {
 
     }
 
-    public static void writeParamfileHistory(String filenameHistory, PaySim simulation) {
-        //TODO : rewrite as a toString of Parameters class
-        long totalTime = System.currentTimeMillis() - simulation.startTime;
-
+    public static void writeParamfileHistory(String filenameHistory) {
         try {
             File f = new File(filenameHistory);
             FileWriter writer = new FileWriter(f);
             BufferedWriter bufWriter = new BufferedWriter(writer);
 
-            String toWrite = ""; /**
-             "nrOfMerchants=" + simulation.nrOfMerchants + "\n" +
-             "seed=" + simulation.seed + "\n" +
-             "multiplier=" + simulation.getMultiplier() + "\n" +
-             "parameterFilePath=" + simulation.parameterFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
-             "aggregateParameterFilePath=" + simulation.aggregateParameterPath.replace(System.getProperty("user.dir"), "") + "\n" +
-             "transferMaxPath=" + simulation.transferMaxPath.replace(System.getProperty("user.dir"), "") + "\n" +
-             "logPath=" + simulation.logPath.replace(System.getProperty("user.dir"), "") + "\n" +
-             "balanceHandler=" + simulation.balanceHandlerFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
-             "transferFreqMod=" + simulation.transferFreqMod.replace(System.getProperty("user.dir"), "") + "\n" +
-             "dbUrl=" + simulation.dbUrl + "\n" +
-             "dbUser=" + simulation.dbUser + "\n" +
-             "dbPassword=" + simulation.dbPassword + "\n" +
-             "fraudProbability=" + simulation.fraudProbability + "\n" +
-             "transferLimit=" + simulation.transferLimit + "\n" +
-             "numFraudsters=" + simulation.numFraudsters + "\n" +
-             Parameters.getFlags();**/
+            String toWrite = "seed=" + Parameters.seed + "\n" +
+                    "nbSteps=" + Parameters.nbSteps + "\n" +
+                    "multiplier=" + Parameters.multiplier + "\n" +
+                    "nbFraudsters=" + Parameters.nbFraudsters + "\n" +
+                    "nbMerchants=" + Parameters.nbMerchants + "\n" +
+                    "fraudProbability=" + Parameters.fraudProbability + "\n" +
+                    "transferLimit=" + Parameters.transferLimit + "\n" +
+                    "aggregateTransactionsParams=" + Parameters.aggregateTransactionsParams + "\n" +
+                    "transferMaxPath=" + Parameters.transferMaxPath + "\n" +
+                    "balanceHandler=" + Parameters.balanceHandlerFilePath + "\n" +
+                    "transferFreqMod=" + Parameters.transferFreqMod + "\n" +
+                    "transferFreqModInit=" + Parameters.transferFreqModInit + "\n" +
+                    "outputPath=" + Parameters.outputPath + "\n" +
+                    "saveToDB=" + Parameters.saveToDB + "\n" +
+                    "dbUrl=" + Parameters.dbUrl + "\n" +
+                    "dbUser=" + Parameters.dbUser + "\n" +
+                    "dbPassword=" + Parameters.dbPassword + "\n";
             bufWriter.write(toWrite);
             bufWriter.close();
         } catch (Exception e) {
@@ -126,7 +124,7 @@ public class Output {
         }
     }
 
-    public static double writeErrorTable(String filenameParamAggregate, String filenameGeneratedAggregate, String filenameErrorTable) {
+    public static String writeErrorTable(String filenameParamAggregate, String filenameGeneratedAggregate, String filenameErrorTable) {
         AggregateDumpHandler aggrHandler = new AggregateDumpHandler();
         AggregateDumpAnalyzer analyzerOrig = new AggregateDumpAnalyzer(filenameParamAggregate);
         AggregateDumpAnalyzer analyzerSynth = new AggregateDumpAnalyzer(filenameGeneratedAggregate);
@@ -176,33 +174,8 @@ public class Output {
     }
 
     public static void writeSummaryFile(String filenameParams, String filenameGeneratedAggregate, String filenameSummary, PaySim simulation) {
-        ArrayList<String> fileContentsOrig = new ArrayList<>();
-        try {
-            File f = new File(filenameParams);
-            FileReader fReader = new FileReader(f);
-            BufferedReader reader = new BufferedReader(fReader);
-            String line = reader.readLine();
-            while ((line = reader.readLine()) != null) {
-                fileContentsOrig.add(line);
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        ArrayList<String> fileContentsSynth = new ArrayList<>();
-        try {
-            File f = new File(filenameGeneratedAggregate);
-            FileReader fReader = new FileReader(f);
-            BufferedReader reader = new BufferedReader(fReader);
-            String line = reader.readLine();
-            while ((line = reader.readLine()) != null) {
-                fileContentsSynth.add(line);
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        ArrayList<String[]> fileContentsOrig = CSVReader.read(filenameParams);
+        ArrayList<String[]> fileContentsSynth = CSVReader.read(filenameGeneratedAggregate);
 
         String spaceBegin = "                     ";
         String result = spaceBegin + "Orig" + spaceBegin + "\tSynthetic" + spaceBegin + "\n";
@@ -244,23 +217,20 @@ public class Output {
 
     }
 
-    public static double getCumulative(String action, int rowIndex, ArrayList<String> fileContents) {
+    private static double getCumulative(String action, int rowIndex, ArrayList<String[]> lines) {
         double aggr = 0;
-        for (String line : fileContents) {
-            String split[] = line.split(",");
-            String currAction = split[0];
-
-            if (currAction.equals(action)) {
-                aggr += Double.parseDouble(split[rowIndex]);
+        for (String[] line : lines) {
+            if (line[0].equals(action)) {
+                aggr += Double.parseDouble(line[rowIndex]);
             }
         }
         return aggr;
     }
 
     public static void appendSimulationSummary(String filenameOutput, String summary) {
-        String header = "name,steps,totNrOfTransactions,totNrOfClients,totError\n";
+        String header = "name,steps,nbTransactions,nbClients,totalError\n";
         File f = new File(filenameOutput);
-        ArrayList<String> allContents = new ArrayList<>();
+        ArrayList<String> newLines = new ArrayList<>();
 
         if (!f.exists()) {
             try {
@@ -268,27 +238,14 @@ public class Output {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else {
-            header = "";
-        }
-        try {
-            FileReader fWriter = new FileReader(f);
-            BufferedReader bufReader = new BufferedReader(fWriter);
-            String line;
-            allContents.add(header);
-            while ((line = bufReader.readLine()) != null) {
-                allContents.add(line + "\n");
-            }
-            bufReader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            newLines.add(header);
         }
 
-        allContents.add(summary);
+        newLines.add(summary);
         try {
-            FileWriter fWriter = new FileWriter(f);
+            FileWriter fWriter = new FileWriter(f, true);
             BufferedWriter bufWriter = new BufferedWriter(fWriter);
-            for (String line : allContents) {
+            for (String line : newLines) {
                 bufWriter.append(line);
             }
             bufWriter.close();

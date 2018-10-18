@@ -33,11 +33,11 @@ public class AggregateDumpHandler {
     }
 
     private void addResultOfTotalTransaction(AggregateDumpAnalyzer orig, AggregateDumpAnalyzer generated) {
-        formatResult(orig.getTotNrOfCashIn(), generated.getTotNrOfCashIn(), "CASH_IN");
-        formatResult(orig.getTotNrOfCashOut(), generated.getTotNrOfCashOut(), "CASH_OUT");
-        formatResult(orig.getTotNrOfTransfer(), generated.getTotNrOfTransfer(), "TRANS");
-        formatResult(orig.getTotNrOfPayments(), generated.getTotNrOfPayments(), "PAYM");
-        formatResult(orig.getTotNrOfDebit(), generated.getTotNrOfDebit(), "DEB");
+        formatResult(orig.getTotNbCashIn(), generated.getTotNbCashIn(), "CASH_IN");
+        formatResult(orig.getTotNbCashOut(), generated.getTotNbCashOut(), "CASH_OUT");
+        formatResult(orig.getTotNbTransfer(), generated.getTotNbTransfer(), "TRANS");
+        formatResult(orig.getTotNbPayments(), generated.getTotNbPayments(), "PAYM");
+        formatResult(orig.getTotNbDebit(), generated.getTotNbDebit(), "DEB");
     }
 
     private void addResultOfAvgTransaction(AggregateDumpAnalyzer orig, AggregateDumpAnalyzer generated) {
@@ -55,7 +55,7 @@ public class AggregateDumpHandler {
                 "\t|\t" + formatDouble(3, errorRate) + "\t\t\t|" + "\n";
     }
 
-    public double getTotalErrorRate() {
-        return totalErrorRate;
+    public String getTotalErrorRate() {
+        return formatDouble(3, totalErrorRate);
     }
 }

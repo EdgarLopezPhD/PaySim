@@ -19,7 +19,7 @@ public class ActionProbability {
     @Override
     public String toString() {
         return "Action: " + action + "\nMonth: " + month + "\nDay: " + day + "\nHour: " + hour
-                + "\nNrOfTransactions: " + nbTransactions + "\nTotalSum: " + totalSum
+                + "\nNbTransactions: " + nbTransactions + "\nTotalSum: " + totalSum
                 + "\nAverage: " + average + "\nStd: " + std + "\n";
     }
 

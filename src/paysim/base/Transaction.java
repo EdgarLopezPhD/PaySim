@@ -30,21 +30,6 @@ public class Transaction implements Serializable {
         this.newBalanceDest = newBalanceDest;
     }
 
-    public String toString() {
-        String ps = "";
-
-        /**if (this.newBalanceDest == 0) {
-            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + "Amount:\t" + Double.toString(amount)
-                    + "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "\n";
-        } else {
-            ps = Long.toString(step) + " " + clientOrigBefore.toString() + "\t" + this.clientOrigBefore.toString() + "(" + this.newBalanceOrig
-                    + ") Transfered: " + Double.toString(amount) + " to " + this.clientOrigAfter.toString() + " (" + this.newBalanceDest + ")\t" +
-                    "\tnew Balance " + Double.toString(newBalanceOrig) + "\t" + "\n";
-        }**/
-
-        return ps;
-    }
-
     public boolean isFlaggedFraud() {
         return isFlaggedFraud;
     }

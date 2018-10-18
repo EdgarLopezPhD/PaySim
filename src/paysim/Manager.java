@@ -18,7 +18,6 @@ import sim.engine.Steppable;
 import static java.lang.Math.abs;
 
 public class Manager implements Steppable {
-    //For debugging purposes
     static int nbStepParticipated = 0;
 
     public void step(SimState state) {
@@ -37,20 +36,20 @@ public class Manager implements Steppable {
         Map<String, ActionProbability> actionProbabilities = StepParameters.get(step);
 
         //Get the number of clients to load from actionProbabilities
-        int nrOfClients = getNrOfClients(actionProbabilities);
+        int nbClients = getNbClients(actionProbabilities);
 
-        nrOfClients *= Parameters.multiplier;
+        nbClients *= Parameters.multiplier;
 
-        //FIX THIS
-        double probArr[] = paysim.loadProbabilities(actionProbabilities, nrOfClients);
+        double probArr[] = paysim.loadProbabilities(actionProbabilities, nbClients);
 
-        //If there are no clients to repeat, "-1" is returned, hence, if its -1, nrOfClients should remain 0 because there are originally
+        //TODO: Verify implementation of this check
+        //If there are no clients to repeat, "-1" is returned, hence, if its -1, nbClients should remain 0 because there are originally
         //no transactions to be executed at that step.
         int remainingAlignments = StepParameters.getRemainingAssignments(step);
         if (remainingAlignments != -1) {
-            nrOfClients -= remainingAlignments;
+            nbClients -= remainingAlignments;
         }
-        for (int i = 0; i < nrOfClients; i++) {
+        for (int i = 0; i < nbClients; i++) {
             Client c = this.generateClient(probArr, actionProbabilities, paysim, step);
             if (c.getStepsToRepeat().size() != 0) {
                 paysim.getClients().add(c);
@@ -72,10 +71,7 @@ public class Manager implements Steppable {
             Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, transactions);
         }
 
-        String outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + paysim.simulatorName + "//" + paysim.simulatorName;
-        String filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
-
-        Output.writeAggregateStep(filenameOutputAggregate, step, paysim.getTransactions());
+        Output.writeAggregateStep(Parameters.filenameOutputAggregate, step, paysim.getTransactions());
         paysim.resetVariables();
     }
 
@@ -92,22 +88,22 @@ public class Manager implements Steppable {
         if (cont.getLow() == 1 && cont.getHigh() == 1) {
             return generatedClient;
         } else {
-            int nrOfTimesToRepeat;
+            int nbTimesToRepeat;
 
             //Get how many times to repeat
             if ((cont.getLow() - cont.getHigh()) == 0) {
-                nrOfTimesToRepeat = (int) cont.getLow();
+                nbTimesToRepeat = (int) cont.getLow();
             } else {
                 int randNr = abs(paysim.random.nextInt() % ((int) (cont.getHigh() - cont.getLow())));
-                nrOfTimesToRepeat = (int) (cont.getLow() + randNr);
+                nbTimesToRepeat = (int) (cont.getLow() + randNr);
                 //Check if the randomized nr of times to be repeated exceeds the max
                 int maxTimesAction = TransactionParameters.getMaxOccurrenceGivenAction(cont.getAction());
-                if (nrOfTimesToRepeat > maxTimesAction) {
-                    nrOfTimesToRepeat = maxTimesAction;
+                if (nbTimesToRepeat > maxTimesAction) {
+                    nbTimesToRepeat = maxTimesAction;
                 }
             }
-            nrOfTimesToRepeat *= Parameters.multiplier;
-            ArrayList<Integer> stepsToRepeat = StepParameters.getSteps(step, nrOfTimesToRepeat);
+            nbTimesToRepeat *= Parameters.multiplier;
+            ArrayList<Integer> stepsToRepeat = StepParameters.getSteps(step, nbTimesToRepeat);
             if (stepsToRepeat == null) {
                 return generatedClient;
             }
@@ -117,13 +113,13 @@ public class Manager implements Steppable {
         }
     }
 
-    private int getNrOfClients(Map<String, ActionProbability> actionProbabilities) {
-        int nrOfClients = 0;
+    private int getNbClients(Map<String, ActionProbability> actionProbabilities) {
+        int nbClients = 0;
 
         for (ActionProbability p : actionProbabilities.values()) {
-            nrOfClients += p.getNbTransactions();
+            nbClients += p.getNbTransactions();
         }
 
-        return nrOfClients;
+        return nbClients;
     }
 }

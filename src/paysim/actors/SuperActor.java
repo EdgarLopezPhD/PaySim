@@ -10,7 +10,7 @@ public class SuperActor {
     private boolean isFraud = false;
     Repetition cont = null;
 
-    SuperActor(String name){
+    SuperActor(String name) {
         this.name = name;
     }
 
@@ -71,7 +71,7 @@ public class SuperActor {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return name;
     }
 }

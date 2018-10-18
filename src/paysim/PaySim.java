@@ -1,8 +1,6 @@
 package paysim;
 
-import java.io.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Map;
 
 import paysim.actors.Client;
@@ -28,7 +26,7 @@ public class PaySim extends SimState {
     private String propertiesFile = "";
 
     public long startTime = 0;
-    private double totalTransactionsMade = 0;
+    private int totalTransactionsMade = 0;
 
     public static String simulatorName = "";
 
@@ -45,8 +43,8 @@ public class PaySim extends SimState {
         if (args.length < 4) {
             args = DEFAULT_ARGS;
         }
-        int nrOfTimesRepeat = Integer.parseInt(args[3]);
-        for (int i = 0; i < nrOfTimesRepeat; i++) {
+        int nbTimesRepeat = Integer.parseInt(args[3]);
+        for (int i = 0; i < nbTimesRepeat; i++) {
             PaySim p = new PaySim();
             for (int x = 0; x < args.length - 1; x++) {
                 if (args[x].equals("-file")) {
@@ -71,9 +69,6 @@ public class PaySim extends SimState {
 
     private void runSimulation() {
         System.out.println("PAYSIM: Financial Simulator v" + PAYSIM_VERSION + " \n");
-        long elapsedSteps;
-        double begin;
-
         startTime = System.currentTimeMillis();
         super.start();
         initActors();
@@ -82,9 +77,9 @@ public class PaySim extends SimState {
         Manager manager = new Manager();
         schedule.scheduleRepeating(manager);
 
-        begin = System.currentTimeMillis();
         System.out.println("Starting PaySim Running for " + Parameters.nbSteps + " steps.");
 
+        long elapsedSteps;
         while ((elapsedSteps = schedule.getSteps()) < Parameters.nbSteps) {
             if (!schedule.step(this))
                 break;
@@ -97,7 +92,7 @@ public class PaySim extends SimState {
         System.out.println("\nFinished running " + elapsedSteps + " steps ");
         finish();
 
-        double total = System.currentTimeMillis() - begin;
+        double total = System.currentTimeMillis() - startTime;
         total = total / 1000 / 60;
         System.out.println("\nIt took:\t" + total + " minutes to execute the simulation\n");
         System.out.println("Simulation name: " + simulatorName);
@@ -114,7 +109,7 @@ public class PaySim extends SimState {
         }
 
         //Add the fraudsters
-        System.out.println("NrOfFraudsters:\t" + Parameters.nbFraudsters * Parameters.multiplier + "\n");
+        System.out.println("NbFraudsters:\t" + Parameters.nbFraudsters * Parameters.multiplier + "\n");
         for (int i = 0; i < Parameters.nbFraudsters * Parameters.multiplier; i++) {
             Fraudster f = new Fraudster(generateIdentifier());
             fraudsters.add(f);
@@ -126,9 +121,9 @@ public class PaySim extends SimState {
         Output.writeLog(Parameters.filenameLog, transactions);
         Output.writeFraudsters(Parameters.filenameFraudsters, fraudsters);
 
-        Output.writeParamfileHistory(Parameters.filenameHistory, this);
+        Output.writeParamfileHistory(Parameters.filenameHistory);
 
-        double totalErrorRate = Output.writeErrorTable(Parameters.aggregateTransactionsParams,
+        String totalErrorRate = Output.writeErrorTable(Parameters.aggregateTransactionsParams,
                 Parameters.filenameOutputAggregate, Parameters.filenameErrorTable);
 
         Output.writeSummaryFile(Parameters.aggregateTransactionsParams, Parameters.filenameOutputAggregate, Parameters.filenameSummary, this);
@@ -168,8 +163,8 @@ public class PaySim extends SimState {
                 .toArray();
     }
 
-    public void updateTotalTransactionsMade(double cumulative) {
-        totalTransactionsMade += cumulative;
+    public void updateTotalTransactionsMade(int count) {
+        totalTransactionsMade += count;
     }
 
     public String generateIdentifier() {

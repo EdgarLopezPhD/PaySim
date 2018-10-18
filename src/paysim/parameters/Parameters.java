@@ -22,7 +22,7 @@ public class Parameters {
 
     private static String outputBaseString;
     public static String filenameOutputAggregate, filenameLog, filenameFraudsters, filenameHistory,
-    filenameErrorTable, filenameSummary, filenameFreqOutput, filenameGlobalSummary;
+            filenameErrorTable, filenameSummary, filenameFreqOutput, filenameGlobalSummary;
 
     public static void loadPropertiesFile(String propertiesFile) {
         try {
@@ -39,12 +39,11 @@ public class Parameters {
             fraudProbability = Double.parseDouble(parameters.getProperty("fraudProbability"));
             transferLimit = Double.parseDouble(parameters.getProperty("transferLimit"));
 
-            String baseDir = System.getProperty("user.dir");
-            aggregateTransactionsParams = baseDir + parameters.getProperty("aggregateTransactionsParams");
-            transferMaxPath = baseDir + parameters.getProperty("transferMaxPath");
-            balanceHandlerFilePath = baseDir + parameters.getProperty("balanceHandler");
-            transferFreqMod = baseDir + parameters.getProperty("transferFreqMod");
-            transferFreqModInit = baseDir + parameters.getProperty("transferFreqModInit");
+            aggregateTransactionsParams = parameters.getProperty("aggregateTransactionsParams");
+            transferMaxPath = parameters.getProperty("transferMaxPath");
+            balanceHandlerFilePath = parameters.getProperty("balanceHandler");
+            transferFreqMod = parameters.getProperty("transferFreqMod");
+            transferFreqModInit = parameters.getProperty("transferFreqModInit");
 
             outputPath = parameters.getProperty("outputPath");
 
@@ -72,15 +71,15 @@ public class Parameters {
         Date d = new Date();
         simulatorName = "PS_" + (d.getYear() + 1900) + (d.getMonth() + 1) + d.getDate() + d.getHours() + d.getMinutes()
                 + d.getSeconds() + "_" + seed;
-        File f = new File(System.getProperty("user.dir") + Parameters.outputPath + simulatorName);
+        File f = new File(Parameters.outputPath + simulatorName);
         f.mkdirs();
     }
 
-    private static void initOutputFilenames(){
-        outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + simulatorName + "//" + simulatorName;
-        filenameGlobalSummary = System.getProperty("user.dir") + Parameters.outputPath + "summary.csv";
+    private static void initOutputFilenames() {
+        outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
+        filenameGlobalSummary = Parameters.outputPath + "summary.csv";
 
-        filenameLog =  outputBaseString + "_log.csv";
+        filenameLog = outputBaseString + "_log.csv";
         filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
         filenameFreqOutput = outputBaseString + "_repetitionFrequency.csv";
         filenameFraudsters = outputBaseString + "_Fraudsters.csv";

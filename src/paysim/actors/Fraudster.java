@@ -7,9 +7,10 @@ import sim.engine.Steppable;
 
 public class Fraudster extends SuperActor implements Steppable {
     private static final String FRAUDSTER_IDENTIFIER = "C";
-    public double profit = 0, clientsAffected = 0;
+    private double profit = 0;
+    private int clientsAffected = 0;
 
-    public Fraudster(String name){
+    public Fraudster(String name) {
         super(FRAUDSTER_IDENTIFIER + name);
     }
 
@@ -51,6 +52,13 @@ public class Fraudster extends SuperActor implements Steppable {
                 }
             }
         }
+    }
 
+    public double getProfit() {
+        return profit;
+    }
+
+    public int getClientsAffected() {
+        return clientsAffected;
     }
 }

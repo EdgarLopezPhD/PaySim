@@ -1,20 +1,18 @@
 package paysim.aggregation;
 
 import paysim.parameters.TransactionParameters;
+import paysim.utils.CSVReader;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 
 public class AggregateDumpAnalyzer {
     //The total number of transactions made for each action
-    private double totNrOfTransfer = 0;
-    private double totNrOfDebit = 0;
-    private double totNrOfCashIn = 0;
-    private double totNrOfCashOut = 0;
-    private double totNrOfDeposit = 0;
-    private double totNrOfPayments = 0;
+    private double totNbTransfer = 0;
+    private double totNbDebit = 0;
+    private double totNbCashIn = 0;
+    private double totNbCashOut = 0;
+    private double totNbDeposit = 0;
+    private double totNbPayments = 0;
 
     //The avg of the avg for each action
     private double avgAvgTransfer = 0;
@@ -32,25 +30,14 @@ public class AggregateDumpAnalyzer {
     private double avgStdDeposit = 0;
     private double avgStdPayment = 0;
 
-    private final ArrayList<String> fileContents = new ArrayList<>();
+    private ArrayList<String[]> fileContents;
 
     public AggregateDumpAnalyzer(String fileName) {
         init(fileName);
     }
 
-    private void init(String fileName) {
-        try {
-            File f = new File(fileName);
-            FileReader fReader = new FileReader(f);
-            BufferedReader reader = new BufferedReader(fReader);
-            String line = reader.readLine();
-            while ((line = reader.readLine()) != null) {
-                fileContents.add(line);
-            }
-            reader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void init(String filename) {
+        fileContents = CSVReader.read(filename);
     }
 
     public void analyze() {
@@ -60,12 +47,12 @@ public class AggregateDumpAnalyzer {
     }
 
     private void computeTotal() {
-        totNrOfCashIn = getCount(TransactionParameters.indexOf("CASH_IN"));
-        totNrOfCashOut = getCount(TransactionParameters.indexOf("CASH_OUT"));
-        totNrOfDebit = getCount(TransactionParameters.indexOf("DEBIT"));
-        totNrOfDeposit = getCount(TransactionParameters.indexOf("DEPOSIT"));
-        totNrOfPayments = getCount(TransactionParameters.indexOf("PAYMENT"));
-        totNrOfTransfer = getCount(TransactionParameters.indexOf("TRANSFER"));
+        totNbCashIn = getCount(TransactionParameters.indexOf("CASH_IN"));
+        totNbCashOut = getCount(TransactionParameters.indexOf("CASH_OUT"));
+        totNbDebit = getCount(TransactionParameters.indexOf("DEBIT"));
+        totNbDeposit = getCount(TransactionParameters.indexOf("DEPOSIT"));
+        totNbPayments = getCount(TransactionParameters.indexOf("PAYMENT"));
+        totNbTransfer = getCount(TransactionParameters.indexOf("TRANSFER"));
     }
 
     private void computeAvgAvg() {
@@ -86,34 +73,14 @@ public class AggregateDumpAnalyzer {
         avgStdTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
     }
 
-    private boolean isNumber(String action) {
-        try {
-            Double.parseDouble(action);
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
-    //Handler function
     private double getCount(int actionId) {
         double count = 0;
 
-        for (String s : this.fileContents) {
-            String split[] = s.split(",");
-            String action = split[0];
-
-            //Handle from the original aggregate file
-            if (!isNumber(action)) {
-                String receivedAction = TransactionParameters.getAction(actionId);
-                if (receivedAction.equals(action)) {
-                    count += Double.parseDouble(split[4]);
-                }
-            } else {
-                //Handle from the generated aggregate file
-                if (Double.parseDouble(action) == actionId) {
-                    count += Double.parseDouble(split[4]);
-                }
+        for (String[] line : fileContents) {
+            String action = line[0];
+            String receivedAction = TransactionParameters.getAction(actionId);
+            if (receivedAction.equals(action)) {
+                count += Double.parseDouble(line[4]);
             }
         }
 
@@ -123,23 +90,12 @@ public class AggregateDumpAnalyzer {
     private double getAvgAvg(int actionId) {
         double avg = 0, nr = 0;
 
-        for (String s : this.fileContents) {
-            String split[] = s.split(",");
-            String action = split[0];
-
-            //Handle from the original aggregate file
-            if (!isNumber(action)) {
-                String receivedAction = TransactionParameters.getAction(actionId);
-                if (receivedAction.equals(action)) {
-                    avg += Double.parseDouble(split[6]);
-                    nr++;
-                }
-            } else {
-                //Handle from the generated aggregate file
-                if (Double.parseDouble(action) == actionId) {
-                    avg += Double.parseDouble(split[6]);
-                    nr++;
-                }
+        for (String[] line : fileContents) {
+            String action = line[0];
+            String receivedAction = TransactionParameters.getAction(actionId);
+            if (receivedAction.equals(action)) {
+                avg += Double.parseDouble(line[6]);
+                nr++;
             }
         }
         avg = avg / nr;
@@ -151,25 +107,14 @@ public class AggregateDumpAnalyzer {
         double avgStd = 0;
         double nr = 0;
 
-        for (String s : fileContents) {
-            String split[] = s.split(",");
-            String action = split[0];
+        for (String[] line : fileContents) {
+            String action = line[0];
 
-            //Handle from the original aggregate file
-            if (!isNumber(action)) {
-                String receivedAction = TransactionParameters.getAction(actionId);
-                if (receivedAction.equals(action)) {
-                    avgStd += Double.parseDouble(split[7]);
-                    nr++;
-                }
-            } else {
-                //Handle from the generated aggregate file
-                if (Double.parseDouble(action) == actionId) {
-                    avgStd += Double.parseDouble(split[7]);
-                    nr++;
-                }
+            String receivedAction = TransactionParameters.getAction(actionId);
+            if (receivedAction.equals(action)) {
+                avgStd += Double.parseDouble(line[7]);
+                nr++;
             }
-
         }
         avgStd = avgStd / nr;
 
@@ -177,24 +122,24 @@ public class AggregateDumpAnalyzer {
     }
 
 
-    public double getTotNrOfTransfer() {
-        return totNrOfTransfer;
+    public double getTotNbTransfer() {
+        return totNbTransfer;
     }
 
-    public double getTotNrOfDebit() {
-        return totNrOfDebit;
+    public double getTotNbDebit() {
+        return totNbDebit;
     }
 
-    public double getTotNrOfCashIn() {
-        return totNrOfCashIn;
+    public double getTotNbCashIn() {
+        return totNbCashIn;
     }
 
-    public double getTotNrOfCashOut() {
-        return totNrOfCashOut;
+    public double getTotNbCashOut() {
+        return totNbCashOut;
     }
 
-    public double getTotNrOfPayments() {
-        return totNrOfPayments;
+    public double getTotNbPayments() {
+        return totNbPayments;
     }
 
     public double getAvgAvgTransfer() {
@@ -219,11 +164,11 @@ public class AggregateDumpAnalyzer {
 
     @Override
     public String toString() {
-        return "AggregateDumpAnalyzer [totNrOfTransfer=" + totNrOfTransfer
-                + ", totNrOfDebit=" + totNrOfDebit + ", totNrOfCashIn="
-                + totNrOfCashIn + ", totNrOfCashOut=" + totNrOfCashOut
-                + ", totNrOfDeposit=" + totNrOfDeposit + ", totNrOfPayments="
-                + totNrOfPayments + ", avgAvgTransfer=" + avgAvgTransfer
+        return "AggregateDumpAnalyzer [totNbTransfer=" + totNbTransfer
+                + ", totNbDebit=" + totNbDebit + ", totNbCashIn="
+                + totNbCashIn + ", totNbCashOut=" + totNbCashOut
+                + ", totNbDeposit=" + totNbDeposit + ", totNbPayments="
+                + totNbPayments + ", avgAvgTransfer=" + avgAvgTransfer
                 + ", avgAvgDebit=" + avgAvgDebit + ", avgAvgCashIn="
                 + avgAvgCashIn + ", avgAvgCashOut=" + avgAvgCashOut
                 + ", avgAvgDeposit=" + avgAvgDeposit + ", avgAvgPayments="

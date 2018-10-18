@@ -38,7 +38,7 @@ public class StepParameters {
         modifyWithMultiplier(multiplier);
     }
 
-    private static void initSteps(int nbSteps){
+    private static void initSteps(int nbSteps) {
         probabilitiesPerStep = new ArrayList<>(nbSteps);
         while (probabilitiesPerStep.size() < nbSteps) {
             probabilitiesPerStep.add(new HashMap<>());
@@ -67,11 +67,12 @@ public class StepParameters {
         //int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
         return stepCounter.getCountAssigned();
     }
-    public static ArrayList<Integer> getSteps(int currentStep, int nrOfSteps) {
+
+    public static ArrayList<Integer> getSteps(int currentStep, int nbSteps) {
         ArrayList<Integer> stepsToBeRepeated = new ArrayList<>();
         int stepsGathered = 0;
         int index = 0;
-        while (stepsGathered < nrOfSteps) {
+        while (stepsGathered < nbSteps) {
             index = index % stepHandler.size();
             if (index == 0 && isFull(currentStep)) {
                 return null;
