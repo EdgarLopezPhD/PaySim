@@ -15,7 +15,7 @@ public class AggregateParamFileCreator {
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
         for (String type : TransactionParameters.getActions()) {
-            for (int step = 1; step <= Parameters.nbSteps; step++) {
+            for (int step = 0; step < Parameters.nbSteps; step++) {
                 AggregateTransactionRecord partialRecord = getAggregateRecord(type, step, transactionList);
                 if (partialRecord != null) {
                     aggrTransRecord.add(partialRecord);
@@ -107,8 +107,7 @@ public class AggregateParamFileCreator {
             double average = getTruncatedDouble(sum / (double) count);
             double tstd = getTruncatedDouble(getStd(subsetTransList, average));
 
-            // We count days starting from 1 and hours starting from 0
-            int day = step / 24 + 1;
+            int day = step / 24;
             int hour = step % 24;
 
             AggregateTransactionRecord recordToReturn = new AggregateTransactionRecord(String.valueOf(type),

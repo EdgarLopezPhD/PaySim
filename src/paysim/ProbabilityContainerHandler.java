@@ -19,7 +19,7 @@ public class ProbabilityContainerHandler {
 
     public void initRecordList(ArrayList<String> fileContents) {
 
-        for (int i = 1; i <= Parameters.nbSteps; i++) {
+        for (int i = 0; i < Parameters.nbSteps; i++) {
             ArrayList<ActionProbability> aProbListTemp = new ArrayList<>();
             for (String actionType : TransactionParameters.getActions()) {
                 ActionProbability probTemp = getActionProbabilityFromStep(actionType, i, fileContents);

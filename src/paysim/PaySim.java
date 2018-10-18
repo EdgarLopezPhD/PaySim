@@ -84,7 +84,7 @@ public class PaySim extends SimState {
         while ((elapsedSteps = schedule.getSteps()) < Parameters.nbSteps) {
             if (!schedule.step(this))
                 break;
-            if (elapsedSteps % 100 == 0 && elapsedSteps != 0) {
+            if (elapsedSteps % 100 == 100 - 1) {
                 System.out.println("Step " + elapsedSteps);
             } else {
                 System.out.print("*");
@@ -237,7 +237,6 @@ public class PaySim extends SimState {
             String split[] = row.split(",");
             String currType = split[0];
 
-            System.out.println(currType);
             if (currType.equals(type)) {
                 aggr += Double.parseDouble(split[rowIndex]);
             }

@@ -7,9 +7,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 
-import static paysim.utils.Output.formatDouble;
-
-
 public class AggregateDumpAnalyzer {
     //The total number of transactions made for each type
     private double totNrOfTransfer = 0;
@@ -87,17 +84,6 @@ public class AggregateDumpAnalyzer {
         avgStdDeposit = getAvgStd(TransactionParameters.indexOf("DEPOSIT"));
         avgStdPayment = getAvgStd(TransactionParameters.indexOf("PAYMENT"));
         avgStdTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
-    }
-
-    public void printSummary() {
-        String split[] = this.toString().split(",");
-        for (String s : split) {
-            System.out.println(s + "\n");
-        }
-
-        double total = this.totNrOfCashIn + this.totNrOfCashOut + this.totNrOfDebit +
-                this.totNrOfDeposit + this.totNrOfPayments + this.totNrOfTransfer;
-        System.out.println("\n\nTot\t" + formatDouble(10, total) + "\n");
     }
 
     private boolean isNumber(String type) {
