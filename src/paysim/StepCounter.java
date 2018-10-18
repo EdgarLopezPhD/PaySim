@@ -1,7 +1,9 @@
 package paysim;
 
 public class StepCounter {
-    private int currentStep, maxCount, countAssigned;
+    private final int currentStep;
+    private int maxCount;
+    private int countAssigned;
 
     StepCounter(int currentStep) {
         this.currentStep = currentStep;

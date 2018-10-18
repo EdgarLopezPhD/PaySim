@@ -32,7 +32,7 @@ public class AggregateDumpAnalyzer {
     private double avgStdDeposit = 0;
     private double avgStdPayment = 0;
 
-    private ArrayList<String> fileContents = new ArrayList<>();
+    private final ArrayList<String> fileContents = new ArrayList<>();
 
     public AggregateDumpAnalyzer(String fileName) {
         init(fileName);

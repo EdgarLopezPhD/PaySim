@@ -46,13 +46,13 @@ public class Manager implements Steppable {
         nrOfClients *= Parameters.multiplier;
 
         //FIX THIS
-        double probArr[] = paysim.loadProbabilites(aProbList, nrOfClients);
+        double probArr[] = paysim.loadProbabilities(aProbList, nrOfClients);
 
         //If there are no clients to repeat, "-1" is returned, hence, if its -1, nrOfClients should remain 0 because there are originally
         //no transactions to be executed at that step.
-        int remainingAssignements = stepHandler.getRemainingAssignements(currStep);
-        if (remainingAssignements != -1) {
-            nrOfClients -= remainingAssignements;
+        int remainingAlignments = stepHandler.getRemainingAssignments(currStep);
+        if (remainingAlignments != -1) {
+            nrOfClients -= remainingAlignments;
         }
         for (int i = 0; i < nrOfClients; i++) {
             Client c = this.generateClient(probArr, aProbList, paysim, currStep);
@@ -62,18 +62,18 @@ public class Manager implements Steppable {
             paysim.schedule.scheduleOnce(c);
         }
 
-        updatePaysimOutputs(paysim);
+        updatePaySimOutputs(paysim);
     }
 
-    private void updatePaysimOutputs(PaySim paysim) {
+    private void updatePaySimOutputs(PaySim paysim) {
         ArrayList<AggregateTransactionRecord> records = paysim.getAggregateCreator().
                 generateAggregateParamFile(paysim.getTrans());
 
         if (records.size() > 0) {
             Manager.nbStepParticipated++;
         }
-        for (int i = 0; i < records.size(); i++) {
-            paysim.getAggrTransRecordList().add(records.get(i));
+        for (AggregateTransactionRecord r : records) {
+            paysim.getAggrTransRecordList().add(r);
         }
 
         Output.writeLog(paysim.logFileName, paysim.trans);
@@ -85,20 +85,19 @@ public class Manager implements Steppable {
 
     private Client generateClient(double probArr[], ArrayList<ActionProbability> aProbList, PaySim paysim, int currStep) {
         //Create the client
-        Client generatedClient = new Client();
+        Client generatedClient = new Client(paysim.generateIdentifier());
         generatedClient.setStepHandler(stepHandler);
         generatedClient.setProbabilityArr(probArr);
         generatedClient.setProbList(aProbList);
-        generatedClient.setName("C" + String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode())));
         generatedClient.setBalance(BalanceClients.getBalance(paysim));
-        generatedClient.setCurrStep(currStep);
+        generatedClient.setStep(currStep);
 
         Repetition cont = TransactionParameters.getRepetition();
         //Check whether the action is to be repeated
         if (cont.getLow() == 1 && cont.getHigh() == 1) {
             return generatedClient;
         } else {
-            int nrOfTimesToRepeat = 0;
+            int nrOfTimesToRepeat;
 
             //Get how many times to repeat
             if ((cont.getLow() - cont.getHigh()) == 0) {
@@ -107,7 +106,7 @@ public class Manager implements Steppable {
                 int randNr = abs(paysim.random.nextInt() % ((int) (cont.getHigh() - cont.getLow())));
                 nrOfTimesToRepeat = (int) (cont.getLow() + randNr);
                 //Check if the randomized nr of times to be repeated exceeds the max
-                int maxTimesType = TransactionParameters.getMaxOccurenceGivenType(cont.getType());
+                int maxTimesType = TransactionParameters.getMaxOccurrenceGivenType(cont.getType());
                 if (nrOfTimesToRepeat > maxTimesType) {
                     nrOfTimesToRepeat = maxTimesType;
                 }
@@ -123,14 +122,12 @@ public class Manager implements Steppable {
         }
     }
 
-    public ArrayList<ActionProbability> getActionProbabilityFromStep(int step) {
+    private ArrayList<ActionProbability> getActionProbabilityFromStep(int step) {
         ProbabilityRecordContainer cont = probabilityHandler.getList().get(step - 1);
-        ArrayList<ActionProbability> probList = cont.getProbList();
-
-        return probList;
+        return cont.getProbList();
     }
 
-    public int getNrOfClients(ArrayList<ActionProbability> probList) {
+    private int getNrOfClients(ArrayList<ActionProbability> probList) {
         int nrOfClients = 0;
 
         for (ActionProbability p : probList) {

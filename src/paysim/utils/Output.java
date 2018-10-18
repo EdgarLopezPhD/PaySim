@@ -20,7 +20,7 @@ import static paysim.parameters.TransactionParameters.getCountCallAction;
 import static paysim.parameters.TransactionParameters.getCountCallRepetition;
 
 public class Output {
-    private static int PRECISION_OUTPUT = 2;
+    private static final int PRECISION_OUTPUT = 2;
 
     public static void writeLog(String logFilename, ArrayList<Transaction> trans) {
         try {
@@ -79,13 +79,13 @@ public class Output {
             for (AggregateTransactionRecord record : reformatted) {
                 paramDump.write(record.getType() + "," +
                         record.getMonth() + "," +
-                        record.gettDay() + "," +
-                        record.gettHour() + "," +
-                        record.gettCount() + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettSum())) + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettAvg())) + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.gettStd())) + "," +
-                        record.gettStep() + "\n"
+                        record.getDay() + "," +
+                        record.getHour() + "," +
+                        record.getCount() + "," +
+                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getSum())) + "," +
+                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getAvg())) + "," +
+                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getStd())) + "," +
+                        record.getStep() + "\n"
                 );
             }
             paramDump.close();
@@ -101,7 +101,7 @@ public class Output {
         try {
             File f = new File(filenameHistory);
             FileWriter writer = new FileWriter(f);
-            BufferedWriter bufWrtier = new BufferedWriter(writer);
+            BufferedWriter bufWriter = new BufferedWriter(writer);
 
             String toWrite = ""; /**
              "nrOfMerchants=" + simulation.nrOfMerchants + "\n" +
@@ -113,7 +113,6 @@ public class Output {
              "logPath=" + simulation.logPath.replace(System.getProperty("user.dir"), "") + "\n" +
              "balanceHandler=" + simulation.balanceHandlerFilePath.replace(System.getProperty("user.dir"), "") + "\n" +
              "transferFreqMod=" + simulation.transferFreqMod.replace(System.getProperty("user.dir"), "") + "\n" +
-             "networkFolderPath=" + simulation.networkPath + "\n" +
              "dbUrl=" + simulation.dbUrl + "\n" +
              "dbUser=" + simulation.dbUser + "\n" +
              "dbPassword=" + simulation.dbPassword + "\n" +
@@ -121,8 +120,8 @@ public class Output {
              "transferLimit=" + simulation.transferLimit + "\n" +
              "numFraudsters=" + simulation.numFraudsters + "\n" +
              Parameters.getFlags();**/
-            bufWrtier.write(toWrite);
-            bufWrtier.close();
+            bufWriter.write(toWrite);
+            bufWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -206,32 +205,29 @@ public class Output {
         }
 
 
-        String spaceBegin = "                                                         ";
+        String spaceBegin = "                     ";
         String result = spaceBegin + "Orig" + spaceBegin + "\tSynthetic" + spaceBegin + "\n";
         result += spaceBegin + "Sum" + spaceBegin + "\tSum" + "\n";
-        double countOrig = 0;
-        double countSynth = 0;
-        double sumOrig = 0;
-        double sumSynth = 0;
+
         for (String type : TransactionParameters.getActions()) {
-            sumOrig += getCumulative(type, 5, fileContentsOrig);
-            sumSynth += getCumulative(type, 5, fileContentsSynth);
+            double sumOrig = getCumulative(type, 5, fileContentsOrig);
+            double sumSynth = getCumulative(type, 5, fileContentsSynth);
             result += type + spaceBegin.substring(type.length())
-                    + formatDouble(14, sumOrig) + spaceBegin.substring(String.valueOf(sumOrig).length())
-                    + "\t\t" + formatDouble(14, sumSynth) + "\n";
+                    + formatDouble(PRECISION_OUTPUT, sumOrig) + spaceBegin.substring(String.valueOf(sumOrig).length())
+                    + "\t\t" + formatDouble(PRECISION_OUTPUT, sumSynth) + "\n";
         }
 
         result += "-----------------------------------------------------------------------------\n";
         result += spaceBegin + "Count" + spaceBegin + "\tCount" + spaceBegin + "\n";
 
         for (String type : TransactionParameters.getActions()) {
-            countOrig += getCumulative(type, 4, fileContentsOrig);
-            countSynth += getCumulative(type, 4, fileContentsSynth);
+            int countOrig = (int) getCumulative(type, 4, fileContentsOrig);
+            int countSynth = (int) getCumulative(type, 4, fileContentsSynth);
 
             simulation.updateTotalTransactionsMade(countSynth);
             result += type + spaceBegin.substring(type.length())
-                    + formatDouble(14, countOrig) + spaceBegin.substring(String.valueOf(sumOrig).length())
-                    + "\t\t\t" + formatDouble(14, countSynth) + "\n";
+                    + String.valueOf(countOrig) + spaceBegin.substring(String.valueOf(countOrig).length())
+                    + "\t\t\t" + String.valueOf(countSynth) + "\n";
         }
 
 
@@ -265,7 +261,7 @@ public class Output {
         try {
             FileReader fWriter = new FileReader(f);
             BufferedReader bufReader = new BufferedReader(fWriter);
-            String line = "";
+            String line;
             allContents.add(header);
             while ((line = bufReader.readLine()) != null) {
                 allContents.add(line + "\n");
@@ -285,63 +281,7 @@ public class Output {
             bufWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
 
-    public static void writeNetworkResults(String logFilename, String networkFilename) {
-        ArrayList<String> fileContents = new ArrayList<String>();
-        try {
-
-            File f = new File(logFilename);
-            FileReader reader = new FileReader(f);
-            BufferedReader bufReader = new BufferedReader(reader);
-            String line = "";
-            bufReader.readLine();
-            while ((line = bufReader.readLine()) != null) {
-                fileContents.add(line);
-            }
-            bufReader.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        //Create the network contents
-        ArrayList<String> networkResults = new ArrayList<String>();
-        networkResults.add("type,from,to,amount");
-        for (int i = 0; i < fileContents.size(); i++) {
-            String line = fileContents.get(i);
-            String splitLine[] = line.split(",");
-
-
-            try {
-                String toAdd = splitLine[0] + "," + splitLine[1] + "," + splitLine[5] + "," + splitLine[2];
-                networkResults.add(toAdd);
-            } catch (Exception e) {
-
-            }
-
-        }
-
-        //Create the dumpfile to write to
-        BufferedWriter bufWriter = null;
-        try {
-            File f = new File(networkFilename);
-            FileWriter writer = new FileWriter(f);
-            bufWriter = new BufferedWriter(writer);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        //Write the actual network contents
-        for (int i = 0; i < networkResults.size(); i++) {
-            try {
-                bufWriter.write(networkResults.get(i));
-                bufWriter.newLine();
-            } catch (IOException e) {
-
-                e.printStackTrace();
-            }
         }
     }
 

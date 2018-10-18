@@ -5,11 +5,13 @@ import paysim.parameters.Parameters;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
-import static java.lang.Math.abs;
-
-public class Fraudster implements Steppable {
-    private String name = "";
+public class Fraudster extends SuperActor implements Steppable {
+    private static final String FRAUDSTER_IDENTIFIER = "C";
     public double profit = 0, clientsAffected = 0;
+
+    public Fraudster(String name){
+        super(FRAUDSTER_IDENTIFIER + name);
+    }
 
     @Override
     public void step(SimState state) {
@@ -28,7 +30,7 @@ public class Fraudster implements Steppable {
             if (balance > 0) {
                 int loops = (int) Math.ceil(balance / Parameters.transferLimit);
                 for (int i = 0; i < loops; i++) {
-                    Client muleClient = new Client();
+                    Client muleClient = new Client(paysim.generateIdentifier());
                     muleClient.setFraud(true);
                     if (balance > Parameters.transferLimit) {
                         c.handleTransfer(paysim, muleClient,
@@ -50,15 +52,5 @@ public class Fraudster implements Steppable {
             }
         }
 
-    }
-
-    public String getName() {
-        if (this.name.equals(""))
-            this.name = this.toString();
-        return this.name;
-    }
-
-    public String toString() {
-        return "F" + Integer.toString(abs(this.hashCode()));
     }
 }

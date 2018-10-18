@@ -1,7 +1,7 @@
 package paysim.base;
 
 public class BalanceGenerator {
-    private double low, high;
+    private final double low, high;
 
     public BalanceGenerator(double low, double high) {
         this.low = low;

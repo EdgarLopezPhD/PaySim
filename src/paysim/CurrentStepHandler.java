@@ -7,15 +7,8 @@ import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
 public class CurrentStepHandler {
-    private static int COLUMN_TYPE = 0,
-            COLUMN_MONTH = 1,
-            COLUMN_DAY = 2,
-            COLUMN_HOUR = 3,
-            COLUMN_COUNT = 4,
-            COLUMN_SUM = 5,
-            COLUMN_AVG = 6,
-            COLUMN_STD = 7,
-            COLUMN_STEP = 8;
+    private static final int COLUMN_TYPE = 0, COLUMN_MONTH = 1, COLUMN_DAY = 2, COLUMN_HOUR = 3, COLUMN_COUNT = 4,
+            COLUMN_SUM = 5, COLUMN_AVG = 6, COLUMN_STD = 7, COLUMN_STEP = 8;
     private ArrayList<String> aggregateParameters = new ArrayList<>();
     private ArrayList<AggregateTransactionRecord> aggrRecordList = new ArrayList<>();
     private ArrayList<StepCounter> stepHandler = new ArrayList<>();
@@ -75,7 +68,6 @@ public class CurrentStepHandler {
                     } catch (Exception e) {
                         System.out.println("initStepCount - Could not parse line " + csvLine);
                         e.printStackTrace();
-                        continue;
                     }
                 }
                 stepContainer.setMaxCount(count);
@@ -97,7 +89,7 @@ public class CurrentStepHandler {
 
     private boolean isInAggrRecordList(int step) {
         for (AggregateTransactionRecord t : aggrRecordList) {
-            if (t.gettStep().equals(Integer.toString(step))) {
+            if (t.getStep().equals(Integer.toString(step))) {
                 return true;
             }
         }
@@ -106,7 +98,7 @@ public class CurrentStepHandler {
 
     public AggregateTransactionRecord getRecord(String type, int step) {
         for (AggregateTransactionRecord t : aggrRecordList) {
-            if (t.getType().equals(type) && t.gettStep().equals(Integer.toString(step))) {
+            if (t.getType().equals(type) && t.getStep().equals(Integer.toString(step))) {
                 return t;
             }
         }
@@ -114,7 +106,7 @@ public class CurrentStepHandler {
     }
 
 
-    public int getRemainingAssignements(int stepNumber) {
+    public int getRemainingAssignments(int stepNumber) {
         for (StepCounter stepContainer : stepHandler) {
             if (stepContainer.getCurrentStep() == stepNumber) {
                 //int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
@@ -132,7 +124,7 @@ public class CurrentStepHandler {
         while (stepsGathered < nrOfSteps) {
             index = index % stepHandler.size();
             if (index == 0 && isFull(currentStep)) {
-                    return null;
+                return null;
             }
             StepCounter step = stepHandler.get(index);
             if (step.canBeAssigned() && step.getCurrentStep() >= currentStep) {

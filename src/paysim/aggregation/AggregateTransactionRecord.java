@@ -3,28 +3,28 @@ package paysim.aggregation;
 import paysim.parameters.TransactionParameters;
 
 public class AggregateTransactionRecord implements Comparable<AggregateTransactionRecord> {
-    private String type, month, tDay, tHour, tCount, tSum, tAvg, tStd, tStep;
+    private final String type, month, day, hour, count, sum, avg, std, step;
 
-    public AggregateTransactionRecord(String type, String month, String tDay, String tHour, String tCount,
-                                      String tSum, String tAvg, String tStd, String tStep) {
+    public AggregateTransactionRecord(String type, String month, String day, String hour, String count,
+                                      String sum, String avg, String std, String tStep) {
         this.type = type;
         this.month = month;
-        this.tDay = tDay;
-        this.tHour = tHour;
-        this.tCount = tCount;
-        this.tSum = tSum;
-        this.tAvg = tAvg;
-        this.tStd = tStd;
-        this.tStep = tStep;
+        this.day = day;
+        this.hour = hour;
+        this.count = count;
+        this.sum = sum;
+        this.avg = avg;
+        this.std = std;
+        this.step = tStep;
     }
 
     @Override
     public int compareTo(AggregateTransactionRecord record) {
-        double inDay = Double.parseDouble(tDay);
-        double inHour = Double.parseDouble(tHour);
+        double inDay = Double.parseDouble(day);
+        double inHour = Double.parseDouble(hour);
         double inType = (double) (TransactionParameters.indexOf(type));
-        double inputDay = Double.parseDouble(record.gettDay());
-        double inputHour = Double.parseDouble(record.gettHour());
+        double inputDay = Double.parseDouble(record.getDay());
+        double inputHour = Double.parseDouble(record.getHour());
         double inputType = (double) (TransactionParameters.indexOf(record.getType()));
 
         double valIn = ((inType * 1000000) + (10000 * inDay) + (10 * inHour));
@@ -41,52 +41,48 @@ public class AggregateTransactionRecord implements Comparable<AggregateTransacti
     @Override
     public String toString() {
         return "AggregateTransactionRecord [type=" + type + ", month=" + month
-                + ", tDay=" + tDay + ", tHour=" + tHour + ", tCount=" + tCount
-                + ", tSum=" + tSum + ", tAvg=" + tAvg + ", tStd=" + tStd
-                + ", tStep=" + tStep + "]";
+                + ", day=" + day + ", hour=" + hour + ", count=" + count
+                + ", sum=" + sum + ", avg=" + avg + ", std=" + std
+                + ", step=" + step + "]";
     }
 
     public boolean equals(AggregateTransactionRecord rec) {
-        return type.equals(rec.getType()) && tStep.equals(rec.gettStep());
+        return type.equals(rec.getType()) && step.equals(rec.getStep());
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public String getMonth() {
         return month;
     }
 
-    public String gettDay() {
-        return tDay;
+    public String getDay() {
+        return day;
     }
 
-    public String gettHour() {
-        return tHour;
+    public String getHour() {
+        return hour;
     }
 
-    public String gettCount() {
-        return tCount;
+    public String getCount() {
+        return count;
     }
 
-    public String gettSum() {
-        return tSum;
+    public String getSum() {
+        return sum;
     }
 
-    public String gettAvg() {
-        return tAvg;
+    public String getAvg() {
+        return avg;
     }
 
-    public String gettStd() {
-        return tStd;
+    public String getStd() {
+        return std;
     }
 
-    public String gettStep() {
-        return tStep;
+    public String getStep() {
+        return step;
     }
 }

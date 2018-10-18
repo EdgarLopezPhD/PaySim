@@ -4,17 +4,15 @@ import java.io.Serializable;
 
 public class Transaction implements Serializable {
     private static final long serialVersionUID = 1L;
-    private long step;
-    private String type;
-    private double amount;
+    private final long step;
+    private final String type;
+    private final double amount;
 
-    private String nameOrig;
-    private double oldBalanceOrig;
-    private double newBalanceOrig;
+    private final String nameOrig;
+    private final double oldBalanceOrig, newBalanceOrig;
 
-    private String nameDest;
-    private double oldBalanceDest ;
-    private double newBalanceDest;
+    private final String nameDest;
+    private final double oldBalanceDest, newBalanceDest;
 
     private boolean isFraud = false;
     private boolean isFlaggedFraud = false;
@@ -63,16 +61,8 @@ public class Transaction implements Serializable {
         return step;
     }
 
-    public void setStep(long step) {
-        this.step = step;
-    }
-
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public double getAmount() {

@@ -5,7 +5,7 @@ import paysim.base.ActionProbability;
 import java.util.ArrayList;
 
 public class ProbabilityRecordContainer {
-    private int step;
+    private final int step;
     private ArrayList<ActionProbability> probList;
 
     public ProbabilityRecordContainer(int step, ArrayList<ActionProbability> probList) {
@@ -24,13 +24,5 @@ public class ProbabilityRecordContainer {
 
     public ArrayList<ActionProbability> getProbList() {
         return probList;
-    }
-
-    public int getStep() {
-        return step;
-    }
-
-    public void setStep(int step) {
-        this.step = step;
     }
 }

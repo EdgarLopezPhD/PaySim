@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Random;
 
 public class TransactionParameters {
-    private static int COLUMN_ACTION = 0, COLUMN_PROB = 1, COLUMN_OCCURENCES = 1;
-    private static int COLUMN_LOW = 1, COLUMN_HIGH = 2, COLUMN_AVG = 3, COLUMN_STD = 4, COLUMN_FREQ = 5;
+    private static final int COLUMN_ACTION = 0, COLUMN_PROB = 1, COLUMN_OCCURRENCES = 1;
+    private static final int COLUMN_LOW = 1, COLUMN_HIGH = 2, COLUMN_AVG = 3, COLUMN_STD = 4, COLUMN_FREQ = 5;
 
     private static ArrayList<String> actions = new ArrayList<>();
     private static RandomCollection<String> actionPicker;
@@ -50,7 +50,7 @@ public class TransactionParameters {
         int loaded = 0;
         for (String[] paramLine : parameters) {
             if (isValidType(paramLine[COLUMN_ACTION])) {
-                maxOccurrencesPerAction.set(indexOf(paramLine[COLUMN_ACTION]), Integer.parseInt(paramLine[COLUMN_OCCURENCES]));
+                maxOccurrencesPerAction.set(indexOf(paramLine[COLUMN_ACTION]), Integer.parseInt(paramLine[COLUMN_OCCURRENCES]));
                 loaded++;
             }
         }
@@ -75,7 +75,7 @@ public class TransactionParameters {
         }
     }
 
-    public static int getMaxOccurenceGivenType(String type) {
+    public static int getMaxOccurrenceGivenType(String type) {
         return maxOccurrencesPerAction.get(indexOf(type));
     }
 
@@ -95,14 +95,14 @@ public class TransactionParameters {
         return actions;
     }
 
-    public static String getNextAction() {
+    private static String getNextAction() {
         String action = actionPicker.next();
         int count = countCallAction.get(action);
         countCallAction.put(action, count + 1);
         return action;
     }
 
-    public static Repetition getNextRepetition(String action) {
+    private static Repetition getNextRepetition(String action) {
         return repetitionPickerPerAction.get(indexOf(action)).next();
     }
 

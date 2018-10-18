@@ -3,12 +3,6 @@ package paysim.utils;
 import paysim.PaySim;
 import paysim.Transaction;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.DriverManager;
 
 import java.sql.SQLException;
@@ -19,16 +13,14 @@ import java.sql.Connection;
 public class DatabaseHandler {
 
     private Connection con = null;
-    private String url = "";
-    private String user = "";
-    private String password = "";
+    private final String url, user, password;
 
-    public DatabaseHandler(String urli, String useri, String passwordi) {
-        this.url = urli;
-        this.user = useri;
-        this.password = passwordi;
+    public DatabaseHandler(String url, String user, String password) {
+        this.url = url;
+        this.user = user;
+        this.password = password;
         try {
-            con = DriverManager.getConnection(url, user, password);
+            con = DriverManager.getConnection(this.url, this.user, this.password);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -59,36 +51,6 @@ public class DatabaseHandler {
         }
 
     }
-
-    public void copyDirectory(File sourceLocation, File targetLocation)
-            throws IOException {
-
-        if (sourceLocation.isDirectory()) {
-            if (!targetLocation.exists()) {
-                targetLocation.mkdir();
-            }
-
-            String[] children = sourceLocation.list();
-            for (int i = 0; i < children.length; i++) {
-                copyDirectory(new File(sourceLocation, children[i]),
-                        new File(targetLocation, children[i]));
-            }
-        } else {
-
-            InputStream in = new FileInputStream(sourceLocation);
-            OutputStream out = new FileOutputStream(targetLocation);
-
-            // Copy the bits from instream to outstream
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = in.read(buf)) > 0) {
-                out.write(buf, 0, len);
-            }
-            in.close();
-            out.close();
-        }
-    }
-
 
     public void close() {
         try {

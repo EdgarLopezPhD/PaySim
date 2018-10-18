@@ -5,7 +5,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 public class RandomCollection<E> {
-    private final NavigableMap<Double, E> map = new TreeMap<Double, E>();
+    private final NavigableMap<Double, E> map = new TreeMap<>();
     private final Random random;
     private double total = 0;
 

@@ -9,8 +9,8 @@ import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
 public class AggregateParamFileCreator {
-    private static int DOUBLE_PRECISION = 2;
-    String MONTH_TEN = "10";
+    private static final int DOUBLE_PRECISION = 2;
+    private final String MONTH_TEN = "10";
 
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
@@ -62,23 +62,23 @@ public class AggregateParamFileCreator {
     private AggregateTransactionRecord compactAggrRecord(ArrayList<AggregateTransactionRecord> recordList) {
         String type = recordList.get(0).getType();
         String month = recordList.get(0).getMonth();
-        String day = recordList.get(0).gettDay();
-        String hour = recordList.get(0).gettHour();
-        String step = recordList.get(0).gettStep();
+        String day = recordList.get(0).getDay();
+        String hour = recordList.get(0).getHour();
+        String step = recordList.get(0).getStep();
 
         double totalCount = recordList.stream()
-                .map(AggregateTransactionRecord::gettCount)
+                .map(AggregateTransactionRecord::getCount)
                 .mapToDouble(Double::parseDouble)
                 .sum();
 
         double sum = recordList.stream()
-                .map(AggregateTransactionRecord::gettSum)
+                .map(AggregateTransactionRecord::getSum)
                 .mapToDouble(Double::parseDouble)
                 .sum();
 
 
         double std = recordList.stream()
-                .map(AggregateTransactionRecord::gettStd)
+                .map(AggregateTransactionRecord::getStd)
                 .mapToDouble(Double::parseDouble)
                 .sum();
         std = std / ((double) recordList.size());
@@ -96,7 +96,7 @@ public class AggregateParamFileCreator {
         return compacted;
     }
 
-    public AggregateTransactionRecord getAggregateRecord(String type, int step, ArrayList<Transaction> transactionList) {
+    private AggregateTransactionRecord getAggregateRecord(String type, int step, ArrayList<Transaction> transactionList) {
         ArrayList<Transaction> subsetTransList = transactionList.stream()
                 .filter(t -> t.getStep() == step && t.getType().equals(type))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -126,7 +126,7 @@ public class AggregateParamFileCreator {
 
     }
 
-    public static double getStd(ArrayList<Transaction> list, double average) {
+    private static double getStd(ArrayList<Transaction> list, double average) {
         // Bessel corrected deviation https://en.wikipedia.org/wiki/Bessel%27s_correction
         return Math.sqrt(list.stream()
                 .map(Transaction::getAmount)

@@ -3,14 +3,16 @@ package paysim.actors;
 import paysim.PaySim;
 import paysim.base.Repetition;
 
-public class SuperClient {
+public class SuperActor {
+    private final String name;
+    double balance = 0;
+    int step = 0;
     private boolean isFraud = false;
-    int numDeposits = 0;
-    int numWithdraws = 0;
-    int numTransfers = 0;
-    public double balance = 0;
-    int currStep = 0;
     Repetition cont = null;
+
+    SuperActor(String name){
+        this.name = name;
+    }
 
     public int chooseAction(PaySim paysim, double probArr[]) {
         double randNr = paysim.random.nextDouble();
@@ -40,13 +42,8 @@ public class SuperClient {
         }
     }
 
-    public void transfer(Client cOne, Client cTwo, double amount) {
-        cOne.withdraw(amount);
-        cTwo.deposit(amount);
-    }
-
-    public void setCurrStep(int currStep) {
-        this.currStep = currStep;
+    public void setStep(int step) {
+        this.step = step;
     }
 
     public boolean isFraud() {
@@ -67,5 +64,14 @@ public class SuperClient {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString(){
+        return name;
     }
 }

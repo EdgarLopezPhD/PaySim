@@ -17,26 +17,29 @@ import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
 import sim.engine.SimState;
 
+import static java.lang.Math.abs;
+
 public class PaySim extends SimState {
     public static final double PAYSIM_VERSION = 1.0;
     public static long seed = 0;
-    String propertiesFile = "";
+    private String propertiesFile = "";
+    private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "1"};
 
     public ArrayList<AggregateTransactionRecord> aggrTransRecordList = new ArrayList<>();
     public AggregateParamFileCreator aggregateCreator = new AggregateParamFileCreator();
-    ProbabilityContainerHandler probabilityContainerHandler = new ProbabilityContainerHandler();
+    private ProbabilityContainerHandler probabilityContainerHandler = new ProbabilityContainerHandler();
 
     ArrayList<Transaction> trans = new ArrayList<>();
-    ArrayList<Merchant> merchants = new ArrayList<>();
-    ArrayList<Fraudster> fraudsters = new ArrayList<>();
+    private ArrayList<Merchant> merchants = new ArrayList<>();
+    private ArrayList<Fraudster> fraudsters = new ArrayList<>();
     public ArrayList<Client> clients = new ArrayList<>();
 
     String logFileName = "";
 
-    CurrentStepHandler stepHandler;
+    private CurrentStepHandler stepHandler;
 
     public long startTime = 0;
-    double totalTransactionsMade = 0;
+    private double totalTransactionsMade = 0;
 
     public static String simulatorName = "";
     private ArrayList<String> paramFile = new ArrayList<>();
@@ -46,7 +49,9 @@ public class PaySim extends SimState {
     }
 
     public static void main(String args[]) {
-        args = new String[] { "", "-file", "PaySim.properties", "1"};
+        if (args.length < 4) {
+            args = DEFAULT_ARGS;
+        }
         int nrOfTimesRepeat = Integer.parseInt(args[3]);
         for (int i = 0; i < nrOfTimesRepeat; i++) {
             PaySim p = new PaySim();
@@ -60,7 +65,7 @@ public class PaySim extends SimState {
         }
     }
 
-    public void initParameters(){
+    private void initParameters(){
         Parameters.loadPropertiesFile(propertiesFile);
         initSimulatorName();
         loadAggregatedFile();
@@ -69,7 +74,7 @@ public class PaySim extends SimState {
         createLogFile(logFileName);
     }
 
-    public void runSimulation() {
+    private void runSimulation() {
         System.out.println("PAYSIM: Financial Simulator v" + PAYSIM_VERSION + " \n");
         long elapsedSteps;
         double begin;
@@ -118,7 +123,7 @@ public class PaySim extends SimState {
         f.mkdirs();
     }
 
-    public void initSimulation() {
+    private void initSimulation() {
         System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed + "\n");
         setSeed(seed);
         BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
@@ -135,14 +140,14 @@ public class PaySim extends SimState {
         //Add the merchants
         System.out.println("NbMerchants:\t" + Parameters.nbMerchants * Parameters.multiplier + "\n");
         for (int i = 0; i < Parameters.nbMerchants * Parameters.multiplier; i++) {
-            Merchant m = new Merchant();
+            Merchant m = new Merchant(generateIdentifier());
             merchants.add(m);
         }
 
         //Add the fraudsters
         System.out.println("NrOfFraudsters:\t" + Parameters.nbFraudsters * Parameters.multiplier + "\n");
         for (int i = 0; i < Parameters.nbFraudsters * Parameters.multiplier; i++) {
-            Fraudster f = new Fraudster();
+            Fraudster f = new Fraudster(generateIdentifier());
             fraudsters.add(f);
             schedule.scheduleRepeating(f);
         }
@@ -157,7 +162,6 @@ public class PaySim extends SimState {
         String filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
         String filenameFraudsters = outputBaseString + "_Fraudsters.csv";
         String filenameHistory = outputBaseString + "_ParamHistory" + ".txt";
-        String networkFilename = outputBaseString + "_networkdump.txt";
         String filenameErrorTable = outputBaseString + "_ErrorTable.txt";
         String filenameParamAggregate = System.getProperty("user.dir") + "/paramFiles/AggregateTransaction.csv";
         String filenameSummary = outputBaseString + "_Summary.csv";
@@ -169,9 +173,7 @@ public class PaySim extends SimState {
         Output.writeAggregateParamFile(filenameOutputAggregate, this);
 
         Output.writeParamfileHistory(filenameHistory, this);
-        if (Parameters.saveNetwork) {
-            Output.writeNetworkResults(logFilename, networkFilename);
-        }
+
         double totalErrorRate = Output.writeErrorTable(filenameParamAggregate, filenameOutputAggregate, filenameErrorTable);
 
         Output.writeSummaryFile(filenameParamAggregate, filenameOutputAggregate, filenameSummary, this);
@@ -189,17 +191,16 @@ public class PaySim extends SimState {
 
     public Client getRandomClient() {
         if (getClients().size() > 0) {
-            Client c = getClients().get(random.nextInt(getClients().size()));
-            return c;
+            return getClients().get(random.nextInt(getClients().size()));
         }
         return null;
     }
 
-    public void resetVariables() {
+    void resetVariables() {
         trans = new ArrayList<>();
     }
 
-    public void setPropertiesFile(String s) {
+    private void setPropertiesFile(String s) {
         propertiesFile = s;
     }
 
@@ -209,10 +210,9 @@ public class PaySim extends SimState {
             FileReader reader = new FileReader(new File(Parameters.aggregateTransactionsParams));
             BufferedReader bufReader = new BufferedReader(reader);
 
-            String tempLine = "";
-
-            while ((tempLine = bufReader.readLine()) != null) {
-                paramFile.add(tempLine);
+            String line;
+            while ((line = bufReader.readLine()) != null) {
+                paramFile.add(line);
             }
             bufReader.close();
         } catch (Exception e) {
@@ -221,7 +221,7 @@ public class PaySim extends SimState {
     }
 
     //Parameters the probabilities into the probability array
-    public double[] loadProbabilites(ArrayList<ActionProbability> list, int nrOfClients) {
+    double[] loadProbabilities(ArrayList<ActionProbability> list, int nrOfClients) {
         double ProbabilityArr[] = new double[list.size()];
         for (int i = 0; i < list.size(); i++) {
             double currProb = (list.get(i).getNrOfTransactions() * Parameters.multiplier) / ((double) nrOfClients);
@@ -232,9 +232,8 @@ public class PaySim extends SimState {
 
     public static double getCumulative(String type, int rowIndex, ArrayList<String> fileContents) {
         double aggr = 0;
-        for (int i = 0; i < fileContents.size(); i++) {
-            String row = fileContents.get(i);
-            String split[] = row.split(",");
+        for (String line: fileContents) {
+            String split[] = line.split(",");
             String currType = split[0];
 
             if (currType.equals(type)) {
@@ -256,15 +255,19 @@ public class PaySim extends SimState {
         return clients;
     }
 
-    public ArrayList<Merchant> getMerchants() {
+    private ArrayList<Merchant> getMerchants() {
         return this.merchants;
     }
 
-    public ArrayList<AggregateTransactionRecord> getAggrTransRecordList() {
+    ArrayList<AggregateTransactionRecord> getAggrTransRecordList() {
         return aggrTransRecordList;
     }
 
-    public AggregateParamFileCreator getAggregateCreator() {
+    AggregateParamFileCreator getAggregateCreator() {
         return aggregateCreator;
+    }
+
+    public String generateIdentifier(){
+        return String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode()));
     }
 }

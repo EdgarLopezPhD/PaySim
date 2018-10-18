@@ -9,17 +9,18 @@ import paysim.parameters.Parameters;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
-import static java.lang.Math.abs;
-
-public class Client extends SuperClient implements Steppable {
-    private String name = "";
+public class Client extends SuperActor implements Steppable {
+    private static final String CLIENT_IDENTIFIER = "C";
     private double[] probabilityArr;
     private ArrayList<ActionProbability> probList;
     private ArrayList<Integer> stepsToRepeat = new ArrayList<>();
-    String currType = "";
     private CurrentStepHandler stepHandler = null;
     private double balanceFlag = 0; // steps before and balance
     private int countFlag = 0;
+
+    public Client(String name) {
+        super(CLIENT_IDENTIFIER + name);
+    }
 
     @Override
     public void step(SimState state) {
@@ -31,13 +32,13 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleAction(SimState state) {
+    private void handleAction(SimState state) {
         PaySim paysim = (PaySim) state;
-        int action = 0;
+        int action = -1;
 
-        do {
+        while (action == -1) {
             action = chooseAction(paysim, probabilityArr);
-        } while (action == -1);
+        }
 
         ActionProbability prob;
         switch (action) {
@@ -82,34 +83,28 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleRepetition(SimState state) {
+    private void handleRepetition(SimState state) {
         PaySim paysim = (PaySim) state;
         for (int currentStep : stepsToRepeat) {
-            currStep = currentStep;
+            step = currentStep;
 
-            switch (this.cont.getType()) {
+            switch (cont.getType()) {
                 case "CASH_IN":
-                    this.currType = "CASH_IN";
                     handleCashInRepetition(paysim);
                     break;
                 case "CASH_OUT":
-                    this.currType = "CASH_OUT";
                     handleCashOutRepetition(paysim);
                     break;
                 case "DEBIT":
-                    this.currType = "DEBIT";
                     handleDebitRepetition(paysim);
                     break;
                 case "PAYMENT":
-                    this.currType = "PAYMENT";
                     handlePaymentRepetition(paysim);
                     break;
                 case "TRANSFER":
-                    this.currType = "TRANSFER";
                     handleTransferRepetition(paysim);
                     break;
                 case "DEPOSIT":
-                    this.currType = "DEPOSIT";
                     handleDepositRepetition(paysim);
                     break;
             }
@@ -117,7 +112,7 @@ public class Client extends SuperClient implements Steppable {
 
     }
 
-    public void handleCashIn(PaySim paysim, Merchant merchantTo) {
+    private void handleCashIn(PaySim paysim, Merchant merchantTo) {
         String type = "CASH_IN";
         ActionProbability prob = getProb(type);
 
@@ -139,7 +134,7 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleCashOut(PaySim paysim, Merchant merchantTo, double amount) {
+    void handleCashOut(PaySim paysim, Merchant merchantTo, double amount) {
         String type = "CASH_OUT";
 
         String nameOrig = this.getName();
@@ -158,7 +153,7 @@ public class Client extends SuperClient implements Steppable {
         paysim.getTrans().add(t);
     }
 
-    public void handleDebit(PaySim paysim) {
+    private void handleDebit(PaySim paysim) {
         String type = "DEBIT";
         ActionProbability prob = getProb(type);
 
@@ -181,7 +176,7 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handlePayment(PaySim paysim) {
+    private void handlePayment(PaySim paysim) {
         String type = "PAYMENT";
         ActionProbability prob = getProb(type);
         if (prob != null) {
@@ -206,7 +201,7 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleTransfer(PaySim paysim, Client clientTo, double amount) {
+    void handleTransfer(PaySim paysim, Client clientTo, double amount) {
         String type = "TRANSFER";
         String nameOrig = this.getName();
         String nameDest = clientTo.getName();
@@ -239,7 +234,7 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleDeposit(PaySim paysim) {
+    private void handleDeposit(PaySim paysim) {
         String type = "DEPOSIT";
         ActionProbability prob = getProb(type);
 
@@ -255,7 +250,6 @@ public class Client extends SuperClient implements Steppable {
 
             clientToTransfer.withdraw(amount);
             this.deposit(amount);
-            this.numDeposits++;
 
             double newBalanceOrig = this.getBalance();
             double newBalanceDest = clientToTransfer.getBalance();
@@ -267,9 +261,9 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleCashInRepetition(PaySim paysim) {
+    private void handleCashInRepetition(PaySim paysim) {
         String type = "CASH_IN";
-        double amount = getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -291,9 +285,9 @@ public class Client extends SuperClient implements Steppable {
         paysim.getTrans().add(t);
     }
 
-    public void handleCashOutRepetition(PaySim paysim) {
+    private void handleCashOutRepetition(PaySim paysim) {
         String type = "CASH_OUT";
-        double amount = getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -316,9 +310,9 @@ public class Client extends SuperClient implements Steppable {
         paysim.getTrans().add(t);
     }
 
-    public void handleDebitRepetition(PaySim paysim) {
+    private void handleDebitRepetition(PaySim paysim) {
         String type = "DEBIT";
-        double amount = getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -338,9 +332,9 @@ public class Client extends SuperClient implements Steppable {
         paysim.getTrans().add(t);
     }
 
-    public void handlePaymentRepetition(PaySim paysim) {
+    private void handlePaymentRepetition(PaySim paysim) {
         String type = "PAYMENT";
-        double amount = this.getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -363,9 +357,9 @@ public class Client extends SuperClient implements Steppable {
         paysim.getTrans().add(t);
     }
 
-    public void handleTransferRepetition(PaySim paysim) {
+    private void handleTransferRepetition(PaySim paysim) {
         String type = "TRANSFER";
-        double amount = this.getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -386,9 +380,9 @@ public class Client extends SuperClient implements Steppable {
         }
     }
 
-    public void handleDepositRepetition(PaySim paysim) {
+    private void handleDepositRepetition(PaySim paysim) {
         String type = "DEPOSIT";
-        double amount = getAmountRepetition(currType, currStep, paysim);
+        double amount = getAmountRepetition(type, step, paysim);
         if (amount == -1) {
             return;
         }
@@ -401,7 +395,6 @@ public class Client extends SuperClient implements Steppable {
 
         clientToTransfer.withdraw(amount);
         this.deposit(amount);
-        this.numDeposits++;
 
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = clientToTransfer.getBalance();
@@ -416,21 +409,7 @@ public class Client extends SuperClient implements Steppable {
         this.probabilityArr = probabilityArr;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        if (this.name.equals(""))
-            this.name = this.toString();
-        return this.name;
-    }
-
-    public String toString() {
-        return "C" + Integer.toString(abs(this.hashCode()));
-    }
-
-    public boolean checkBalanceDropping(double transLimit, double amount) {
+    private boolean checkBalanceDropping(double transLimit, double amount) {
         boolean flag = false;
         if (this.countFlag >= 3) { // check for fraud
             if (this.balanceFlag - this.balance - amount > transLimit * 2.5) {
@@ -450,8 +429,8 @@ public class Client extends SuperClient implements Steppable {
 
     // Handler functions for repetition
 
-    public Client getRandomClient(double amount, PaySim paysim) {
-        Client clientToTransfer = new Client();
+    private Client getRandomClient(double amount, PaySim paysim) {
+        Client clientToTransfer;
         int counter = 0;
         do {
             clientToTransfer = paysim.getClients().get(
@@ -470,12 +449,12 @@ public class Client extends SuperClient implements Steppable {
     }
 
     private double getAmount(ActionProbability prob, PaySim paysim) {
-        double amount = 0;
+        double amount = -1;
 
-        do {
+        while (amount <= 0) {
             amount = paysim.random.nextGaussian() * prob.getStd()
                     + prob.getAverage();
-        } while (amount <= 0);
+        }
 
         return amount;
     }
@@ -485,12 +464,12 @@ public class Client extends SuperClient implements Steppable {
         if (transRecord == null) {
             return -1;
         }
-        double amount = 0;
-        do {
+        double amount = -1;
+        while (amount <= 0) {
             amount = paysim.random.nextGaussian()
-                    * Double.parseDouble(transRecord.gettStd())
-                    + Double.parseDouble(transRecord.gettAvg());
-        } while (amount <= 0);
+                    * Double.parseDouble(transRecord.getStd())
+                    + Double.parseDouble(transRecord.getAvg());
+        }
 
         return amount;
     }

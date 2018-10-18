@@ -1,8 +1,8 @@
 package paysim.base;
 
 public class Repetition {
-    private String type;
-    private double low, high, avg, std;
+    private final String type;
+    private final double low, high, avg, std;
 
     public Repetition(String type, double low, double high, double avg, double std) {
         this.type = type;
@@ -21,10 +21,6 @@ public class Repetition {
 
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public double getLow() {

@@ -7,7 +7,7 @@ import paysim.parameters.TransactionParameters;
 import java.util.ArrayList;
 
 public class ProbabilityContainerHandler {
-    ArrayList<ProbabilityRecordContainer> list;
+    private ArrayList<ProbabilityRecordContainer> list;
 
     public ProbabilityContainerHandler() {
         list = new ArrayList<>();
