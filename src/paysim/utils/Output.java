@@ -1,12 +1,12 @@
 package paysim.utils;
 
 import paysim.PaySim;
+import paysim.base.ActionProbability;
 import paysim.base.Repetition;
-import paysim.Transaction;
+import paysim.base.Transaction;
 import paysim.actors.Fraudster;
 import paysim.aggregation.AggregateDumpAnalyzer;
 import paysim.aggregation.AggregateDumpHandler;
-import paysim.aggregation.AggregateTransactionRecord;
 import paysim.parameters.TransactionParameters;
 
 import java.io.*;
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import static paysim.PaySim.getCumulative;
+import static paysim.aggregation.AggregateParamFileCreator.generateAggregateParamFile;
 import static paysim.parameters.TransactionParameters.getCountCallAction;
 import static paysim.parameters.TransactionParameters.getCountCallRepetition;
 
@@ -66,32 +67,31 @@ public class Output {
         }
     }
 
-    public static void writeAggregateParamFile(String filenameOutputAggregate, PaySim simulation) {
+    public static void writeAggregateStep(String filenameOutputAggregate, int step, ArrayList<Transaction> transactions) {
+        Map<String, ActionProbability> stepRecord = generateAggregateParamFile(step, transactions);
         try {
-            BufferedWriter paramDump = new BufferedWriter(new FileWriter(new File(filenameOutputAggregate)));
-            paramDump.write("action,tmonth,tday,thour,tcount,tsum,tavg,tstd,step\n");
-
-            java.util.Collections.sort(simulation.aggrTransRecordList);
-
-            ArrayList<AggregateTransactionRecord> reformatted = simulation.aggregateCreator.reformat(simulation.aggrTransRecordList);
-            java.util.Collections.sort(reformatted);
-
-            for (AggregateTransactionRecord record : reformatted) {
-                paramDump.write(record.getAction() + "," +
-                        record.getMonth() + "," +
-                        record.getDay() + "," +
-                        record.getHour() + "," +
-                        record.getCount() + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getSum())) + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getAvg())) + "," +
-                        formatDouble(PRECISION_OUTPUT, Double.parseDouble(record.getStd())) + "," +
-                        record.getStep() + "\n"
+            BufferedWriter paramDump = new BufferedWriter(new FileWriter(new File(filenameOutputAggregate), true));
+            if (step == 0) {
+                paramDump.write("action,month,day,hour,count,sum,avg,std,step\n");
+            }
+            for (ActionProbability actionRecord : stepRecord.values()) {
+                paramDump.write(actionRecord.getAction() + "," +
+                        actionRecord.getMonth() + "," +
+                        actionRecord.getDay() + "," +
+                        actionRecord.getHour() + "," +
+                        actionRecord.getNbTransactions() + "," +
+                        formatDouble(PRECISION_OUTPUT, actionRecord.getTotalSum()) + "," +
+                        formatDouble(PRECISION_OUTPUT, actionRecord.getAverage()) + "," +
+                        formatDouble(PRECISION_OUTPUT, actionRecord.getStd()) + "," +
+                        step + "\n"
                 );
             }
             paramDump.close();
-        } catch (IOException e) {
+        } catch (
+                IOException e) {
             e.printStackTrace();
         }
+
     }
 
     public static void writeParamfileHistory(String filenameHistory, PaySim simulation) {
@@ -166,7 +166,7 @@ public class Output {
                 double probability = totalAction != 0 ? ((double) count) / totalAction : 0;
 
                 bufWriter.write(action + "," + repetition.getLow() + "," + repetition.getHigh() + ","
-                        + count + "," + formatDouble(3, probability)
+                        + count + "," + formatDouble(5, probability)
                         + "\n");
             }
             bufWriter.close();

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import paysim.actors.Client;
-import paysim.aggregation.AggregateTransactionRecord;
 import paysim.base.ActionProbability;
 import paysim.base.Repetition;
 import paysim.parameters.BalanceClients;
@@ -58,24 +57,23 @@ public class Manager implements Steppable {
             paysim.schedule.scheduleOnce(c);
         }
 
-        updatePaySimOutputs(paysim);
+        updatePaySimOutputs(paysim, step);
     }
 
-    private void updatePaySimOutputs(PaySim paysim) {
-        ArrayList<AggregateTransactionRecord> records = paysim.getAggregateCreator().
-                generateAggregateParamFile(paysim.getTrans());
-
-        if (records.size() > 0) {
+    private void updatePaySimOutputs(PaySim paysim, int step) {
+        if (paysim.transactions.size() > 0) {
             Manager.nbStepParticipated++;
         }
-        for (AggregateTransactionRecord r : records) {
-            paysim.getAggrTransRecordList().add(r);
+
+        Output.writeLog(paysim.logFileName, paysim.transactions);
+        if (Parameters.saveToDB) {
+            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, paysim.transactions);
         }
 
-        Output.writeLog(paysim.logFileName, paysim.trans);
-        if (Parameters.saveToDB) {
-            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, paysim.trans);
-        }
+        String outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + paysim.simulatorName + "//" + paysim.simulatorName;
+        String filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
+
+        Output.writeAggregateStep(filenameOutputAggregate, step, paysim.getTransactions());
         paysim.resetVariables();
     }
 

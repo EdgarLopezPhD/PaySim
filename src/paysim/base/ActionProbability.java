@@ -23,7 +23,7 @@ public class ActionProbability {
                 + "\nAverage: " + average + "\nStd: " + std + "\n";
     }
 
-    public double getNbTransactions() {
+    public int getNbTransactions() {
         return nbTransactions;
     }
 
@@ -33,5 +33,25 @@ public class ActionProbability {
 
     public double getStd() {
         return std;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public int getMonth() {
+        return month;
+    }
+
+    public int getDay() {
+        return day;
+    }
+
+    public int getHour() {
+        return hour;
+    }
+
+    public double getTotalSum() {
+        return totalSum;
     }
 }

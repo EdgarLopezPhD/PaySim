@@ -9,9 +9,8 @@ import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
 
-import paysim.aggregation.AggregateParamFileCreator;
-import paysim.aggregation.AggregateTransactionRecord;
 import paysim.base.ActionProbability;
+import paysim.base.Transaction;
 import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
 import paysim.parameters.StepParameters;
@@ -34,13 +33,10 @@ public class PaySim extends SimState {
 
     public static String simulatorName = "";
 
-    ArrayList<Transaction> trans = new ArrayList<>();
+    ArrayList<Transaction> transactions = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
     private ArrayList<Fraudster> fraudsters = new ArrayList<>();
     public ArrayList<Client> clients = new ArrayList<>();
-
-    public ArrayList<AggregateTransactionRecord> aggrTransRecordList = new ArrayList<>();
-    public AggregateParamFileCreator aggregateCreator = new AggregateParamFileCreator();
 
     public PaySim() {
         super(0);
@@ -151,8 +147,9 @@ public class PaySim extends SimState {
 
     public void finish() {
         String outputBaseString = System.getProperty("user.dir") + Parameters.outputPath + simulatorName + "//" + simulatorName;
-        String logFilename =  outputBaseString + "_log.csv";
         String filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
+
+        String logFilename =  outputBaseString + "_log.csv";
         String filenameFraudsters = outputBaseString + "_Fraudsters.csv";
         String filenameHistory = outputBaseString + "_ParamHistory" + ".txt";
         String filenameErrorTable = outputBaseString + "_ErrorTable.txt";
@@ -161,9 +158,8 @@ public class PaySim extends SimState {
         String filenameFreqOutput = outputBaseString + "_repetitionFrequency.csv";
         String filenameSummary2 = System.getProperty("user.dir") + Parameters.outputPath + "summary.csv";
 
-        Output.writeLog(logFilename, trans);
+        Output.writeLog(logFilename, transactions);
         Output.writeFraudsters(filenameFraudsters, fraudsters);
-        Output.writeAggregateParamFile(filenameOutputAggregate, this);
 
         Output.writeParamfileHistory(filenameHistory, this);
 
@@ -190,7 +186,7 @@ public class PaySim extends SimState {
     }
 
     void resetVariables() {
-        trans = new ArrayList<>();
+        transactions = new ArrayList<>();
     }
 
     private void setPropertiesFile(String s) {
@@ -227,8 +223,8 @@ public class PaySim extends SimState {
         return String.valueOf(abs(String.valueOf(System.currentTimeMillis()).hashCode()));
     }
 
-    public ArrayList<Transaction> getTrans() {
-        return trans;
+    public ArrayList<Transaction> getTransactions() {
+        return transactions;
     }
 
     public ArrayList<Client> getClients() {
@@ -237,13 +233,5 @@ public class PaySim extends SimState {
 
     private ArrayList<Merchant> getMerchants() {
         return this.merchants;
-    }
-
-    ArrayList<AggregateTransactionRecord> getAggrTransRecordList() {
-        return aggrTransRecordList;
-    }
-
-    AggregateParamFileCreator getAggregateCreator() {
-        return aggregateCreator;
     }
 }

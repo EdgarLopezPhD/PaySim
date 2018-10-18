@@ -1,7 +1,7 @@
 package paysim.utils;
 
 import paysim.PaySim;
-import paysim.Transaction;
+import paysim.base.Transaction;
 
 import java.sql.DriverManager;
 

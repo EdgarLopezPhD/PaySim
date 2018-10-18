@@ -1,6 +1,6 @@
 package paysim.parameters;
 
-import paysim.StepCounter;
+import paysim.base.StepCounter;
 import paysim.base.ActionProbability;
 import paysim.utils.CSVReader;
 

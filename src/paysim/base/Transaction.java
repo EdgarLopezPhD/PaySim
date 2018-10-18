@@ -1,4 +1,4 @@
-package paysim;
+package paysim.base;
 
 import java.io.Serializable;
 

@@ -65,8 +65,8 @@ public class TransactionParameters {
             if (isValidAction(repetitionString[COLUMN_ACTION])) {
                 RandomCollection<Repetition> repetitionGetter = repetitionPickerPerAction.get(indexOf(repetitionString[COLUMN_ACTION]));
                 Repetition repetition = new Repetition(repetitionString[COLUMN_ACTION],
-                        Double.parseDouble(repetitionString[COLUMN_LOW]),
-                        Double.parseDouble(repetitionString[COLUMN_HIGH]),
+                        Integer.parseInt(repetitionString[COLUMN_LOW]),
+                        Integer.parseInt(repetitionString[COLUMN_HIGH]),
                         Double.parseDouble(repetitionString[COLUMN_AVG]),
                         Double.parseDouble(repetitionString[COLUMN_STD]));
                 repetitionGetter.add(Double.parseDouble(repetitionString[COLUMN_FREQ]), repetition);

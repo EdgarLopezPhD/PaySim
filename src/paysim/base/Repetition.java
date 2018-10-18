@@ -2,9 +2,10 @@ package paysim.base;
 
 public class Repetition {
     private final String action;
-    private final double low, high, avg, std;
+    private final int low, high;
+    private final double avg, std;
 
-    public Repetition(String action, double low, double high, double avg, double std) {
+    public Repetition(String action, int low, int high, double avg, double std) {
         this.action = action;
         this.low = low;
         this.high = high;
