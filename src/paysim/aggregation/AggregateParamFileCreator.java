@@ -14,9 +14,9 @@ public class AggregateParamFileCreator {
 
     public ArrayList<AggregateTransactionRecord> generateAggregateParamFile(ArrayList<Transaction> transactionList) {
         ArrayList<AggregateTransactionRecord> aggrTransRecord = new ArrayList<>();
-        for (String type : TransactionParameters.getActions()) {
+        for (String action : TransactionParameters.getActions()) {
             for (int step = 0; step < Parameters.nbSteps; step++) {
-                AggregateTransactionRecord partialRecord = getAggregateRecord(type, step, transactionList);
+                AggregateTransactionRecord partialRecord = getAggregateRecord(action, step, transactionList);
                 if (partialRecord != null) {
                     aggrTransRecord.add(partialRecord);
                 }
@@ -60,7 +60,7 @@ public class AggregateParamFileCreator {
     }
 
     private AggregateTransactionRecord compactAggrRecord(ArrayList<AggregateTransactionRecord> recordList) {
-        String type = recordList.get(0).getType();
+        String action = recordList.get(0).getAction();
         String month = recordList.get(0).getMonth();
         String day = recordList.get(0).getDay();
         String hour = recordList.get(0).getHour();
@@ -85,7 +85,7 @@ public class AggregateParamFileCreator {
         double avg = sum / totalCount;
 
         AggregateTransactionRecord compacted =
-                new AggregateTransactionRecord(type,
+                new AggregateTransactionRecord(action,
                         month, day, hour,
                         String.valueOf((int) totalCount),
                         String.valueOf(sum),
@@ -96,9 +96,9 @@ public class AggregateParamFileCreator {
         return compacted;
     }
 
-    private AggregateTransactionRecord getAggregateRecord(String type, int step, ArrayList<Transaction> transactionList) {
+    private AggregateTransactionRecord getAggregateRecord(String action, int step, ArrayList<Transaction> transactionList) {
         ArrayList<Transaction> subsetTransList = transactionList.stream()
-                .filter(t -> t.getStep() == step && t.getType().equals(type))
+                .filter(t -> t.getStep() == step && t.getAction().equals(action))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (subsetTransList.size() > 0) {
@@ -107,11 +107,11 @@ public class AggregateParamFileCreator {
             double average = getTruncatedDouble(sum / (double) count);
             double tstd = getTruncatedDouble(getStd(subsetTransList, average));
 
-            int month = step / (HOURS_IN_DAY * HOURS_IN_DAY);
+            int month = step / (DAYS_IN_MONTH * HOURS_IN_DAY);
             int day = (step % (DAYS_IN_MONTH * HOURS_IN_DAY)) / HOURS_IN_DAY;
             int hour = step % HOURS_IN_DAY;
 
-            AggregateTransactionRecord recordToReturn = new AggregateTransactionRecord(String.valueOf(type),
+            AggregateTransactionRecord recordToReturn = new AggregateTransactionRecord(String.valueOf(action),
                     String.valueOf(month),
                     String.valueOf(day),
                     String.valueOf(hour),

@@ -1,4 +1,4 @@
-type,tmonth,tday,thour,tcount,tsum,tavg,tstd,step
+action,tmonth,tday,thour,tcount,tsum,tavg,tstd,step
 CASH_IN,10,0,1,5189,804508501.9,155041.1451,131917.0502,1
 CASH_IN,10,0,2,1057,167921628.7,158866.2523,134859.017,2
 CASH_IN,10,0,3,204,31760625.09,155689.3387,121524.7892,3

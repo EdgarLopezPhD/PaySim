@@ -33,7 +33,7 @@ public class DatabaseHandler {
                     + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
             PreparedStatement st = con.prepareStatement(sql);
             st.setString(1, PaySim.simulatorName);
-            st.setString(2, trans.getType());
+            st.setString(2, trans.getAction());
             st.setDouble(3, trans.getAmount());
             st.setString(4, trans.getNameOrig());
             st.setDouble(5, trans.getOldBalanceOrig());

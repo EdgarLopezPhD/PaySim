@@ -1,4 +1,4 @@
-type,max(numTrans)
+action,max(numTrans)
 CASH_IN,1924
 CASH_OUT,1400
 CASH_OUT_ATM,67

@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Transaction implements Serializable {
     private static final long serialVersionUID = 1L;
     private final long step;
-    private final String type;
+    private final String action;
     private final double amount;
 
     private final String nameOrig;
@@ -17,10 +17,10 @@ public class Transaction implements Serializable {
     private boolean isFraud = false;
     private boolean isFlaggedFraud = false;
 
-    public Transaction(long step, String type, double amount, String nameOrig, double oldBalanceOrig,
+    public Transaction(long step, String action, double amount, String nameOrig, double oldBalanceOrig,
                        double newBalanceOrig, String nameDest, double oldBalanceDest, double newBalanceDest) {
         this.step = step;
-        this.type = type;
+        this.action = action;
         this.amount = amount;
         this.nameOrig = nameOrig;
         this.oldBalanceOrig = oldBalanceOrig;
@@ -61,8 +61,8 @@ public class Transaction implements Serializable {
         return step;
     }
 
-    public String getType() {
-        return type;
+    public String getAction() {
+        return action;
     }
 
     public double getAmount() {

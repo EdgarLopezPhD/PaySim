@@ -10,8 +10,9 @@ public class CSVReader {
 
     public static ArrayList<String[]> read(String csvFile) {
         ArrayList<String[]> csvContent = new ArrayList<>();
-        String line;
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
+            // Skip header
+            String line = br.readLine();
             while ((line = br.readLine()) != null) {
                 csvContent.add(line.split(SPLIT_BY));
             }

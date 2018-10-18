@@ -49,20 +49,20 @@ public class TransactionParameters {
         ArrayList<String[]> parameters = CSVReader.read(filename);
         int loaded = 0;
         for (String[] paramLine : parameters) {
-            if (isValidType(paramLine[COLUMN_ACTION])) {
+            if (isValidAction(paramLine[COLUMN_ACTION])) {
                 maxOccurrencesPerAction.set(indexOf(paramLine[COLUMN_ACTION]), Integer.parseInt(paramLine[COLUMN_OCCURRENCES]));
                 loaded++;
             }
         }
         if (loaded != actions.size()) {
-            System.out.println("Warning : Missing type of transactions in " + filename);
+            System.out.println("Warning : Missing action in " + filename);
         }
     }
 
     public static void loadTransferFreqMod(String filename) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
         for (String[] repetitionString : parameters) {
-            if (isValidType(repetitionString[COLUMN_ACTION])) {
+            if (isValidAction(repetitionString[COLUMN_ACTION])) {
                 RandomCollection<Repetition> repetitionGetter = repetitionPickerPerAction.get(indexOf(repetitionString[COLUMN_ACTION]));
                 Repetition repetition = new Repetition(repetitionString[COLUMN_ACTION],
                         Double.parseDouble(repetitionString[COLUMN_LOW]),
@@ -75,19 +75,19 @@ public class TransactionParameters {
         }
     }
 
-    public static int getMaxOccurrenceGivenType(String type) {
-        return maxOccurrencesPerAction.get(indexOf(type));
+    public static int getMaxOccurrenceGivenAction(String action) {
+        return maxOccurrencesPerAction.get(indexOf(action));
     }
 
-    public static boolean isValidType(String name) {
+    public static boolean isValidAction(String name) {
         return actions.contains(name);
     }
 
-    public static int indexOf(String type) {
-        return actions.indexOf(type);
+    public static int indexOf(String action) {
+        return actions.indexOf(action);
     }
 
-    public static String getType(int id) {
+    public static String getAction(int id) {
         return actions.get(id);
     }
 

@@ -5,7 +5,7 @@ public class StepCounter {
     private int maxCount;
     private int countAssigned;
 
-    StepCounter(int currentStep) {
+    public StepCounter(int currentStep) {
         this.currentStep = currentStep;
         this.maxCount = 0;
         this.countAssigned = 0;
@@ -39,5 +39,9 @@ public class StepCounter {
 
     public void setMaxCount(int maxCount) {
         this.maxCount = maxCount;
+    }
+
+    public void addCount(int count) {
+        this.maxCount += count;
     }
 }

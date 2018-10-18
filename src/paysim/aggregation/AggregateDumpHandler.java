@@ -48,10 +48,10 @@ public class AggregateDumpHandler {
         formatResult(orig.getAvgAvgDebit(), generated.getAvgAvgDebit(), "DEB");
     }
 
-    private void formatResult(double valueOrig, double valueGenerated, String type) {
+    private void formatResult(double valueOrig, double valueGenerated, String action) {
         double errorRate = abs((valueOrig - valueGenerated) / valueOrig);
         totalErrorRate += errorRate;
-        resultDump += "|\t" + type + "\t\t|\t" + formatDouble(3, valueOrig) + "\t|\t" + formatDouble(3, valueGenerated) +
+        resultDump += "|\t" + action + "\t\t|\t" + formatDouble(3, valueOrig) + "\t|\t" + formatDouble(3, valueGenerated) +
                 "\t|\t" + formatDouble(3, errorRate) + "\t\t\t|" + "\n";
     }
 

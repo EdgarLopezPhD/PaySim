@@ -30,7 +30,7 @@ public class Output {
             for (Transaction t : trans) {
                 bufWriter.write(
                         t.getStep() +
-                                "," + t.getType() +
+                                "," + t.getAction() +
                                 "," + formatDouble(PRECISION_OUTPUT, t.getAmount()) +
                                 "," + t.getNameOrig() +
                                 "," + formatDouble(PRECISION_OUTPUT, t.getOldBalanceOrig()) +
@@ -69,7 +69,7 @@ public class Output {
     public static void writeAggregateParamFile(String filenameOutputAggregate, PaySim simulation) {
         try {
             BufferedWriter paramDump = new BufferedWriter(new FileWriter(new File(filenameOutputAggregate)));
-            paramDump.write("type,tmonth,tday,thour,tcount,tsum,tavg,tstd,step\n");
+            paramDump.write("action,tmonth,tday,thour,tcount,tsum,tavg,tstd,step\n");
 
             java.util.Collections.sort(simulation.aggrTransRecordList);
 
@@ -77,7 +77,7 @@ public class Output {
             java.util.Collections.sort(reformatted);
 
             for (AggregateTransactionRecord record : reformatted) {
-                paramDump.write(record.getType() + "," +
+                paramDump.write(record.getAction() + "," +
                         record.getMonth() + "," +
                         record.getDay() + "," +
                         record.getHour() + "," +
@@ -156,16 +156,16 @@ public class Output {
         try {
             FileWriter fWriter = new FileWriter(f);
             BufferedWriter bufWriter = new BufferedWriter(fWriter);
-            bufWriter.write("type,high,low,total,freq" + "\n");
+            bufWriter.write("action,high,low,total,freq" + "\n");
 
             for (Map.Entry<Repetition, Integer> counterRep : countPerRepetition.entrySet()) {
                 Repetition repetition = counterRep.getKey();
-                String type = repetition.getType();
+                String action = repetition.getAction();
                 int count = counterRep.getValue();
-                int totalAction = countPerAction.get(type);
+                int totalAction = countPerAction.get(action);
                 double probability = totalAction != 0 ? ((double) count) / totalAction : 0;
 
-                bufWriter.write(type + "," + repetition.getLow() + "," + repetition.getHigh() + ","
+                bufWriter.write(action + "," + repetition.getLow() + "," + repetition.getHigh() + ","
                         + count + "," + formatDouble(3, probability)
                         + "\n");
             }
@@ -209,10 +209,10 @@ public class Output {
         String result = spaceBegin + "Orig" + spaceBegin + "\tSynthetic" + spaceBegin + "\n";
         result += spaceBegin + "Sum" + spaceBegin + "\tSum" + "\n";
 
-        for (String type : TransactionParameters.getActions()) {
-            double sumOrig = getCumulative(type, 5, fileContentsOrig);
-            double sumSynth = getCumulative(type, 5, fileContentsSynth);
-            result += type + spaceBegin.substring(type.length())
+        for (String action : TransactionParameters.getActions()) {
+            double sumOrig = getCumulative(action, 5, fileContentsOrig);
+            double sumSynth = getCumulative(action, 5, fileContentsSynth);
+            result += action + spaceBegin.substring(action.length())
                     + formatDouble(PRECISION_OUTPUT, sumOrig) + spaceBegin.substring(String.valueOf(sumOrig).length())
                     + "\t\t" + formatDouble(PRECISION_OUTPUT, sumSynth) + "\n";
         }
@@ -220,12 +220,12 @@ public class Output {
         result += "-----------------------------------------------------------------------------\n";
         result += spaceBegin + "Count" + spaceBegin + "\tCount" + spaceBegin + "\n";
 
-        for (String type : TransactionParameters.getActions()) {
-            int countOrig = (int) getCumulative(type, 4, fileContentsOrig);
-            int countSynth = (int) getCumulative(type, 4, fileContentsSynth);
+        for (String action : TransactionParameters.getActions()) {
+            int countOrig = (int) getCumulative(action, 4, fileContentsOrig);
+            int countSynth = (int) getCumulative(action, 4, fileContentsSynth);
 
             simulation.updateTotalTransactionsMade(countSynth);
-            result += type + spaceBegin.substring(type.length())
+            result += action + spaceBegin.substring(action.length())
                     + String.valueOf(countOrig) + spaceBegin.substring(String.valueOf(countOrig).length())
                     + "\t\t\t" + String.valueOf(countSynth) + "\n";
         }

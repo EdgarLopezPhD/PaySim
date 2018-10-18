@@ -1,79 +1,37 @@
 package paysim.base;
 
 public class ActionProbability {
-    private String type;
-    private double month;
-    private double day;
-    private double hour;
-    private double nrOfTransactions;
-    private double totalSum;
-    private double average;
-    private double std;
+    private final String action;
+    private final int month, day, hour, nbTransactions;
+    private final double totalSum, average, std;
 
-    public ActionProbability() {
-        type = "";
-        month = 0;
-        day = 0;
-        hour = 0;
-        nrOfTransactions = 0;
-        totalSum = 0;
-        average = 0;
-        std = 0;
+    public ActionProbability(String action, int month, int day, int hour, int nbTransactions, double totalSum, double average, double std) {
+        this.action = action;
+        this.month = month;
+        this.day = day;
+        this.hour = hour;
+        this.nbTransactions = nbTransactions;
+        this.totalSum = totalSum;
+        this.average = average;
+        this.std = std;
     }
 
     @Override
     public String toString() {
-        return "Type: " + type + "\nMonth: " + month + "\nDay: " + day + "\nHour: " + hour
-                + "\nNrOfTransactions: " + nrOfTransactions + "\nTotalSum: " + totalSum
+        return "Action: " + action + "\nMonth: " + month + "\nDay: " + day + "\nHour: " + hour
+                + "\nNrOfTransactions: " + nbTransactions + "\nTotalSum: " + totalSum
                 + "\nAverage: " + average + "\nStd: " + std + "\n";
     }
 
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setMonth(double month) {
-        this.month = month;
-    }
-
-    public void setDay(double day) {
-        this.day = day;
-    }
-
-    public void setHour(double hour) {
-        this.hour = hour;
-    }
-
-    public double getNrOfTransactions() {
-        return nrOfTransactions;
-    }
-
-    public void setNrOfTransactions(double nrOfTransactions) {
-        this.nrOfTransactions = nrOfTransactions;
-    }
-
-    public void setTotalSum(double totalSum) {
-        this.totalSum = totalSum;
+    public double getNbTransactions() {
+        return nbTransactions;
     }
 
     public double getAverage() {
         return average;
     }
 
-    public void setAverage(double average) {
-        this.average = average;
-    }
-
     public double getStd() {
         return std;
-    }
-
-    public void setStd(double std) {
-        this.std = std;
     }
 }

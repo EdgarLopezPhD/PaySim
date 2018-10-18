@@ -8,7 +8,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 
 public class AggregateDumpAnalyzer {
-    //The total number of transactions made for each type
+    //The total number of transactions made for each action
     private double totNrOfTransfer = 0;
     private double totNrOfDebit = 0;
     private double totNrOfCashIn = 0;
@@ -16,7 +16,7 @@ public class AggregateDumpAnalyzer {
     private double totNrOfDeposit = 0;
     private double totNrOfPayments = 0;
 
-    //The avg of the avg for each type
+    //The avg of the avg for each action
     private double avgAvgTransfer = 0;
     private double avgAvgDebit = 0;
     private double avgAvgCashIn = 0;
@@ -24,7 +24,7 @@ public class AggregateDumpAnalyzer {
     private double avgAvgDeposit = 0;
     private double avgAvgPayments = 0;
 
-    //The avg of the std for each type
+    //The avg of the std for each action
     private double avgStdTransfer = 0;
     private double avgStdDebit = 0;
     private double avgStdCashIn = 0;
@@ -86,9 +86,9 @@ public class AggregateDumpAnalyzer {
         avgStdTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
     }
 
-    private boolean isNumber(String type) {
+    private boolean isNumber(String action) {
         try {
-            Double.parseDouble(type);
+            Double.parseDouble(action);
         } catch (Exception e) {
             return false;
         }
@@ -96,22 +96,22 @@ public class AggregateDumpAnalyzer {
     }
 
     //Handler function
-    private double getCount(int typeNr) {
+    private double getCount(int actionId) {
         double count = 0;
 
         for (String s : this.fileContents) {
             String split[] = s.split(",");
-            String type = split[0];
+            String action = split[0];
 
             //Handle from the original aggregate file
-            if (!isNumber(type)) {
-                String receivedType = TransactionParameters.getType(typeNr);
-                if (receivedType.equals(type)) {
+            if (!isNumber(action)) {
+                String receivedAction = TransactionParameters.getAction(actionId);
+                if (receivedAction.equals(action)) {
                     count += Double.parseDouble(split[4]);
                 }
             } else {
                 //Handle from the generated aggregate file
-                if (Double.parseDouble(type) == typeNr) {
+                if (Double.parseDouble(action) == actionId) {
                     count += Double.parseDouble(split[4]);
                 }
             }
@@ -120,23 +120,23 @@ public class AggregateDumpAnalyzer {
         return count;
     }
 
-    private double getAvgAvg(int typeNr) {
+    private double getAvgAvg(int actionId) {
         double avg = 0, nr = 0;
 
         for (String s : this.fileContents) {
             String split[] = s.split(",");
-            String type = split[0];
+            String action = split[0];
 
             //Handle from the original aggregate file
-            if (!isNumber(type)) {
-                String receivedType = TransactionParameters.getType(typeNr);
-                if (receivedType.equals(type)) {
+            if (!isNumber(action)) {
+                String receivedAction = TransactionParameters.getAction(actionId);
+                if (receivedAction.equals(action)) {
                     avg += Double.parseDouble(split[6]);
                     nr++;
                 }
             } else {
                 //Handle from the generated aggregate file
-                if (Double.parseDouble(type) == typeNr) {
+                if (Double.parseDouble(action) == actionId) {
                     avg += Double.parseDouble(split[6]);
                     nr++;
                 }
@@ -147,24 +147,24 @@ public class AggregateDumpAnalyzer {
         return avg;
     }
 
-    private double getAvgStd(int typeNr) {
+    private double getAvgStd(int actionId) {
         double avgStd = 0;
         double nr = 0;
 
         for (String s : fileContents) {
             String split[] = s.split(",");
-            String type = split[0];
+            String action = split[0];
 
             //Handle from the original aggregate file
-            if (!isNumber(type)) {
-                String receivedType = TransactionParameters.getType(typeNr);
-                if (receivedType.equals(type)) {
+            if (!isNumber(action)) {
+                String receivedAction = TransactionParameters.getAction(actionId);
+                if (receivedAction.equals(action)) {
                     avgStd += Double.parseDouble(split[7]);
                     nr++;
                 }
             } else {
                 //Handle from the generated aggregate file
-                if (Double.parseDouble(type) == typeNr) {
+                if (Double.parseDouble(action) == actionId) {
                     avgStd += Double.parseDouble(split[7]);
                     nr++;
                 }
