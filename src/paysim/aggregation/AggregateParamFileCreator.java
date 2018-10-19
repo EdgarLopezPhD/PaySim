@@ -35,7 +35,7 @@ public class AggregateParamFileCreator {
             double sum = getTotalAmount(subsetTransList);
             int count = subsetTransList.size();
             double average = getTruncatedDouble(sum / (double) count);
-            double tstd = getTruncatedDouble(getStd(subsetTransList, average));
+            double std = getTruncatedDouble(getStd(subsetTransList, average));
 
             int month = step / (DAYS_IN_MONTH * HOURS_IN_DAY);
             int day = (step % (DAYS_IN_MONTH * HOURS_IN_DAY)) / HOURS_IN_DAY;
@@ -48,7 +48,7 @@ public class AggregateParamFileCreator {
                     count,
                     sum,
                     average,
-                    tstd);
+                    std);
             return recordToReturn;
         } else {
             return null;

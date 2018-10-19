@@ -137,7 +137,7 @@ public class Client extends SuperActor implements Steppable {
         }
     }
 
-    void handleCashOut(PaySim paysim) {
+    private void handleCashOut(PaySim paysim) {
         String action = "CASH_OUT";
         ActionProbability prob = actionProbabilities.get(action);
 

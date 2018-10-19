@@ -15,7 +15,6 @@ public class Parameters {
     public static boolean saveToDB = false;
     public static String dbUrl = "", dbUser = "", dbPassword = "";
 
-    private static String outputBaseString;
     public static String filenameOutputAggregate, filenameLog, filenameFraudsters, filenameHistory,
             filenameErrorTable, filenameSummary, filenameFreqOutput, filenameGlobalSummary;
 
@@ -70,7 +69,7 @@ public class Parameters {
     }
 
     public static void initOutputFilenames(String simulatorName) {
-        outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
+        String outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
         filenameGlobalSummary = Parameters.outputPath + "summary.csv";
 
         filenameLog = outputBaseString + "_log.csv";

@@ -2,7 +2,9 @@ package paysim;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.stream.IntStream;
 
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
@@ -10,6 +12,7 @@ import paysim.actors.Merchant;
 
 import paysim.base.Transaction;
 import paysim.parameters.Parameters;
+import paysim.parameters.StepParameters;
 import paysim.utils.Output;
 import sim.engine.SimState;
 
@@ -19,14 +22,17 @@ public class PaySim extends SimState {
     public static final double PAYSIM_VERSION = 1.0;
     private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "1"};
 
-    public String simulatorName = "";
-    public long startTime = 0;
+    public String simulatorName;
+    private long startTime = 0;
     private int totalTransactionsMade = 0;
 
     private ArrayList<Client> clients = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
     private ArrayList<Fraudster> fraudsters = new ArrayList<>();
+
     private ArrayList<Transaction> transactions = new ArrayList<>();
+
+    private ArrayList<Integer> countAssignedTransactions;
 
     public static void main(String args[]) {
         if (args.length < 4) {
@@ -64,6 +70,7 @@ public class PaySim extends SimState {
         super.start();
 
         initActors();
+        initCounters();
 
         //Start the manager
         Manager manager = new Manager();
@@ -109,6 +116,10 @@ public class PaySim extends SimState {
         }
     }
 
+    private void initCounters() {
+        countAssignedTransactions = new ArrayList<>(Collections.nCopies(Parameters.nbSteps, 0));
+    }
+
     public void finish() {
         Output.writeLog(Parameters.filenameLog, transactions);
         Output.writeFraudsters(Parameters.filenameFraudsters, fraudsters);
@@ -124,6 +135,39 @@ public class PaySim extends SimState {
         Output.dumpRepetitionFreq(Parameters.filenameFreqOutput);
         System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + Manager.nbStepParticipated + "\n");
 
+    }
+
+    public int getCountAssigned(int step) {
+        return countAssignedTransactions.get(step);
+    }
+
+    public ArrayList<Integer> getSteps(int step, int nbSteps) {
+        if (isFullAfter(step)) {
+            return null;
+        }
+
+        ArrayList<Integer> stepsToBeRepeated = new ArrayList<>();
+        int stepsGathered = 0;
+        int index = 0;
+        while (stepsGathered < nbSteps) {
+            index = index % countAssignedTransactions.size();
+            if (index >= step) {
+                int alreadyAssigned = getCountAssigned(index);
+                if (alreadyAssigned < StepParameters.getMaxCount(index)) {
+                    countAssignedTransactions.set(index, alreadyAssigned);
+                    stepsToBeRepeated.add(index);
+                    stepsGathered++;
+                }
+            }
+            index++;
+        }
+        return stepsToBeRepeated;
+
+    }
+
+    private boolean isFullAfter(int step) {
+        return IntStream.range(step, countAssignedTransactions.size())
+                .noneMatch(i -> countAssignedTransactions.get(i) < StepParameters.getMaxCount(i));
     }
 
     public Merchant getRandomMerchant() {

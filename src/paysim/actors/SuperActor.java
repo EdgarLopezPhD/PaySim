@@ -14,7 +14,7 @@ public class SuperActor {
         this.name = name;
     }
 
-    public int chooseAction(PaySim paysim, double probArr[]) {
+    int chooseAction(PaySim paysim, double probArr[]) {
         double randNr = paysim.random.nextDouble();
         double total = 0;
 
@@ -30,11 +30,11 @@ public class SuperActor {
         return -1;
     }
 
-    public void deposit(double amount) {
+    void deposit(double amount) {
         balance += amount;
     }
 
-    public void withdraw(double amount) {
+    void withdraw(double amount) {
         if (balance < amount) {
             balance = 0;
         } else {
@@ -46,11 +46,11 @@ public class SuperActor {
         this.step = step;
     }
 
-    public boolean isFraud() {
+    boolean isFraud() {
         return isFraud;
     }
 
-    public void setFraud(boolean isFraud) {
+    void setFraud(boolean isFraud) {
         this.isFraud = isFraud;
     }
 
@@ -58,7 +58,7 @@ public class SuperActor {
         this.cont = cont;
     }
 
-    public double getBalance() {
+    double getBalance() {
         return balance;
     }
 
