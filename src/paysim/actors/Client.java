@@ -3,6 +3,8 @@ package paysim.actors;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static java.lang.Math.max;
+
 import paysim.*;
 import paysim.base.ActionProbability;
 import paysim.base.Transaction;
@@ -11,13 +13,15 @@ import paysim.parameters.StepParameters;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
+
 public class Client extends SuperActor implements Steppable {
     private static final String CLIENT_IDENTIFIER = "C";
-    private double[] probabilityArr;
+    private static final int MIN_NB_TRANSFER_FOR_FRAUD = 3;
+    private double[] normalizedProbabilities;
     private Map<String, ActionProbability> actionProbabilities;
     private ArrayList<Integer> stepsToRepeat = new ArrayList<>();
-    private double balanceFlag = 0; // steps before and balance
-    private int countFlag = 0;
+    private double balanceMax = 0;
+    private int countTransferTransactions = 0;
 
     public Client(String name) {
         super(CLIENT_IDENTIFIER + name);
@@ -38,19 +42,16 @@ public class Client extends SuperActor implements Steppable {
         int action = -1;
 
         while (action == -1) {
-            action = chooseAction(paysim, probabilityArr);
+            action = chooseAction(paysim, normalizedProbabilities);
         }
 
         ActionProbability prob;
         switch (action) {
             case 1:
-                handleCashIn(paysim, paysim.getRandomMerchant());
+                handleCashIn(paysim);
                 break;
             case 2:
-                prob = actionProbabilities.get("CASH_OUT");
-                if (prob != null)
-                    handleCashOut(paysim, paysim.getRandomMerchant(),
-                            this.getAmount(prob, paysim));
+                handleCashOut(paysim);
                 break;
             case 3:
                 handleDebit(paysim);
@@ -62,7 +63,7 @@ public class Client extends SuperActor implements Steppable {
                 prob = actionProbabilities.get("TRANSFER");
 
                 if (prob != null) {
-                    double amount = this.getAmount(prob, paysim);
+                    double amount = getAmount(prob, paysim);
                     double reducedAmount = amount;
                     int loops = (int) Math.ceil(amount / Parameters.transferLimit);
                     Client c = paysim.getRandomClient();
@@ -113,11 +114,12 @@ public class Client extends SuperActor implements Steppable {
 
     }
 
-    private void handleCashIn(PaySim paysim, Merchant merchantTo) {
+    private void handleCashIn(PaySim paysim) {
         String action = "CASH_IN";
         ActionProbability prob = actionProbabilities.get(action);
 
         if (prob != null) {
+            Merchant merchantTo = paysim.getRandomMerchant();
             String nameOrig = this.getName();
             String nameDest = merchantTo.getName();
             double oldBalanceOrig = this.getBalance();
@@ -135,23 +137,28 @@ public class Client extends SuperActor implements Steppable {
         }
     }
 
-    void handleCashOut(PaySim paysim, Merchant merchantTo, double amount) {
+    void handleCashOut(PaySim paysim) {
         String action = "CASH_OUT";
+        ActionProbability prob = actionProbabilities.get(action);
 
-        String nameOrig = this.getName();
-        String nameDest = merchantTo.getName();
-        double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantTo.getBalance();
+        if (prob != null) {
+            Merchant merchantTo = paysim.getRandomMerchant();
+            String nameOrig = this.getName();
+            String nameDest = merchantTo.getName();
+            double oldBalanceOrig = this.getBalance();
+            double oldBalanceDest = merchantTo.getBalance();
 
-        this.withdraw(amount);
+            double amount = getAmount(prob, paysim);
+            this.withdraw(amount);
 
-        double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantTo.getBalance();
+            double newBalanceOrig = this.getBalance();
+            double newBalanceDest = merchantTo.getBalance();
 
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-        t.setFraud(this.isFraud());
-        paysim.getTransactions().add(t);
+            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
+                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+            t.setFraud(this.isFraud());
+            paysim.getTransactions().add(t);
+        }
     }
 
     private void handleDebit(PaySim paysim) {
@@ -181,19 +188,19 @@ public class Client extends SuperActor implements Steppable {
         String action = "PAYMENT";
         ActionProbability prob = actionProbabilities.get(action);
         if (prob != null) {
-            Merchant merchantPayment = paysim.getRandomMerchant();
+            Merchant merchantTo = paysim.getRandomMerchant();
 
             String nameOrig = this.getName();
-            String nameDest = merchantPayment.getName();
+            String nameDest = merchantTo.getName();
             double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = merchantPayment.getBalance();
+            double oldBalanceDest = merchantTo.getBalance();
 
             double amount = this.getAmount(prob, paysim);
             this.withdraw(amount);
-            merchantPayment.deposit(amount);
+            merchantTo.deposit(amount);
 
             double newBalanceOrig = this.getBalance();
-            double newBalanceDest = merchantPayment.getBalance();
+            double newBalanceDest = merchantTo.getBalance();
 
             Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -268,17 +275,17 @@ public class Client extends SuperActor implements Steppable {
         if (amount == -1) {
             return;
         }
-        Merchant merchantHandlingTransac = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.getRandomMerchant();
 
         String nameOrig = this.getName();
-        String nameDest = merchantHandlingTransac.getName();
+        String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantHandlingTransac.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
 
         this.deposit(amount);
 
         double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantHandlingTransac.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
 
         Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -292,17 +299,17 @@ public class Client extends SuperActor implements Steppable {
         if (amount == -1) {
             return;
         }
-        Merchant merchantHandlingTransac = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.getRandomMerchant();
 
         String nameOrig = this.getName();
-        String nameDest = merchantHandlingTransac.getName();
+        String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantHandlingTransac.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
 
         this.withdraw(amount);
 
         double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantHandlingTransac.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
 
         Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -339,18 +346,18 @@ public class Client extends SuperActor implements Steppable {
         if (amount == -1) {
             return;
         }
-        Merchant merchantPayment = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.getRandomMerchant();
 
         String nameOrig = this.getName();
-        String nameDest = merchantPayment.getName();
+        String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantPayment.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
 
         this.withdraw(amount);
-        merchantPayment.deposit(amount);
+        merchantTo.deposit(amount);
 
         double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantPayment.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
 
         Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -367,7 +374,7 @@ public class Client extends SuperActor implements Steppable {
         double reducedAmount = amount;
         int loops = (int) Math.ceil(amount / Parameters.transferLimit);
 
-        Client clientDest = this.getRandomClient(amount, paysim);
+        Client clientDest = getRandomClient(amount, paysim);
 
         for (int i = 0; i < loops; i++) {
             if (reducedAmount > Parameters.transferLimit) {
@@ -406,29 +413,22 @@ public class Client extends SuperActor implements Steppable {
         paysim.getTransactions().add(t);
     }
 
-    public void setProbabilityArr(double[] probabilityArr) {
-        this.probabilityArr = probabilityArr;
+    public void setNormalizedProbabilities(double[] normalizedProbabilities) {
+        this.normalizedProbabilities = normalizedProbabilities;
     }
 
     private boolean checkBalanceDropping(double transLimit, double amount) {
-        boolean flag = false;
-        if (this.countFlag >= 3) { // check for fraud
-            if (this.balanceFlag - this.balance - amount > transLimit * 2.5) {
-                flag = true;
+        boolean isFraudulentAccount = false;
+        if (this.countTransferTransactions >= MIN_NB_TRANSFER_FOR_FRAUD) {
+            if (this.balanceMax - this.balance - amount > transLimit * 2.5) {
+                isFraudulentAccount = true;
             }
         } else {
-            this.countFlag++;
-            if (this.balanceFlag == 0) {
-                this.balanceFlag = this.balance;
-            }
-            if (this.balanceFlag < this.balance) {
-                this.balanceFlag = this.balance;
-            }
+            this.countTransferTransactions++;
+            this.balanceMax = max(this.balanceMax, this.balance);
         }
-        return flag;
+        return isFraudulentAccount;
     }
-
-    // Handler functions for repetition
 
     private Client getRandomClient(double amount, PaySim paysim) {
         Client clientToTransfer;

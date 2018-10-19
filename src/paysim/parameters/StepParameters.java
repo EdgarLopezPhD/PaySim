@@ -62,9 +62,9 @@ public class StepParameters {
         }
     }
 
-    public static int getRemainingAssignments(int step) {
+    //TODO : MOVE EVERYTHING UNDER THIS LINE
+    public static int getCountAssigned(int step) {
         StepCounter stepCounter = stepHandler.get(step);
-        //int remains = stepContainer.getMaxCount() - stepContainer.getCountAssigned();
         return stepCounter.getCountAssigned();
     }
 

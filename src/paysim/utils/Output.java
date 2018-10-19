@@ -94,13 +94,13 @@ public class Output {
 
     }
 
-    public static void writeParamfileHistory(String filenameHistory) {
+    public static void writeParamfileHistory(String filenameHistory, long seed) {
         try {
             File f = new File(filenameHistory);
             FileWriter writer = new FileWriter(f);
             BufferedWriter bufWriter = new BufferedWriter(writer);
 
-            String toWrite = "seed=" + Parameters.seed + "\n" +
+            String toWrite = "seed=" + seed + "\n" +
                     "nbSteps=" + Parameters.nbSteps + "\n" +
                     "multiplier=" + Parameters.multiplier + "\n" +
                     "nbFraudsters=" + Parameters.nbFraudsters + "\n" +
@@ -255,10 +255,11 @@ public class Output {
         }
     }
 
-    public static void writeDatabaseLog(String dbUrl, String dbUser, String dbPassword, ArrayList<Transaction> transactions) {
+    public static void writeDatabaseLog(String dbUrl, String dbUser, String dbPassword,
+                                        ArrayList<Transaction> transactions, String simulatorName) {
         DatabaseHandler handler = new DatabaseHandler(dbUrl, dbUser, dbPassword);
         for (Transaction t : transactions) {
-            handler.insert(t);
+            handler.insert(simulatorName, t);
         }
     }
 

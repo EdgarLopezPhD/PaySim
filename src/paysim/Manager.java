@@ -21,15 +21,7 @@ public class Manager implements Steppable {
     static int nbStepParticipated = 0;
 
     public void step(SimState state) {
-        /*
-         * Algorithm
-         *
-         * 1) Get the probabilities to load from the current step
-         * 2) From that, get the number of clients to allocate at the next step
-         * 3) For each client that is created, make sure there is a 10% chance of that client to re-enter after x-amount of steps
-         */
         PaySim paysim = (PaySim) state;
-
         int step = (int) paysim.schedule.getSteps();
 
         //Get the corresponding probabilities for that step from the parameter file
@@ -40,27 +32,23 @@ public class Manager implements Steppable {
 
         nbClients *= Parameters.multiplier;
 
-        double probArr[] = paysim.loadProbabilities(actionProbabilities, nbClients);
+        double normalizedProbabilities[] = normalizeProbabilities(actionProbabilities, nbClients);
 
-        //TODO: Verify implementation of this check
-        //If there are no clients to repeat, "-1" is returned, hence, if its -1, nbClients should remain 0 because there are originally
-        //no transactions to be executed at that step.
-        int remainingAlignments = StepParameters.getRemainingAssignments(step);
-        if (remainingAlignments != -1) {
-            nbClients -= remainingAlignments;
-        }
+        int alreadyAssigned = StepParameters.getCountAssigned(step);
+        nbClients -= alreadyAssigned;
+
         for (int i = 0; i < nbClients; i++) {
-            Client c = this.generateClient(probArr, actionProbabilities, paysim, step);
+            Client c = generateClient(normalizedProbabilities, actionProbabilities, paysim, step);
             if (c.getStepsToRepeat().size() != 0) {
                 paysim.getClients().add(c);
             }
             paysim.schedule.scheduleOnce(c);
         }
 
-        updatePaySimOutputs(paysim, step);
+        writeOutputStep(paysim, step);
     }
 
-    private void updatePaySimOutputs(PaySim paysim, int step) {
+    private void writeOutputStep(PaySim paysim, int step) {
         ArrayList<Transaction> transactions = paysim.getTransactions();
         if (transactions.size() > 0) {
             Manager.nbStepParticipated++;
@@ -68,17 +56,17 @@ public class Manager implements Steppable {
 
         Output.writeLog(Parameters.filenameLog, transactions);
         if (Parameters.saveToDB) {
-            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, transactions);
+            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, transactions, paysim.simulatorName);
         }
 
         Output.writeAggregateStep(Parameters.filenameOutputAggregate, step, paysim.getTransactions());
         paysim.resetVariables();
     }
 
-    private Client generateClient(double probArr[], Map<String, ActionProbability> actionProbabilities, PaySim paysim, int step) {
+    private Client generateClient(double normalizedProbabilities[], Map<String, ActionProbability> actionProbabilities, PaySim paysim, int step) {
         //Create the client
         Client generatedClient = new Client(paysim.generateIdentifier());
-        generatedClient.setProbabilityArr(probArr);
+        generatedClient.setNormalizedProbabilities(normalizedProbabilities);
         generatedClient.setActionProbabilities(actionProbabilities);
         generatedClient.setBalance(BalanceClients.getBalance(paysim));
         generatedClient.setStep(step);
@@ -114,12 +102,18 @@ public class Manager implements Steppable {
     }
 
     private int getNbClients(Map<String, ActionProbability> actionProbabilities) {
-        int nbClients = 0;
-
-        for (ActionProbability p : actionProbabilities.values()) {
-            nbClients += p.getNbTransactions();
-        }
-
-        return nbClients;
+        return actionProbabilities.values()
+                .stream()
+                .mapToInt(ActionProbability::getNbTransactions)
+                .sum();
     }
+
+    double[] normalizeProbabilities(Map<String, ActionProbability> actionProbabilities, int nbClients) {
+        double coef = Parameters.multiplier / ((double) nbClients);
+        return actionProbabilities.values().stream()
+                .map(ActionProbability::getNbTransactions)
+                .mapToDouble(x -> x * coef)
+                .toArray();
+    }
+
 }

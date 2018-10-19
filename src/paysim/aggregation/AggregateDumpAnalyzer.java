@@ -47,38 +47,37 @@ public class AggregateDumpAnalyzer {
     }
 
     private void computeTotal() {
-        totNbCashIn = getCount(TransactionParameters.indexOf("CASH_IN"));
-        totNbCashOut = getCount(TransactionParameters.indexOf("CASH_OUT"));
-        totNbDebit = getCount(TransactionParameters.indexOf("DEBIT"));
-        totNbDeposit = getCount(TransactionParameters.indexOf("DEPOSIT"));
-        totNbPayments = getCount(TransactionParameters.indexOf("PAYMENT"));
-        totNbTransfer = getCount(TransactionParameters.indexOf("TRANSFER"));
+        totNbCashIn = getCount("CASH_IN");
+        totNbCashOut = getCount("CASH_OUT");
+        totNbDebit = getCount("DEBIT");
+        totNbDeposit = getCount("DEPOSIT");
+        totNbPayments = getCount("PAYMENT");
+        totNbTransfer = getCount("TRANSFER");
     }
 
     private void computeAvgAvg() {
-        avgAvgCashIn = getAvgAvg(TransactionParameters.indexOf("CASH_IN"));
-        avgAvgCashOut = getAvgAvg(TransactionParameters.indexOf("CASH_OUT"));
-        avgAvgDebit = getAvgAvg(TransactionParameters.indexOf("DEBIT"));
-        avgAvgDeposit = getAvgAvg(TransactionParameters.indexOf("DEPOSIT"));
-        avgAvgPayments = getAvgAvg(TransactionParameters.indexOf("PAYMENT"));
-        avgAvgTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
+        avgAvgCashIn = getAvgAvg("CASH_IN");
+        avgAvgCashOut = getAvgAvg("CASH_OUT");
+        avgAvgDebit = getAvgAvg("DEBIT");
+        avgAvgDeposit = getAvgAvg("DEPOSIT");
+        avgAvgPayments = getAvgAvg("PAYMENT");
+        avgAvgTransfer = getAvgAvg("TRANSFER");
     }
 
     private void computeAvgStd() {
-        avgStdCashIn = getAvgStd(TransactionParameters.indexOf("CASH_IN"));
-        avgStdCashOut = getAvgStd(TransactionParameters.indexOf("CASH_OUT"));
-        avgStdDebit = getAvgStd(TransactionParameters.indexOf("DEBIT"));
-        avgStdDeposit = getAvgStd(TransactionParameters.indexOf("DEPOSIT"));
-        avgStdPayment = getAvgStd(TransactionParameters.indexOf("PAYMENT"));
-        avgStdTransfer = getAvgAvg(TransactionParameters.indexOf("TRANSFER"));
+        avgStdCashIn = getAvgStd("CASH_IN");
+        avgStdCashOut = getAvgStd("CASH_OUT");
+        avgStdDebit = getAvgStd("DEBIT");
+        avgStdDeposit = getAvgStd("DEPOSIT");
+        avgStdPayment = getAvgStd("PAYMENT");
+        avgStdTransfer = getAvgAvg("TRANSFER");
     }
 
-    private double getCount(int actionId) {
+    private double getCount(String receivedAction) {
         double count = 0;
 
         for (String[] line : fileContents) {
             String action = line[0];
-            String receivedAction = TransactionParameters.getAction(actionId);
             if (receivedAction.equals(action)) {
                 count += Double.parseDouble(line[4]);
             }
@@ -87,12 +86,11 @@ public class AggregateDumpAnalyzer {
         return count;
     }
 
-    private double getAvgAvg(int actionId) {
+    private double getAvgAvg(String receivedAction) {
         double avg = 0, nr = 0;
 
         for (String[] line : fileContents) {
             String action = line[0];
-            String receivedAction = TransactionParameters.getAction(actionId);
             if (receivedAction.equals(action)) {
                 avg += Double.parseDouble(line[6]);
                 nr++;
@@ -103,14 +101,13 @@ public class AggregateDumpAnalyzer {
         return avg;
     }
 
-    private double getAvgStd(int actionId) {
+    private double getAvgStd(String receivedAction) {
         double avgStd = 0;
         double nr = 0;
 
         for (String[] line : fileContents) {
             String action = line[0];
 
-            String receivedAction = TransactionParameters.getAction(actionId);
             if (receivedAction.equals(action)) {
                 avgStd += Double.parseDouble(line[7]);
                 nr++;

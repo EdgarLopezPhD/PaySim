@@ -26,13 +26,13 @@ public class DatabaseHandler {
         }
     }
 
-    public void insert(Transaction trans) {
+    public void insert(String simulatorName, Transaction trans) {
         try {
             String sql = "INSERT INTO paysim.paysimLog (logName, pType, pAmount, cliFrom,pOldBalanceFrom,pNewBalanceFrom,"
                     + "cliTo,pOldBalanceTo,pNewBalanceTo,isFraud,isFlaggedFraud,step) "
                     + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
             PreparedStatement st = con.prepareStatement(sql);
-            st.setString(1, PaySim.simulatorName);
+            st.setString(1, simulatorName);
             st.setString(2, trans.getAction());
             st.setDouble(3, trans.getAmount());
             st.setString(4, trans.getNameOrig());

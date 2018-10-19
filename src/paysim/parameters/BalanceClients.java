@@ -17,7 +17,7 @@ public class BalanceClients {
 
     public static void initBalanceClients(String filename) {
         // TODO : check what type of Random management do we want
-        balanceGeneratorPicker = new RandomCollection<>(new Random(Parameters.seed));
+        balanceGeneratorPicker = new RandomCollection<>(new Random(Parameters.getSeed()));
         ArrayList<String[]> parameters = CSVReader.read(filename);
         for (String[] paramLine : parameters) {
             BalanceGenerator balanceGenerator = new BalanceGenerator(Double.parseDouble(paramLine[COLUMN_LOW]),

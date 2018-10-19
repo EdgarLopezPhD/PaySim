@@ -4,19 +4,16 @@ import paysim.base.Repetition;
 import paysim.utils.CSVReader;
 import paysim.utils.RandomCollection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class TransactionParameters {
     private static final int COLUMN_ACTION = 0, COLUMN_PROB = 1, COLUMN_OCCURRENCES = 1;
     private static final int COLUMN_LOW = 1, COLUMN_HIGH = 2, COLUMN_AVG = 3, COLUMN_STD = 4, COLUMN_FREQ = 5;
 
-    private static ArrayList<String> actions = new ArrayList<>();
+    private static Set<String> actions = new TreeSet<>();
     private static RandomCollection<String> actionPicker;
-    private static ArrayList<Integer> maxOccurrencesPerAction = new ArrayList<>();
-    private static ArrayList<RandomCollection<Repetition>> repetitionPickerPerAction = new ArrayList<>();
+    private static Map<String, Integer> maxOccurrencesPerAction = new HashMap<>();
+    private static Map<String, RandomCollection<Repetition>> repetitionPickerPerAction = new HashMap<>();
 
     private static Map<String, Integer> countCallAction = new HashMap<>();
     private static Map<Repetition, Integer> countCallRepetition = new HashMap<>();
@@ -24,7 +21,7 @@ public class TransactionParameters {
     public static void loadTransferFreqModInit(String filename) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
         // TODO : check what type of Random management do we want
-        actionPicker = new RandomCollection<>(new Random(Parameters.seed));
+        actionPicker = new RandomCollection<>(new Random(Parameters.getSeed()));
         for (String[] paramLine : parameters) {
             String action = paramLine[COLUMN_ACTION];
             actions.add(action);
@@ -32,16 +29,9 @@ public class TransactionParameters {
             countCallAction.put(action, 0);
         }
 
-        // Prepare the other fields accordingly to what has been loaded
-        maxOccurrencesPerAction = new ArrayList<>(actions.size());
-        while (maxOccurrencesPerAction.size() < actions.size()) {
-            maxOccurrencesPerAction.add(0);
-        }
-
-        repetitionPickerPerAction = new ArrayList<>(actions.size());
-        while (repetitionPickerPerAction.size() < actions.size()) {
+        for (String action : actions) {
             // TODO : check what type of Random management do we want
-            repetitionPickerPerAction.add(new RandomCollection<>(new Random(Parameters.seed)));
+            repetitionPickerPerAction.put(action, new RandomCollection<>(new Random(Parameters.getSeed())));
         }
     }
 
@@ -50,7 +40,7 @@ public class TransactionParameters {
         int loaded = 0;
         for (String[] paramLine : parameters) {
             if (isValidAction(paramLine[COLUMN_ACTION])) {
-                maxOccurrencesPerAction.set(indexOf(paramLine[COLUMN_ACTION]), Integer.parseInt(paramLine[COLUMN_OCCURRENCES]));
+                maxOccurrencesPerAction.put(paramLine[COLUMN_ACTION], Integer.parseInt(paramLine[COLUMN_OCCURRENCES]));
                 loaded++;
             }
         }
@@ -63,7 +53,7 @@ public class TransactionParameters {
         ArrayList<String[]> parameters = CSVReader.read(filename);
         for (String[] repetitionString : parameters) {
             if (isValidAction(repetitionString[COLUMN_ACTION])) {
-                RandomCollection<Repetition> repetitionGetter = repetitionPickerPerAction.get(indexOf(repetitionString[COLUMN_ACTION]));
+                RandomCollection<Repetition> repetitionGetter = repetitionPickerPerAction.get(repetitionString[COLUMN_ACTION]);
                 Repetition repetition = new Repetition(repetitionString[COLUMN_ACTION],
                         Integer.parseInt(repetitionString[COLUMN_LOW]),
                         Integer.parseInt(repetitionString[COLUMN_HIGH]),
@@ -76,22 +66,14 @@ public class TransactionParameters {
     }
 
     public static int getMaxOccurrenceGivenAction(String action) {
-        return maxOccurrencesPerAction.get(indexOf(action));
+        return maxOccurrencesPerAction.get(action);
     }
 
     public static boolean isValidAction(String name) {
         return actions.contains(name);
     }
 
-    public static int indexOf(String action) {
-        return actions.indexOf(action);
-    }
-
-    public static String getAction(int id) {
-        return actions.get(id);
-    }
-
-    public static ArrayList<String> getActions() {
+    public static Set<String> getActions() {
         return actions;
     }
 
@@ -103,7 +85,7 @@ public class TransactionParameters {
     }
 
     private static Repetition getNextRepetition(String action) {
-        return repetitionPickerPerAction.get(indexOf(action)).next();
+        return repetitionPickerPerAction.get(action).next();
     }
 
     public static Repetition getRepetition() {

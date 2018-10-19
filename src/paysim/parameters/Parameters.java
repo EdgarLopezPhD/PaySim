@@ -1,17 +1,12 @@
 package paysim.parameters;
 
-import paysim.PaySim;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.Date;
 import java.util.Properties;
 
-import static paysim.PaySim.simulatorName;
-
 public class Parameters {
-    public static long seed = 0;
+    private static String seedString;
     public static int nbMerchants = 0, nbFraudsters = 0, nbSteps = 0;
     public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
     public static String aggregateTransactionsParams = "", transferMaxPath = "",
@@ -24,13 +19,23 @@ public class Parameters {
     public static String filenameOutputAggregate, filenameLog, filenameFraudsters, filenameHistory,
             filenameErrorTable, filenameSummary, filenameFreqOutput, filenameGlobalSummary;
 
-    public static void loadPropertiesFile(String propertiesFile) {
+    public static void initParameters(String propertiesFile) {
+        loadPropertiesFile(propertiesFile);
+
+        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
+        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
+        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
+        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
+        TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
+    }
+
+    private static void loadPropertiesFile(String propertiesFile) {
         try {
             Properties parameters = new Properties();
             InputStream inputStream = new FileInputStream(new File(propertiesFile));
             parameters.load(inputStream);
 
-            initSeed(String.valueOf(parameters.getProperty("seed")));
+            seedString = String.valueOf(parameters.getProperty("seed"));
             nbSteps = Integer.parseInt(parameters.getProperty("nbSteps"));
             multiplier = Double.parseDouble(parameters.getProperty("multiplier"));
 
@@ -54,28 +59,17 @@ public class Parameters {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        initSimulatorName();
-        initOutputFilenames();
     }
 
-    private static void initSeed(String seedString) {
+    public static long getSeed() {
         if (seedString.equals("time")) {
-            seed = System.currentTimeMillis();
+             return System.currentTimeMillis();
         } else {
-            seed = Long.parseLong(seedString);
+            return Long.parseLong(seedString);
         }
-        PaySim.seed = seed;
     }
 
-    private static void initSimulatorName() {
-        Date d = new Date();
-        simulatorName = "PS_" + (d.getYear() + 1900) + (d.getMonth() + 1) + d.getDate() + d.getHours() + d.getMinutes()
-                + d.getSeconds() + "_" + seed;
-        File f = new File(Parameters.outputPath + simulatorName);
-        f.mkdirs();
-    }
-
-    private static void initOutputFilenames() {
+    public static void initOutputFilenames(String simulatorName) {
         outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
         filenameGlobalSummary = Parameters.outputPath + "summary.csv";
 

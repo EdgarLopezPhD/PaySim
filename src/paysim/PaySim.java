@@ -1,18 +1,15 @@
 package paysim;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Date;
 
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
 
-import paysim.base.ActionProbability;
 import paysim.base.Transaction;
-import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
-import paysim.parameters.StepParameters;
-import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
 import sim.engine.SimState;
 
@@ -22,55 +19,50 @@ public class PaySim extends SimState {
     public static final double PAYSIM_VERSION = 1.0;
     private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "1"};
 
-    public static long seed = 0;
-    private String propertiesFile = "";
-
+    public String simulatorName = "";
     public long startTime = 0;
     private int totalTransactionsMade = 0;
 
-    public static String simulatorName = "";
-
-    private ArrayList<Transaction> transactions = new ArrayList<>();
+    private ArrayList<Client> clients = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
     private ArrayList<Fraudster> fraudsters = new ArrayList<>();
-    public ArrayList<Client> clients = new ArrayList<>();
-
-    public PaySim() {
-        super(0);
-    }
+    private ArrayList<Transaction> transactions = new ArrayList<>();
 
     public static void main(String args[]) {
         if (args.length < 4) {
             args = DEFAULT_ARGS;
         }
         int nbTimesRepeat = Integer.parseInt(args[3]);
+        String propertiesFile = "";
+        for (int x = 0; x < args.length - 1; x++) {
+            if (args[x].equals("-file")) {
+                propertiesFile = args[x + 1];
+            }
+        }
+        Parameters.initParameters(propertiesFile);
         for (int i = 0; i < nbTimesRepeat; i++) {
             PaySim p = new PaySim();
-            for (int x = 0; x < args.length - 1; x++) {
-                if (args[x].equals("-file")) {
-                    p.setPropertiesFile(args[x + 1]);
-                }
-            }
-            p.initParameters();
             p.runSimulation();
         }
     }
 
-    private void initParameters() {
-        setSeed(seed);
-        Parameters.loadPropertiesFile(propertiesFile);
+    public PaySim() {
+        super(Parameters.getSeed());
+
+        Date d = new Date();
+        simulatorName = "PS_" + (d.getYear() + 1900) + (d.getMonth() + 1) + d.getDate() + d.getHours() + d.getMinutes()
+                + d.getSeconds() + "_" + seed();
+        File f = new File(Parameters.outputPath + simulatorName);
+        f.mkdirs();
+        Parameters.initOutputFilenames(simulatorName);
         Output.createLogFile(Parameters.filenameLog);
-        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
-        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
-        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
-        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
-        TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
     }
 
     private void runSimulation() {
         System.out.println("PAYSIM: Financial Simulator v" + PAYSIM_VERSION + " \n");
         startTime = System.currentTimeMillis();
         super.start();
+
         initActors();
 
         //Start the manager
@@ -99,7 +91,7 @@ public class PaySim extends SimState {
     }
 
     private void initActors() {
-        System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed + "\n");
+        System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed() + "\n");
 
         //Add the merchants
         System.out.println("NbMerchants:\t" + Parameters.nbMerchants * Parameters.multiplier + "\n");
@@ -121,7 +113,7 @@ public class PaySim extends SimState {
         Output.writeLog(Parameters.filenameLog, transactions);
         Output.writeFraudsters(Parameters.filenameFraudsters, fraudsters);
 
-        Output.writeParamfileHistory(Parameters.filenameHistory);
+        Output.writeParamfileHistory(Parameters.filenameHistory, seed());
 
         String totalErrorRate = Output.writeErrorTable(Parameters.aggregateTransactionsParams,
                 Parameters.filenameOutputAggregate, Parameters.filenameErrorTable);
@@ -130,8 +122,7 @@ public class PaySim extends SimState {
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
         Output.appendSimulationSummary(Parameters.filenameGlobalSummary, summary);
         Output.dumpRepetitionFreq(Parameters.filenameFreqOutput);
-        System.out.println("Nb of clients:\t" + clients.size() + "\n"
-                + "Nb of steps with transactions:\t" + Manager.nbStepParticipated + "\n");
+        System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + Manager.nbStepParticipated + "\n");
 
     }
 
@@ -148,19 +139,6 @@ public class PaySim extends SimState {
 
     void resetVariables() {
         transactions = new ArrayList<>();
-    }
-
-    private void setPropertiesFile(String s) {
-        propertiesFile = s;
-    }
-
-    //Parameters the probabilities into the probability array
-    double[] loadProbabilities(Map<String, ActionProbability> actionProbabilities, int nbClients) {
-        double coef = Parameters.multiplier / ((double) nbClients);
-        return actionProbabilities.values().stream()
-                .map(ActionProbability::getNbTransactions)
-                .mapToDouble(x -> x * coef)
-                .toArray();
     }
 
     public void updateTotalTransactionsMade(int count) {
