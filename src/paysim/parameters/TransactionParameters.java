@@ -4,7 +4,14 @@ import paysim.base.Repetition;
 import paysim.utils.CSVReader;
 import paysim.utils.RandomCollection;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Collection;
+
 
 public class TransactionParameters {
     private static final int COLUMN_ACTION = 0, COLUMN_PROB = 1, COLUMN_OCCURRENCES = 1;
@@ -15,9 +22,6 @@ public class TransactionParameters {
     private static Map<String, Integer> maxOccurrencesPerAction = new HashMap<>();
     private static Map<String, RandomCollection<Repetition>> repetitionPickerPerAction = new HashMap<>();
 
-    private static Map<String, Integer> countCallAction = new HashMap<>();
-    private static Map<Repetition, Integer> countCallRepetition = new HashMap<>();
-
     public static void loadTransferFreqModInit(String filename) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
         // TODO : check what type of Random management do we want
@@ -26,7 +30,6 @@ public class TransactionParameters {
             String action = paramLine[COLUMN_ACTION];
             actions.add(action);
             actionPicker.add(Double.parseDouble(paramLine[COLUMN_PROB]), action);
-            countCallAction.put(action, 0);
         }
 
         for (String action : actions) {
@@ -60,7 +63,6 @@ public class TransactionParameters {
                         Double.parseDouble(repetitionString[COLUMN_AVG]),
                         Double.parseDouble(repetitionString[COLUMN_STD]));
                 repetitionGetter.add(Double.parseDouble(repetitionString[COLUMN_FREQ]), repetition);
-                countCallRepetition.put(repetition, 0);
             }
         }
     }
@@ -77,30 +79,15 @@ public class TransactionParameters {
         return actions;
     }
 
-    private static String getNextAction() {
-        String action = actionPicker.next();
-        int count = countCallAction.get(action);
-        countCallAction.put(action, count + 1);
-        return action;
+    public static Collection<Repetition> getRepetitionsFromAction(String action){
+        return repetitionPickerPerAction.get(action).getCollection();
     }
 
-    private static Repetition getNextRepetition(String action) {
+    public static Repetition pickNextRepetition(String action) {
         return repetitionPickerPerAction.get(action).next();
     }
 
-    public static Repetition getRepetition() {
-        String action = TransactionParameters.getNextAction();
-        Repetition repetition = TransactionParameters.getNextRepetition(action);
-        int count = countCallRepetition.get(repetition);
-        countCallRepetition.put(repetition, count + 1);
-        return repetition;
-    }
-
-    public static Map<String, Integer> getCountCallAction() {
-        return countCallAction;
-    }
-
-    public static Map<Repetition, Integer> getCountCallRepetition() {
-        return countCallRepetition;
+    public static String pickNextAction() {
+        return actionPicker.next();
     }
 }

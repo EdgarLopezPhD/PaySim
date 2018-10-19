@@ -1,5 +1,6 @@
 package paysim.utils;
 
+import java.util.Collection;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
@@ -24,5 +25,9 @@ public class RandomCollection<E> {
     public E next() {
         double value = random.nextDouble() * total;
         return map.higherEntry(value).getValue();
+    }
+
+    public Collection<E> getCollection(){
+        return map.values();
     }
 }

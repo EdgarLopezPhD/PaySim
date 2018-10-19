@@ -60,11 +60,13 @@ public class Parameters {
         }
     }
 
-    public static long getSeed() {
+    public static int getSeed() {
+        // /!\ MASON seed is using an int internally
+        // https://github.com/eclab/mason/blob/66d38fa58fae3e250b89cf6f31bcfa9d124ffd41/mason/sim/engine/SimState.java#L45
         if (seedString.equals("time")) {
-             return System.currentTimeMillis();
+            return (int) (System.currentTimeMillis() % Integer.MAX_VALUE);
         } else {
-            return Long.parseLong(seedString);
+            return Integer.parseInt(seedString);
         }
     }
 

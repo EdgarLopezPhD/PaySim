@@ -1,6 +1,5 @@
 package paysim.aggregation;
 
-import paysim.parameters.TransactionParameters;
 import paysim.utils.CSVReader;
 
 import java.util.ArrayList;

@@ -18,8 +18,6 @@ import sim.engine.Steppable;
 import static java.lang.Math.abs;
 
 public class Manager implements Steppable {
-    static int nbStepParticipated = 0;
-
     public void step(SimState state) {
         PaySim paysim = (PaySim) state;
         int step = (int) paysim.schedule.getSteps();
@@ -50,9 +48,6 @@ public class Manager implements Steppable {
 
     private void writeOutputStep(PaySim paysim, int step) {
         ArrayList<Transaction> transactions = paysim.getTransactions();
-        if (transactions.size() > 0) {
-            Manager.nbStepParticipated++;
-        }
 
         Output.writeLog(Parameters.filenameLog, transactions);
         if (Parameters.saveToDB) {
@@ -71,7 +66,7 @@ public class Manager implements Steppable {
         generatedClient.setBalance(BalanceClients.getBalance(paysim));
         generatedClient.setStep(step);
 
-        Repetition cont = TransactionParameters.getRepetition();
+        Repetition cont = paysim.getRepetition();
         //Check whether the action is to be repeated
         if (cont.getLow() == 1 && cont.getHigh() == 1) {
             return generatedClient;

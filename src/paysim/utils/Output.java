@@ -10,15 +10,16 @@ import paysim.aggregation.AggregateDumpHandler;
 import paysim.parameters.Parameters;
 import paysim.parameters.TransactionParameters;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static paysim.aggregation.AggregateParamFileCreator.generateAggregateParamFile;
-import static paysim.parameters.TransactionParameters.getCountCallAction;
-import static paysim.parameters.TransactionParameters.getCountCallRepetition;
 
 public class Output {
     private static final int PRECISION_OUTPUT = 2;
@@ -145,10 +146,8 @@ public class Output {
         return aggrHandler.getTotalErrorRate();
     }
 
-    public static void dumpRepetitionFreq(String filename) {
-        Map<String, Integer> countPerAction = getCountCallAction();
-        Map<Repetition, Integer> countPerRepetition = getCountCallRepetition();
-
+    public static void dumpRepetitionFreq(String filename, Map<String, Integer> countPerAction,
+                                          Map<Repetition, Integer> countPerRepetition) {
         File f = new File(filename);
         try {
             FileWriter fWriter = new FileWriter(f);

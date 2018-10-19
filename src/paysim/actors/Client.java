@@ -5,7 +5,7 @@ import java.util.Map;
 
 import static java.lang.Math.max;
 
-import paysim.*;
+import paysim.PaySim;
 import paysim.base.ActionProbability;
 import paysim.base.Transaction;
 import paysim.parameters.Parameters;

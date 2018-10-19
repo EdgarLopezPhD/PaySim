@@ -2,17 +2,21 @@ package paysim;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
+import java.util.Collections;
 
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
 
+import paysim.base.Repetition;
 import paysim.base.Transaction;
 import paysim.parameters.Parameters;
 import paysim.parameters.StepParameters;
+import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
 import sim.engine.SimState;
 
@@ -22,9 +26,10 @@ public class PaySim extends SimState {
     public static final double PAYSIM_VERSION = 1.0;
     private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "1"};
 
-    public String simulatorName;
+    public final String simulatorName;
     private long startTime = 0;
     private int totalTransactionsMade = 0;
+    private int stepParticipated = 0;
 
     private ArrayList<Client> clients = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
@@ -33,6 +38,8 @@ public class PaySim extends SimState {
     private ArrayList<Transaction> transactions = new ArrayList<>();
 
     private ArrayList<Integer> countAssignedTransactions;
+    private Map<String, Integer> countCallAction = new HashMap<>();
+    private Map<Repetition, Integer> countCallRepetition = new HashMap<>();
 
     public static void main(String args[]) {
         if (args.length < 4) {
@@ -118,6 +125,12 @@ public class PaySim extends SimState {
 
     private void initCounters() {
         countAssignedTransactions = new ArrayList<>(Collections.nCopies(Parameters.nbSteps, 0));
+        for (String action : TransactionParameters.getActions()) {
+            countCallAction.put(action, 0);
+            for (Repetition repetition : TransactionParameters.getRepetitionsFromAction(action)) {
+                countCallRepetition.put(repetition, 0);
+            }
+        }
     }
 
     public void finish() {
@@ -132,8 +145,8 @@ public class PaySim extends SimState {
         Output.writeSummaryFile(Parameters.aggregateTransactionsParams, Parameters.filenameOutputAggregate, Parameters.filenameSummary, this);
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
         Output.appendSimulationSummary(Parameters.filenameGlobalSummary, summary);
-        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput);
-        System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + Manager.nbStepParticipated + "\n");
+        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput, countCallAction, countCallRepetition);
+        System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + stepParticipated + "\n");
 
     }
 
@@ -154,7 +167,7 @@ public class PaySim extends SimState {
             if (index >= step) {
                 int alreadyAssigned = getCountAssigned(index);
                 if (alreadyAssigned < StepParameters.getMaxCount(index)) {
-                    countAssignedTransactions.set(index, alreadyAssigned);
+                    countAssignedTransactions.set(index, alreadyAssigned + 1);
                     stepsToBeRepeated.add(index);
                     stepsGathered++;
                 }
@@ -163,6 +176,21 @@ public class PaySim extends SimState {
         }
         return stepsToBeRepeated;
 
+    }
+
+    public Repetition getRepetition() {
+        String action = getNextAction();
+        Repetition repetition = TransactionParameters.pickNextRepetition(action);
+        int count = countCallRepetition.get(repetition);
+        countCallRepetition.put(repetition, count + 1);
+        return repetition;
+    }
+
+    private String getNextAction() {
+        String action = TransactionParameters.pickNextAction();
+        int count = countCallAction.get(action);
+        countCallAction.put(action, count + 1);
+        return action;
     }
 
     private boolean isFullAfter(int step) {
@@ -182,6 +210,9 @@ public class PaySim extends SimState {
     }
 
     void resetVariables() {
+        if (transactions.size() > 0) {
+            stepParticipated++;
+        }
         transactions = new ArrayList<>();
     }
 
