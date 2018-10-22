@@ -448,10 +448,6 @@ public class Client extends SuperActor implements Steppable {
         return clientToTransfer;
     }
 
-    public void setActionProbabilities(Map<String, ActionProbability> actionProbabilities) {
-        this.actionProbabilities = actionProbabilities;
-    }
-
     private double getAmount(ActionProbability prob, PaySim paysim) {
         double amount = -1;
 

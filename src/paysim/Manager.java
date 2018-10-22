@@ -28,10 +28,9 @@ public class Manager implements Steppable {
         //Get the number of clients to load from actionProbabilities
         int nbClients = getNbClients(actionProbabilities);
 
-        nbClients *= Parameters.multiplier;
-
         double normalizedProbabilities[] = normalizeProbabilities(actionProbabilities, nbClients);
 
+        nbClients *= Parameters.multiplier;
         int alreadyAssigned = paysim.getCountAssigned(step);
         nbClients -= alreadyAssigned;
 
@@ -105,7 +104,7 @@ public class Manager implements Steppable {
     }
 
     private double[] normalizeProbabilities(Map<String, ActionProbability> actionProbabilities, int nbClients) {
-        double coef = Parameters.multiplier / ((double) nbClients);
+        double coef = 1 / ((double) nbClients);
         return actionProbabilities.values().stream()
                 .map(ActionProbability::getNbTransactions)
                 .mapToDouble(x -> x * coef)
