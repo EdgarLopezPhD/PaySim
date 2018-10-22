@@ -60,11 +60,12 @@ public class Manager implements Steppable {
 
     private Client generateClient(double normalizedProbabilities[], Map<String, ActionProbability> actionProbabilities, PaySim paysim, int step) {
         //Create the client
-        Client generatedClient = new Client(paysim.generateIdentifier());
-        generatedClient.setNormalizedProbabilities(normalizedProbabilities);
-        generatedClient.setActionProbabilities(actionProbabilities);
-        generatedClient.setBalance(BalanceClients.getBalance(paysim));
-        generatedClient.setStep(step);
+        Client generatedClient = new Client(paysim.generateIdentifier(),
+                paysim.getRandomBank(),
+                normalizedProbabilities,
+                actionProbabilities,
+                BalanceClients.getBalance(paysim),
+                step);
 
         Repetition cont = paysim.getRepetition();
         //Check whether the action is to be repeated

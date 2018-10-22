@@ -6,8 +6,8 @@ import paysim.base.Transaction;
 public class Mule extends Client {
     private static final String MULE_IDENTIFIER = "C";
 
-    public Mule(String name) {
-        super(MULE_IDENTIFIER + name);
+    public Mule(String name, Bank bank) {
+        super(MULE_IDENTIFIER + name, bank);
     }
 
     void fraudulentCashOut(PaySim paysim, double amount) {

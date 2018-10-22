@@ -62,10 +62,6 @@ public class SuperActor {
         return balance;
     }
 
-    public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
     public String getName() {
         return name;
     }
