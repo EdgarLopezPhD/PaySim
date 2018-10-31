@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.Collections;
 
+import paysim.actors.Bank;
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
@@ -24,7 +25,7 @@ import static java.lang.Math.abs;
 
 public class PaySim extends SimState {
     public static final double PAYSIM_VERSION = 1.0;
-    private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "1"};
+    private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "5"};
 
     public final String simulatorName;
     private long startTime = 0;
@@ -34,6 +35,7 @@ public class PaySim extends SimState {
     private ArrayList<Client> clients = new ArrayList<>();
     private ArrayList<Merchant> merchants = new ArrayList<>();
     private ArrayList<Fraudster> fraudsters = new ArrayList<>();
+    private ArrayList<Bank> banks = new ArrayList<>();
 
     private ArrayList<Transaction> transactions = new ArrayList<>();
 
@@ -121,6 +123,12 @@ public class PaySim extends SimState {
             fraudsters.add(f);
             schedule.scheduleRepeating(f);
         }
+
+        //Add the banks
+        for (int i = 0; i < Parameters.nbBanks; i++){
+            Bank b = new Bank(generateIdentifier());
+            banks.add(b);
+        }
     }
 
     private void initCounters() {
@@ -199,12 +207,16 @@ public class PaySim extends SimState {
     }
 
     public Merchant getRandomMerchant() {
-        return getMerchants().get(random.nextInt(getMerchants().size()));
+        return merchants.get(random.nextInt(merchants.size()));
+    }
+
+    public Bank getRandomBank() {
+        return banks.get(random.nextInt(banks.size()));
     }
 
     public Client getRandomClient() {
-        if (getClients().size() > 0) {
-            return getClients().get(random.nextInt(getClients().size()));
+        if (clients.size() > 0) {
+            return clients.get(random.nextInt(clients.size()));
         }
         return null;
     }
@@ -230,9 +242,5 @@ public class PaySim extends SimState {
 
     public ArrayList<Client> getClients() {
         return clients;
-    }
-
-    private ArrayList<Merchant> getMerchants() {
-        return this.merchants;
     }
 }

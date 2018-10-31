@@ -7,7 +7,7 @@ import java.util.Properties;
 
 public class Parameters {
     private static String seedString;
-    public static int nbMerchants = 0, nbFraudsters = 0, nbSteps = 0;
+    public static int nbMerchants = 0, nbBanks = 0, nbFraudsters = 0, nbSteps = 0;
     public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
     public static String aggregateTransactionsParams = "", transferMaxPath = "",
             balanceHandlerFilePath = "", transferFreqMod = "", transferFreqModInit = "";
@@ -40,6 +40,7 @@ public class Parameters {
 
             nbFraudsters = Integer.parseInt(parameters.getProperty("nbFraudsters"));
             nbMerchants = Integer.parseInt(parameters.getProperty("nbMerchants"));
+            nbBanks = Integer.parseInt(parameters.getProperty("nbBanks"));
             fraudProbability = Double.parseDouble(parameters.getProperty("fraudProbability"));
             transferLimit = Double.parseDouble(parameters.getProperty("transferLimit"));
 

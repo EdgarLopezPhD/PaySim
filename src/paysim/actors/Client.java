@@ -17,14 +17,26 @@ import sim.engine.Steppable;
 public class Client extends SuperActor implements Steppable {
     private static final String CLIENT_IDENTIFIER = "C";
     private static final int MIN_NB_TRANSFER_FOR_FRAUD = 3;
+    private Bank bank;
     private double[] normalizedProbabilities;
     private Map<String, ActionProbability> actionProbabilities;
     private ArrayList<Integer> stepsToRepeat = new ArrayList<>();
     private double balanceMax = 0;
     private int countTransferTransactions = 0;
 
-    public Client(String name) {
+    public Client(String name, Bank bank) {
         super(CLIENT_IDENTIFIER + name);
+        this.bank = bank;
+    }
+
+    public Client(String name, Bank bank, double[] normalizedProbabilities, Map actionProbabilities,
+                  double balance, int step) {
+        super(CLIENT_IDENTIFIER + name);
+        this.bank = bank;
+        this.normalizedProbabilities = normalizedProbabilities;
+        this.actionProbabilities = actionProbabilities;
+        this.balance = balance;
+        this.step = step;
     }
 
     @Override
@@ -167,15 +179,15 @@ public class Client extends SuperActor implements Steppable {
 
         if (prob != null) {
             String nameOrig = this.getName();
-            String nameDest = this.getName();
+            String nameDest = this.bank.getName();
             double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = this.getBalance();
+            double oldBalanceDest = this.bank.getBalance();
 
             double amount = this.getAmount(prob, paysim);
             this.withdraw(amount);
 
             double newBalanceOrig = this.getBalance();
-            double newBalanceDest = this.getBalance();
+            double newBalanceDest = this.bank.getBalance();
 
             Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -248,19 +260,16 @@ public class Client extends SuperActor implements Steppable {
 
         if (prob != null) {
             double amount = this.getAmount(prob, paysim);
-            Client clientToTransfer = getRandomClient(amount, paysim);
 
             String nameOrig = this.getName();
-            String nameDest = clientToTransfer.getName();
+            String nameDest = this.bank.getName();
             double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = clientToTransfer.getBalance();
+            double oldBalanceDest = this.bank.getBalance();
 
-
-            clientToTransfer.withdraw(amount);
             this.deposit(amount);
 
             double newBalanceOrig = this.getBalance();
-            double newBalanceDest = clientToTransfer.getBalance();
+            double newBalanceDest = this.bank.getBalance();
 
             Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -325,14 +334,14 @@ public class Client extends SuperActor implements Steppable {
             return;
         }
         String nameOrig = this.getName();
-        String nameDest = this.getName();
+        String nameDest = this.bank.getName();
         double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = this.getBalance();
+        double oldBalanceDest = this.bank.getBalance();
 
         this.withdraw(amount);
 
         double newBalanceOrig = this.getBalance();
-        double newBalanceDest = this.getBalance();
+        double newBalanceDest = this.bank.getBalance();
 
         Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
@@ -394,27 +403,21 @@ public class Client extends SuperActor implements Steppable {
         if (amount == -1) {
             return;
         }
-        Client clientToTransfer = getRandomClient(amount, paysim);
 
         String nameOrig = this.getName();
-        String nameDest = clientToTransfer.getName();
+        String nameDest = this.bank.getName();
         double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = clientToTransfer.getBalance();
+        double oldBalanceDest = this.bank.getBalance();
 
-        clientToTransfer.withdraw(amount);
         this.deposit(amount);
 
         double newBalanceOrig = this.getBalance();
-        double newBalanceDest = clientToTransfer.getBalance();
+        double newBalanceDest = this.bank.getBalance();
 
         Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
         paysim.getTransactions().add(t);
-    }
-
-    public void setNormalizedProbabilities(double[] normalizedProbabilities) {
-        this.normalizedProbabilities = normalizedProbabilities;
     }
 
     private boolean checkBalanceDropping(double transLimit, double amount) {
@@ -443,10 +446,6 @@ public class Client extends SuperActor implements Steppable {
         } while (clientToTransfer.getBalance() < amount);
 
         return clientToTransfer;
-    }
-
-    public void setActionProbabilities(Map<String, ActionProbability> actionProbabilities) {
-        this.actionProbabilities = actionProbabilities;
     }
 
     private double getAmount(ActionProbability prob, PaySim paysim) {

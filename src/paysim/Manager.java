@@ -28,10 +28,9 @@ public class Manager implements Steppable {
         //Get the number of clients to load from actionProbabilities
         int nbClients = getNbClients(actionProbabilities);
 
-        nbClients *= Parameters.multiplier;
-
         double normalizedProbabilities[] = normalizeProbabilities(actionProbabilities, nbClients);
 
+        nbClients *= Parameters.multiplier;
         int alreadyAssigned = paysim.getCountAssigned(step);
         nbClients -= alreadyAssigned;
 
@@ -60,11 +59,12 @@ public class Manager implements Steppable {
 
     private Client generateClient(double normalizedProbabilities[], Map<String, ActionProbability> actionProbabilities, PaySim paysim, int step) {
         //Create the client
-        Client generatedClient = new Client(paysim.generateIdentifier());
-        generatedClient.setNormalizedProbabilities(normalizedProbabilities);
-        generatedClient.setActionProbabilities(actionProbabilities);
-        generatedClient.setBalance(BalanceClients.getBalance(paysim));
-        generatedClient.setStep(step);
+        Client generatedClient = new Client(paysim.generateIdentifier(),
+                paysim.getRandomBank(),
+                normalizedProbabilities,
+                actionProbabilities,
+                BalanceClients.getBalance(paysim),
+                step);
 
         Repetition cont = paysim.getRepetition();
         //Check whether the action is to be repeated
@@ -104,7 +104,7 @@ public class Manager implements Steppable {
     }
 
     private double[] normalizeProbabilities(Map<String, ActionProbability> actionProbabilities, int nbClients) {
-        double coef = Parameters.multiplier / ((double) nbClients);
+        double coef = 1 / ((double) nbClients);
         return actionProbabilities.values().stream()
                 .map(ActionProbability::getNbTransactions)
                 .mapToDouble(x -> x * coef)
