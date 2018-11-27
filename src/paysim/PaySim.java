@@ -1,6 +1,8 @@
 package paysim;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import paysim.actors.Bank;
@@ -38,7 +40,7 @@ public class PaySim extends SimState {
     private int stepTargetCount;
 
     private Map<String, Integer> countCallAction = new HashMap<>();
-    private Map<ClientActionProfile, Integer> countProfileAssignement = new HashMap<>();
+    private Map<ClientActionProfile, Integer> countProfileAssignment = new HashMap<>();
 
     public static void main(String[] args) {
         if (args.length < 4) {
@@ -61,9 +63,9 @@ public class PaySim extends SimState {
     public PaySim() {
         super(Parameters.getSeed());
 
-        Date d = new Date();
-        simulatorName = "PS_" + (d.getYear() + 1900) + (d.getMonth() + 1) + d.getDate() + d.getHours() + d.getMinutes()
-                + d.getSeconds() + "_" + seed();
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date currentTime = new Date();
+        simulatorName = "PS_" + dateFormat.format(currentTime) + "_" + seed();
         File f = new File(Parameters.outputPath + simulatorName);
         f.mkdirs();
         Parameters.initOutputFilenames(simulatorName);
@@ -107,7 +109,7 @@ public class PaySim extends SimState {
         for (String action : TransactionParameters.getActions()) {
             countCallAction.put(action, 0);
             for (ClientActionProfile clientActionProfile : TransactionParameters.getProfilesFromAction(action)) {
-                countProfileAssignement.put(clientActionProfile, 0);
+                countProfileAssignment.put(clientActionProfile, 0);
             }
         }
     }
@@ -156,8 +158,8 @@ public class PaySim extends SimState {
         Map<String, ClientActionProfile> profile = new HashMap<>();
         for (String action : TransactionParameters.getActions()) {
             ClientActionProfile clientActionProfile = TransactionParameters.pickNextProfile(action);
-            int count = countProfileAssignement.get(clientActionProfile);
-            countProfileAssignement.put(clientActionProfile, count + 1);
+            int count = countProfileAssignment.get(clientActionProfile);
+            countProfileAssignment.put(clientActionProfile, count + 1);
             profile.put(action, clientActionProfile);
         }
         return profile;
@@ -175,7 +177,7 @@ public class PaySim extends SimState {
         Output.writeSummaryFile(Parameters.aggregateTransactionsParams, Parameters.filenameOutputAggregate, Parameters.filenameSummary, this);
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
         Output.appendSimulationSummary(Parameters.filenameGlobalSummary, summary);
-        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput, countCallAction, countProfileAssignement);
+        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput, countCallAction, countProfileAssignment);
         System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + stepParticipated + "\n");
     }
 
