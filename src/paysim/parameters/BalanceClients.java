@@ -1,12 +1,11 @@
 package paysim.parameters;
 
-import paysim.PaySim;
+import ec.util.MersenneTwisterFast;
 import paysim.base.BalanceGenerator;
 import paysim.utils.CSVReader;
 import paysim.utils.RandomCollection;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import static java.lang.Math.abs;
 
@@ -15,9 +14,8 @@ public class BalanceClients {
 
     private static RandomCollection<BalanceGenerator> balanceGeneratorPicker;
 
-    public static void initBalanceClients(String filename) {
-        // TODO : check what type of Random management do we want
-        balanceGeneratorPicker = new RandomCollection<>(new Random(Parameters.getSeed()));
+    public static void initBalanceClients(String filename, MersenneTwisterFast random) {
+        balanceGeneratorPicker = new RandomCollection<>(random);
         ArrayList<String[]> parameters = CSVReader.read(filename);
         for (String[] paramLine : parameters) {
             BalanceGenerator balanceGenerator = new BalanceGenerator(Double.parseDouble(paramLine[COLUMN_LOW]),
@@ -26,10 +24,10 @@ public class BalanceClients {
         }
     }
 
-    public static double getBalance(PaySim paySim) {
+    public static double getNextBalance(MersenneTwisterFast random) {
         BalanceGenerator balanceGenerator = balanceGeneratorPicker.next();
         double diff = balanceGenerator.getHigh() - balanceGenerator.getLow();
-        double randed = abs(paySim.random.nextLong() % diff);
+        double randed = abs(random.nextLong() % diff);
 
         return balanceGenerator.getLow() + randed;
     }

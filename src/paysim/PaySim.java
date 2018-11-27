@@ -1,22 +1,19 @@
 package paysim;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.IntStream;
-import java.util.Collections;
+import java.util.*;
 
 import paysim.actors.Bank;
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
 
-import paysim.base.Repetition;
+import paysim.base.ClientActionProfile;
+import paysim.base.StepActionProfile;
 import paysim.base.Transaction;
+import paysim.parameters.BalanceClients;
 import paysim.parameters.Parameters;
-import paysim.parameters.StepParameters;
+import paysim.parameters.StepProfile;
 import paysim.parameters.TransactionParameters;
 import paysim.utils.Output;
 import sim.engine.SimState;
@@ -28,7 +25,6 @@ public class PaySim extends SimState {
     private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "5"};
 
     public final String simulatorName;
-    private long startTime = 0;
     private int totalTransactionsMade = 0;
     private int stepParticipated = 0;
 
@@ -38,12 +34,13 @@ public class PaySim extends SimState {
     private ArrayList<Bank> banks = new ArrayList<>();
 
     private ArrayList<Transaction> transactions = new ArrayList<>();
+    private Map<String, StepActionProfile> stepActionProfile;
+    private int stepTargetCount;
 
-    private ArrayList<Integer> countAssignedTransactions;
     private Map<String, Integer> countCallAction = new HashMap<>();
-    private Map<Repetition, Integer> countCallRepetition = new HashMap<>();
+    private Map<ClientActionProfile, Integer> countProfileAssignement = new HashMap<>();
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if (args.length < 4) {
             args = DEFAULT_ARGS;
         }
@@ -75,29 +72,29 @@ public class PaySim extends SimState {
 
     private void runSimulation() {
         System.out.println("PAYSIM: Financial Simulator v" + PAYSIM_VERSION + " \n");
-        startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         super.start();
 
-        initActors();
         initCounters();
-
-        //Start the manager
-        Manager manager = new Manager();
-        schedule.scheduleRepeating(manager);
+        initActors();
 
         System.out.println("Starting PaySim Running for " + Parameters.nbSteps + " steps.");
 
-        long elapsedSteps;
-        while ((elapsedSteps = schedule.getSteps()) < Parameters.nbSteps) {
+        int currentStep;
+        while ((currentStep = (int) schedule.getSteps()) < Parameters.nbSteps) {
+            stepActionProfile = StepProfile.get(currentStep);
+            stepTargetCount = StepProfile.getTargetCount(currentStep);
             if (!schedule.step(this))
                 break;
-            if (elapsedSteps % 100 == 100 - 1) {
-                System.out.println("Step " + elapsedSteps);
+
+            writeOutputStep(currentStep);
+            if (currentStep % 100 == 100 - 1) {
+                System.out.println("Step " + currentStep);
             } else {
                 System.out.print("*");
             }
         }
-        System.out.println("\nFinished running " + elapsedSteps + " steps ");
+        System.out.println("\nFinished running " + currentStep + " steps ");
         finish();
 
         double total = System.currentTimeMillis() - startTime;
@@ -106,18 +103,27 @@ public class PaySim extends SimState {
         System.out.println("Simulation name: " + simulatorName);
     }
 
+    private void initCounters() {
+        for (String action : TransactionParameters.getActions()) {
+            countCallAction.put(action, 0);
+            for (ClientActionProfile clientActionProfile : TransactionParameters.getProfilesFromAction(action)) {
+                countProfileAssignement.put(clientActionProfile, 0);
+            }
+        }
+    }
+
     private void initActors() {
-        System.out.println("Init\nNbMerchants:\t" + Parameters.nbMerchants + "\nSeed:\t" + seed() + "\n");
+        System.out.println("Init - Seed " + seed());
 
         //Add the merchants
-        System.out.println("NbMerchants:\t" + Parameters.nbMerchants * Parameters.multiplier + "\n");
+        System.out.println("NbMerchants:\t" + Parameters.nbMerchants * Parameters.multiplier);
         for (int i = 0; i < Parameters.nbMerchants * Parameters.multiplier; i++) {
             Merchant m = new Merchant(generateIdentifier());
             merchants.add(m);
         }
 
         //Add the fraudsters
-        System.out.println("NbFraudsters:\t" + Parameters.nbFraudsters * Parameters.multiplier + "\n");
+        System.out.println("NbFraudsters:\t" + Parameters.nbFraudsters * Parameters.multiplier);
         for (int i = 0; i < Parameters.nbFraudsters * Parameters.multiplier; i++) {
             Fraudster f = new Fraudster(generateIdentifier());
             fraudsters.add(f);
@@ -125,20 +131,36 @@ public class PaySim extends SimState {
         }
 
         //Add the banks
-        for (int i = 0; i < Parameters.nbBanks; i++){
+        System.out.println("NbBanks:\t" + Parameters.nbBanks * Parameters.multiplier);
+        for (int i = 0; i < Parameters.nbBanks; i++) {
             Bank b = new Bank(generateIdentifier());
             banks.add(b);
         }
+
+        //Add the clients
+        System.out.println("NbClients:\t" + Parameters.nbClients * Parameters.multiplier);
+        for (int i = 0; i < Parameters.nbClients * Parameters.multiplier; i++) {
+            Client c = new Client(generateIdentifier(),
+                    getRandomBank(),
+                    getClientActionProfile(),
+                    BalanceClients.getNextBalance(random),
+                    random);
+            clients.add(c);
+        }
+        for (Client c : clients) {
+            schedule.scheduleRepeating(c);
+        }
     }
 
-    private void initCounters() {
-        countAssignedTransactions = new ArrayList<>(Collections.nCopies(Parameters.nbSteps, 0));
+    public Map<String, ClientActionProfile> getClientActionProfile() {
+        Map<String, ClientActionProfile> profile = new HashMap<>();
         for (String action : TransactionParameters.getActions()) {
-            countCallAction.put(action, 0);
-            for (Repetition repetition : TransactionParameters.getRepetitionsFromAction(action)) {
-                countCallRepetition.put(repetition, 0);
-            }
+            ClientActionProfile clientActionProfile = TransactionParameters.pickNextProfile(action);
+            int count = countProfileAssignement.get(clientActionProfile);
+            countProfileAssignement.put(clientActionProfile, count + 1);
+            profile.put(action, clientActionProfile);
         }
+        return profile;
     }
 
     public void finish() {
@@ -153,57 +175,8 @@ public class PaySim extends SimState {
         Output.writeSummaryFile(Parameters.aggregateTransactionsParams, Parameters.filenameOutputAggregate, Parameters.filenameSummary, this);
         String summary = simulatorName + "," + Parameters.nbSteps + "," + totalTransactionsMade + "," + clients.size() + "," + totalErrorRate + "\n";
         Output.appendSimulationSummary(Parameters.filenameGlobalSummary, summary);
-        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput, countCallAction, countCallRepetition);
+        Output.dumpRepetitionFreq(Parameters.filenameFreqOutput, countCallAction, countProfileAssignement);
         System.out.println("Nb of clients:\t" + clients.size() + "\nNb of steps with transactions:\t" + stepParticipated + "\n");
-
-    }
-
-    public int getCountAssigned(int step) {
-        return countAssignedTransactions.get(step);
-    }
-
-    public ArrayList<Integer> getSteps(int step, int nbSteps) {
-        if (isFullAfter(step)) {
-            return null;
-        }
-
-        ArrayList<Integer> stepsToBeRepeated = new ArrayList<>();
-        int stepsGathered = 0;
-        int index = 0;
-        while (stepsGathered < nbSteps) {
-            index = index % countAssignedTransactions.size();
-            if (index >= step) {
-                int alreadyAssigned = getCountAssigned(index);
-                if (alreadyAssigned < StepParameters.getMaxCount(index)) {
-                    countAssignedTransactions.set(index, alreadyAssigned + 1);
-                    stepsToBeRepeated.add(index);
-                    stepsGathered++;
-                }
-            }
-            index++;
-        }
-        return stepsToBeRepeated;
-
-    }
-
-    public Repetition getRepetition() {
-        String action = getNextAction();
-        Repetition repetition = TransactionParameters.pickNextRepetition(action);
-        int count = countCallRepetition.get(repetition);
-        countCallRepetition.put(repetition, count + 1);
-        return repetition;
-    }
-
-    private String getNextAction() {
-        String action = TransactionParameters.pickNextAction();
-        int count = countCallAction.get(action);
-        countCallAction.put(action, count + 1);
-        return action;
-    }
-
-    private boolean isFullAfter(int step) {
-        return IntStream.range(step, countAssignedTransactions.size())
-                .noneMatch(i -> countAssignedTransactions.get(i) < StepParameters.getMaxCount(i));
     }
 
     public Merchant getRandomMerchant() {
@@ -228,6 +201,18 @@ public class PaySim extends SimState {
         transactions = new ArrayList<>();
     }
 
+    private void writeOutputStep(int step) {
+        ArrayList<Transaction> transactions = getTransactions();
+
+        Output.writeLog(Parameters.filenameLog, transactions);
+        if (Parameters.saveToDB) {
+            Output.writeDatabaseLog(Parameters.dbUrl, Parameters.dbUser, Parameters.dbPassword, transactions, simulatorName);
+        }
+
+        Output.writeAggregateStep(Parameters.filenameOutputAggregate, step, getTransactions());
+        resetVariables();
+    }
+
     public void updateTotalTransactionsMade(int count) {
         totalTransactionsMade += count;
     }
@@ -242,5 +227,12 @@ public class PaySim extends SimState {
 
     public ArrayList<Client> getClients() {
         return clients;
+    }
+
+    public Map<String, StepActionProfile> getStepActionProfile() {
+        return stepActionProfile;
+    }
+    public int getStepTargetCount() {
+        return stepTargetCount;
     }
 }

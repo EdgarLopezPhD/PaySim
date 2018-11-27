@@ -1,5 +1,7 @@
 package paysim.parameters;
 
+import ec.util.MersenneTwisterFast;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -7,7 +9,7 @@ import java.util.Properties;
 
 public class Parameters {
     private static String seedString;
-    public static int nbMerchants = 0, nbBanks = 0, nbFraudsters = 0, nbSteps = 0;
+    public static int nbClients, nbMerchants, nbBanks, nbFraudsters, nbSteps;
     public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
     public static String aggregateTransactionsParams = "", transferMaxPath = "",
             balanceHandlerFilePath = "", transferFreqMod = "", transferFreqModInit = "";
@@ -21,10 +23,12 @@ public class Parameters {
     public static void initParameters(String propertiesFile) {
         loadPropertiesFile(propertiesFile);
 
-        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
-        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
+        //TODO : FIX THIS TO MAKE THE SIMULATION REPRODUCIBLE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        MersenneTwisterFast placeholderRng = new MersenneTwisterFast();
+        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath, placeholderRng);
+        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit, placeholderRng);
         TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
-        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
+        StepProfile.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
         TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
     }
 
@@ -38,6 +42,7 @@ public class Parameters {
             nbSteps = Integer.parseInt(parameters.getProperty("nbSteps"));
             multiplier = Double.parseDouble(parameters.getProperty("multiplier"));
 
+            nbClients = Integer.parseInt(parameters.getProperty("nbClients"));
             nbFraudsters = Integer.parseInt(parameters.getProperty("nbFraudsters"));
             nbMerchants = Integer.parseInt(parameters.getProperty("nbMerchants"));
             nbBanks = Integer.parseInt(parameters.getProperty("nbBanks"));

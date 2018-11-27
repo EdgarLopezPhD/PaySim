@@ -1,8 +1,8 @@
 package paysim.utils;
 
 import paysim.PaySim;
-import paysim.base.ActionProbability;
-import paysim.base.Repetition;
+import paysim.base.StepActionProfile;
+import paysim.base.ClientActionProfile;
 import paysim.base.Transaction;
 import paysim.actors.Fraudster;
 import paysim.aggregation.AggregateDumpAnalyzer;
@@ -69,21 +69,21 @@ public class Output {
     }
 
     public static void writeAggregateStep(String filenameOutputAggregate, int step, ArrayList<Transaction> transactions) {
-        Map<String, ActionProbability> stepRecord = generateAggregateParamFile(step, transactions);
+        Map<String, StepActionProfile> stepRecord = generateAggregateParamFile(step, transactions);
         try {
             BufferedWriter paramDump = new BufferedWriter(new FileWriter(new File(filenameOutputAggregate), true));
             if (step == 0) {
                 paramDump.write("action,month,day,hour,count,sum,avg,std,step\n");
             }
-            for (ActionProbability actionRecord : stepRecord.values()) {
+            for (StepActionProfile actionRecord : stepRecord.values()) {
                 paramDump.write(actionRecord.getAction() + "," +
                         actionRecord.getMonth() + "," +
                         actionRecord.getDay() + "," +
                         actionRecord.getHour() + "," +
-                        actionRecord.getNbTransactions() + "," +
+                        actionRecord.getCount() + "," +
                         formatDouble(PRECISION_OUTPUT, actionRecord.getTotalSum()) + "," +
-                        formatDouble(PRECISION_OUTPUT, actionRecord.getAverage()) + "," +
-                        formatDouble(PRECISION_OUTPUT, actionRecord.getStd()) + "," +
+                        formatDouble(PRECISION_OUTPUT, actionRecord.getAvgAmount()) + "," +
+                        formatDouble(PRECISION_OUTPUT, actionRecord.getStdAmount()) + "," +
                         step + "\n"
                 );
             }
@@ -147,21 +147,21 @@ public class Output {
     }
 
     public static void dumpRepetitionFreq(String filename, Map<String, Integer> countPerAction,
-                                          Map<Repetition, Integer> countPerRepetition) {
+                                          Map<ClientActionProfile, Integer> countPerRepetition) {
         File f = new File(filename);
         try {
             FileWriter fWriter = new FileWriter(f);
             BufferedWriter bufWriter = new BufferedWriter(fWriter);
             bufWriter.write("action,high,low,total,freq" + "\n");
 
-            for (Map.Entry<Repetition, Integer> counterRep : countPerRepetition.entrySet()) {
-                Repetition repetition = counterRep.getKey();
-                String action = repetition.getAction();
+            for (Map.Entry<ClientActionProfile, Integer> counterRep : countPerRepetition.entrySet()) {
+                ClientActionProfile clientActionProfile = counterRep.getKey();
+                String action = clientActionProfile.getAction();
                 int count = counterRep.getValue();
                 int totalAction = countPerAction.get(action);
                 double probability = totalAction != 0 ? ((double) count) / totalAction : 0;
 
-                bufWriter.write(action + "," + repetition.getLow() + "," + repetition.getHigh() + ","
+                bufWriter.write(action + "," + clientActionProfile.getMinCount() + "," + clientActionProfile.getMaxCount() + ","
                         + count + "," + formatDouble(5, probability)
                         + "\n");
             }
@@ -197,8 +197,8 @@ public class Output {
 
             simulation.updateTotalTransactionsMade(countSynth);
             result += action + spaceBegin.substring(action.length())
-                    + String.valueOf(countOrig) + spaceBegin.substring(String.valueOf(countOrig).length())
-                    + "\t\t\t" + String.valueOf(countSynth) + "\n";
+                    + countOrig + spaceBegin.substring(String.valueOf(countOrig).length())
+                    + "\t\t\t" + countSynth + "\n";
         }
 
 

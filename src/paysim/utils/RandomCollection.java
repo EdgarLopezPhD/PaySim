@@ -1,17 +1,17 @@
 package paysim.utils;
 
+import ec.util.MersenneTwisterFast;
+
 import java.util.Collection;
 import java.util.NavigableMap;
-import java.util.Random;
 import java.util.TreeMap;
 
 public class RandomCollection<E> {
     private final NavigableMap<Double, E> map = new TreeMap<>();
-    private final Random random;
+    private final MersenneTwisterFast random;
     private double total = 0;
 
-
-    public RandomCollection(Random random) {
+    public RandomCollection(MersenneTwisterFast random) {
         this.random = random;
     }
 

@@ -1,6 +1,7 @@
 package paysim.parameters;
 
-import paysim.base.Repetition;
+import ec.util.MersenneTwisterFast;
+import paysim.base.ClientActionProfile;
 import paysim.utils.CSVReader;
 import paysim.utils.RandomCollection;
 
@@ -9,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.Collection;
 
 
@@ -20,21 +20,23 @@ public class TransactionParameters {
     private static Set<String> actions = new TreeSet<>();
     private static RandomCollection<String> actionPicker;
     private static Map<String, Integer> maxOccurrencesPerAction = new HashMap<>();
-    private static Map<String, RandomCollection<Repetition>> repetitionPickerPerAction = new HashMap<>();
+    private static Map<String, RandomCollection<ClientActionProfile>> profilePickerPerAction = new HashMap<>();
 
-    public static void loadTransferFreqModInit(String filename) {
+    public static void loadTransferFreqModInit(String filename, MersenneTwisterFast random) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
-        // TODO : check what type of Random management do we want
-        actionPicker = new RandomCollection<>(new Random(Parameters.getSeed()));
+
+        actionPicker = new RandomCollection<>(random);
         for (String[] paramLine : parameters) {
             String action = paramLine[COLUMN_ACTION];
-            actions.add(action);
-            actionPicker.add(Double.parseDouble(paramLine[COLUMN_PROB]), action);
+            double probability = Double.parseDouble(paramLine[COLUMN_PROB]);
+            if (probability > 0) {
+                actions.add(action);
+                actionPicker.add(Double.parseDouble(paramLine[COLUMN_PROB]), action);
+            }
         }
 
         for (String action : actions) {
-            // TODO : check what type of Random management do we want
-            repetitionPickerPerAction.put(action, new RandomCollection<>(new Random(Parameters.getSeed())));
+            profilePickerPerAction.put(action, new RandomCollection<>(random));
         }
     }
 
@@ -54,15 +56,15 @@ public class TransactionParameters {
 
     public static void loadTransferFreqMod(String filename) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
-        for (String[] repetitionString : parameters) {
-            if (isValidAction(repetitionString[COLUMN_ACTION])) {
-                RandomCollection<Repetition> repetitionGetter = repetitionPickerPerAction.get(repetitionString[COLUMN_ACTION]);
-                Repetition repetition = new Repetition(repetitionString[COLUMN_ACTION],
-                        Integer.parseInt(repetitionString[COLUMN_LOW]),
-                        Integer.parseInt(repetitionString[COLUMN_HIGH]),
-                        Double.parseDouble(repetitionString[COLUMN_AVG]),
-                        Double.parseDouble(repetitionString[COLUMN_STD]));
-                repetitionGetter.add(Double.parseDouble(repetitionString[COLUMN_FREQ]), repetition);
+        for (String[] profileString : parameters) {
+            if (isValidAction(profileString[COLUMN_ACTION])) {
+                RandomCollection<ClientActionProfile> profileGetter = profilePickerPerAction.get(profileString[COLUMN_ACTION]);
+                ClientActionProfile clientActionProfile = new ClientActionProfile(profileString[COLUMN_ACTION],
+                        Integer.parseInt(profileString[COLUMN_LOW]),
+                        Integer.parseInt(profileString[COLUMN_HIGH]),
+                        Double.parseDouble(profileString[COLUMN_AVG]),
+                        Double.parseDouble(profileString[COLUMN_STD]));
+                profileGetter.add(Double.parseDouble(profileString[COLUMN_FREQ]), clientActionProfile);
             }
         }
     }
@@ -79,15 +81,11 @@ public class TransactionParameters {
         return actions;
     }
 
-    public static Collection<Repetition> getRepetitionsFromAction(String action){
-        return repetitionPickerPerAction.get(action).getCollection();
+    public static Collection<ClientActionProfile> getProfilesFromAction(String action) {
+        return profilePickerPerAction.get(action).getCollection();
     }
 
-    public static Repetition pickNextRepetition(String action) {
-        return repetitionPickerPerAction.get(action).next();
-    }
-
-    public static String pickNextAction() {
-        return actionPicker.next();
+    public static ClientActionProfile pickNextProfile(String action) {
+        return profilePickerPerAction.get(action).next();
     }
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import paysim.base.Transaction;
-import paysim.base.ActionProbability;
+import paysim.base.StepActionProfile;
 
 import paysim.parameters.TransactionParameters;
 
@@ -15,10 +15,10 @@ public class AggregateParamFileCreator {
     private static final int DOUBLE_PRECISION = 2;
     private static final int HOURS_IN_DAY = 24, DAYS_IN_MONTH = 30;
 
-    public static Map<String, ActionProbability> generateAggregateParamFile(int step, ArrayList<Transaction> transactionList) {
-        Map<String, ActionProbability> stepRecord = new HashMap<>();
+    public static Map<String, StepActionProfile> generateAggregateParamFile(int step, ArrayList<Transaction> transactionList) {
+        Map<String, StepActionProfile> stepRecord = new HashMap<>();
         for (String action : TransactionParameters.getActions()) {
-            ActionProbability actionRecord = getAggregatedRecord(action, step, transactionList);
+            StepActionProfile actionRecord = getAggregatedRecord(action, step, transactionList);
             if (actionRecord != null) {
                 stepRecord.put(action, actionRecord);
             }
@@ -26,7 +26,7 @@ public class AggregateParamFileCreator {
         return stepRecord;
     }
 
-    private static ActionProbability getAggregatedRecord(String action, int step, ArrayList<Transaction> transactionList) {
+    private static StepActionProfile getAggregatedRecord(String action, int step, ArrayList<Transaction> transactionList) {
         ArrayList<Transaction> subsetTransList = transactionList.stream()
                 .filter(t -> t.getAction().equals(action))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -41,7 +41,7 @@ public class AggregateParamFileCreator {
             int day = (step % (DAYS_IN_MONTH * HOURS_IN_DAY)) / HOURS_IN_DAY;
             int hour = step % HOURS_IN_DAY;
 
-            ActionProbability recordToReturn = new ActionProbability(action,
+            StepActionProfile recordToReturn = new StepActionProfile(action,
                     month,
                     day,
                     hour,
