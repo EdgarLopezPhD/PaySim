@@ -1,11 +1,12 @@
-package paysim.parameters;
-
-import ec.util.MersenneTwisterFast;
-import paysim.base.ClientActionProfile;
+package paysim.base;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import ec.util.MersenneTwisterFast;
+
+import paysim.parameters.ActionTypes;
 
 public class ClientProfile {
     private Map<String, ClientActionProfile> profile;
@@ -16,7 +17,7 @@ public class ClientProfile {
     public ClientProfile(Map<String, ClientActionProfile> profile, MersenneTwisterFast random) {
         this.profile = profile;
         this.clientTargetCount = 0;
-        for (String action : TransactionParameters.getActions()) {
+        for (String action : ActionTypes.getActions()) {
             int targetCountAction = pickTargetCount(action, random);
             targetCount.put(action, targetCountAction);
             clientTargetCount += targetCountAction;
@@ -37,7 +38,7 @@ public class ClientProfile {
         }
 
         //TODO: check if this is really mandatory
-        int maxCountAction = TransactionParameters.getMaxOccurrenceGivenAction(actionProfile.getAction());
+        int maxCountAction = ActionTypes.getMaxOccurrenceGivenAction(actionProfile.getAction());
         if (targetCountAction > maxCountAction) {
             targetCountAction = maxCountAction;
         }

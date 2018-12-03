@@ -1,9 +1,9 @@
 package paysim.actors;
 
-public class SuperActor {
+class SuperActor {
     private final String name;
-    double balance = 0;
     private boolean isFraud = false;
+    double balance = 0;
 
     SuperActor(String name) {
         this.name = name;

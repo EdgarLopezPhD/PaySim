@@ -13,13 +13,6 @@ public class ClientActionProfile {
         this.stdAmount = stdAmount;
     }
 
-    @Override
-    public String toString() {
-        return "ClientActionProfile [action=" + action + ", minCount=" + minCount + ", maxCount="
-                + maxCount + ", avgAmount=" + avgAmount + ", stdAmount=" + stdAmount
-                + "]";
-    }
-
     public String getAction() {
         return action;
     }

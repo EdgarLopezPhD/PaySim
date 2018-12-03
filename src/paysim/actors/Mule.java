@@ -10,7 +10,7 @@ public class Mule extends Client {
         super(MULE_IDENTIFIER + name, bank);
     }
 
-    void fraudulentCashOut(PaySim paysim, double amount) {
+    void fraudulentCashOut(PaySim paysim, int step, double amount) {
         String action = "CASH_OUT";
 
         Merchant merchantTo = paysim.getRandomMerchant();
@@ -24,7 +24,7 @@ public class Mule extends Client {
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = merchantTo.getBalance();
 
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
+        Transaction t = new Transaction(step, action, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
         t.setFraud(this.isFraud());
         paysim.getTransactions().add(t);

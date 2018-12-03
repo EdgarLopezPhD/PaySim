@@ -1,49 +1,44 @@
 package paysim.actors;
 
 import java.util.Map;
-
 import static java.lang.Math.max;
 
 import ec.util.MersenneTwisterFast;
-import paysim.PaySim;
-import paysim.base.ClientActionProfile;
-import paysim.parameters.ClientProfile;
-import paysim.base.StepActionProfile;
-import paysim.base.Transaction;
-import paysim.parameters.Parameters;
-import paysim.parameters.StepProfile;
-import paysim.utils.RandomCollection;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.util.distribution.Binomial;
+
+import paysim.PaySim;
+import paysim.base.ClientActionProfile;
+import paysim.base.ClientProfile;
+import paysim.base.StepActionProfile;
+import paysim.base.Transaction;
+import paysim.parameters.Parameters;
+import paysim.utils.RandomCollection;
 
 
 public class Client extends SuperActor implements Steppable {
     private static final String CLIENT_IDENTIFIER = "C";
     private static final int MIN_NB_TRANSFER_FOR_FRAUD = 3;
+    private static final String CASH_IN = "CASH_IN", CASH_OUT = "CASH_OUT", DEBIT = "DEBIT",
+            PAYMENT = "PAYMENT", TRANSFER = "TRANSFER", DEPOSIT = "DEPOSIT";
     private final Bank bank;
     private ClientProfile clientProfile;
     private double clientWeight;
     private double balanceMax = 0;
     private int countTransferTransactions = 0;
 
-    private static final String CASH_IN = "CASH_IN",
-            CASH_OUT = "CASH_OUT",
-            DEBIT = "DEBIT",
-            PAYMENT = "PAYMENT",
-            TRANSFER = "TRANSFER",
-            DEPOSIT = "DEPOSIT";
-
     Client(String name, Bank bank) {
         super(CLIENT_IDENTIFIER + name);
         this.bank = bank;
     }
 
-    public Client(String name, Bank bank, Map<String, ClientActionProfile> profile, double initBalance, MersenneTwisterFast random) {
+    public Client(String name, Bank bank, Map<String, ClientActionProfile> profile, double initBalance,
+                  MersenneTwisterFast random, int totalTargetCount) {
         super(CLIENT_IDENTIFIER + name);
         this.bank = bank;
         this.clientProfile = new ClientProfile(profile, random);
-        this.clientWeight = ((double) clientProfile.getClientTargetCount()) / StepProfile.getTotalTargetCount();
+        this.clientWeight = ((double) clientProfile.getClientTargetCount()) / totalTargetCount;
         this.balance = initBalance;
     }
 
@@ -54,13 +49,15 @@ public class Client extends SuperActor implements Steppable {
         if (stepTargetCount > 0) {
             MersenneTwisterFast random = paySim.random;
             int step = (int) state.schedule.getSteps();
-            Map<String, Double> stepActionProfile = StepProfile.getProbabilitiesPerStep(step);
+            Map<String, Double> stepActionProfile = paySim.getStepProbabilities();
 
             int count = pickCount(random, stepTargetCount);
+
             for (int t = 0; t < count; t++) {
                 String action = pickAction(random, stepActionProfile);
-                StepActionProfile stepAmountProfile = StepProfile.getActionForStep(step, action);
+                StepActionProfile stepAmountProfile = paySim.getStepAction(action);
                 double amount = pickAmount(random, action, stepAmountProfile);
+
                 makeTransaction(paySim, step, action, amount);
             }
         }
@@ -92,8 +89,8 @@ public class Client extends SuperActor implements Steppable {
         ClientActionProfile clientAmountProfile = clientProfile.getProfilePerAction(action);
 
         // We take the mean between the two distributions
-        double average = clientAmountProfile.getAvgAmount() + stepAmountProfile.getAvgAmount();
-        double std = (Math.pow(clientAmountProfile.getStdAmount(), 2) + Math.pow(stepAmountProfile.getStdAmount(), 2)) / (2 * 2);
+        double average = (clientAmountProfile.getAvgAmount() + stepAmountProfile.getAvgAmount()) / 2;
+        double std = Math.sqrt((Math.pow(clientAmountProfile.getStdAmount(), 2) + Math.pow(stepAmountProfile.getStdAmount(), 2))) / 2;
 
         double amount = -1;
         while (amount <= 0) {
@@ -132,6 +129,8 @@ public class Client extends SuperActor implements Steppable {
             case DEPOSIT:
                 handleDeposit(state, step, amount);
                 break;
+            default:
+                throw new UnsupportedOperationException("Action not implemented in Client");
         }
     }
 

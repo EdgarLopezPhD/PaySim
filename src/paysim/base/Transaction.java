@@ -1,10 +1,13 @@
 package paysim.base;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+
+import paysim.output.Output;
 
 public class Transaction implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final long step;
+    private final int step;
     private final String action;
     private final double amount;
 
@@ -17,7 +20,7 @@ public class Transaction implements Serializable {
     private boolean isFraud = false;
     private boolean isFlaggedFraud = false;
 
-    public Transaction(long step, String action, double amount, String nameOrig, double oldBalanceOrig,
+    public Transaction(int step, String action, double amount, String nameOrig, double oldBalanceOrig,
                        double newBalanceOrig, String nameDest, double oldBalanceDest, double newBalanceDest) {
         this.step = step;
         this.action = action;
@@ -42,7 +45,7 @@ public class Transaction implements Serializable {
         return isFraud;
     }
 
-    public long getStep() {
+    public int getStep() {
         return step;
     }
 
@@ -80,5 +83,24 @@ public class Transaction implements Serializable {
 
     public double getNewBalanceDest() {
         return newBalanceDest;
+    }
+
+    @Override
+    public String toString(){
+        ArrayList<String> properties = new ArrayList<>();
+
+        properties.add(String.valueOf(step));
+        properties.add(action);
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, amount));
+        properties.add(nameOrig);
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, oldBalanceOrig));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, newBalanceOrig));
+        properties.add(nameDest);
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, oldBalanceDest));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, newBalanceDest));
+        properties.add(Output.formatBoolean(isFraud));
+        properties.add(Output.formatBoolean(isFlaggedFraud));
+
+        return String.join(Output.OUTPUT_SEPARATOR, properties);
     }
 }

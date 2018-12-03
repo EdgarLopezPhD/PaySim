@@ -1,11 +1,16 @@
 package paysim.base;
 
+import java.util.ArrayList;
+
+import paysim.output.Output;
+
 public class StepActionProfile {
     private final String action;
-    private final int month, day, hour, count;
+    private final int step, month, day, hour, count;
     private final double totalSum, avgAmount, stdAmount;
 
-    public StepActionProfile(String action, int month, int day, int hour, int count, double totalSum, double avgAmount, double stdAmount) {
+    public StepActionProfile(int step, String action, int month, int day, int hour, int count, double totalSum, double avgAmount, double stdAmount) {
+        this.step = step;
         this.action = action;
         this.month = month;
         this.day = day;
@@ -14,13 +19,6 @@ public class StepActionProfile {
         this.totalSum = totalSum;
         this.avgAmount = avgAmount;
         this.stdAmount = stdAmount;
-    }
-
-    @Override
-    public String toString() {
-        return "Action: " + action + "\nMonth: " + month + "\nDay: " + day + "\nHour: " + hour
-                + "\nNbTransactions: " + count + "\nTotalSum: " + totalSum
-                + "\nAverage: " + avgAmount + "\nStd: " + stdAmount + "\n";
     }
 
     public int getCount() {
@@ -35,23 +33,22 @@ public class StepActionProfile {
         return stdAmount;
     }
 
-    public String getAction() {
-        return action;
-    }
+    @Override
+    public String toString(){
+        ArrayList<String> properties = new ArrayList<>();
 
-    public int getMonth() {
-        return month;
-    }
+        properties.add(action);
+        properties.add(String.valueOf(month));
+        properties.add(String.valueOf(day));
+        properties.add(String.valueOf(hour));
 
-    public int getDay() {
-        return day;
-    }
+        properties.add(String.valueOf(count));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, totalSum));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, avgAmount));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, stdAmount));
 
-    public int getHour() {
-        return hour;
-    }
+        properties.add(String.valueOf(step));
 
-    public double getTotalSum() {
-        return totalSum;
+        return String.join(Output.OUTPUT_SEPARATOR, properties);
     }
 }

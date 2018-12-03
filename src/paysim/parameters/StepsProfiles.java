@@ -1,56 +1,54 @@
 package paysim.parameters;
 
-import paysim.base.StepActionProfile;
-import paysim.utils.CSVReader;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static paysim.parameters.TransactionParameters.isValidAction;
+import paysim.utils.CSVReader;
+import static paysim.parameters.ActionTypes.isValidAction;
 
-public class StepProfile {
+import paysim.base.StepActionProfile;
+
+
+public class StepsProfiles {
     private static final int COLUMN_ACTION = 0, COLUMN_MONTH = 1, COLUMN_DAY = 2, COLUMN_HOUR = 3, COLUMN_COUNT = 4,
             COLUMN_SUM = 5, COLUMN_AVERAGE = 6, COLUMN_STD = 7, COLUMN_STEP = 8;
-
     private static ArrayList<Map<String, StepActionProfile>> profilePerStep;
     private static ArrayList<Map<String, Double>> probabilitiesPerStep = new ArrayList<>();
     private static ArrayList<Integer> stepTargetCount = new ArrayList<>();
     private static int totalTargetCount;
 
-
-    public static void initRecordList(String filename, double multiplier, int nbSteps) {
+    public static void initStepsProfiles(String filename, double multiplier, int nbSteps) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
 
         profilePerStep = new ArrayList<>(Collections.nCopies(nbSteps, new HashMap<>()));
         stepTargetCount = new ArrayList<>(Collections.nCopies(nbSteps, 0));
+
         for (String[] line : parameters) {
             if (isValidAction(line[COLUMN_ACTION])) {
                 int step = Integer.parseInt(line[COLUMN_STEP]);
                 int count = Integer.parseInt(line[COLUMN_COUNT]);
-                StepActionProfile probability = new StepActionProfile(line[COLUMN_ACTION],
-                        Integer.parseInt(line[COLUMN_MONTH]),
-                        Integer.parseInt(line[COLUMN_DAY]),
-                        Integer.parseInt(line[COLUMN_HOUR]),
-                        count,
-                        Double.parseDouble(line[COLUMN_SUM]),
-                        Double.parseDouble(line[COLUMN_AVERAGE]),
-                        Double.parseDouble(line[COLUMN_STD]));
-                profilePerStep.get(step).put(line[COLUMN_ACTION], probability);
-                stepTargetCount.set(step, stepTargetCount.get(step) + count);
+
+                if (step < nbSteps) {
+                    StepActionProfile actionProfile = new StepActionProfile(step,
+                            line[COLUMN_ACTION],
+                            Integer.parseInt(line[COLUMN_MONTH]),
+                            Integer.parseInt(line[COLUMN_DAY]),
+                            Integer.parseInt(line[COLUMN_HOUR]),
+                            count,
+                            Double.parseDouble(line[COLUMN_SUM]),
+                            Double.parseDouble(line[COLUMN_AVERAGE]),
+                            Double.parseDouble(line[COLUMN_STD]));
+
+                    profilePerStep.get(step).put(line[COLUMN_ACTION], actionProfile);
+                    stepTargetCount.set(step, stepTargetCount.get(step) + count);
+                }
             }
         }
         modifyWithMultiplier(multiplier);
-        totalTargetCount = stepTargetCount.stream()
-                .mapToInt(c -> c)
-                .sum();
         computeProbabilitiesPerStep();
-    }
-
-    public static Map<String, StepActionProfile> get(int step) {
-        return profilePerStep.get(step);
     }
 
     private static void modifyWithMultiplier(double multiplier) {
@@ -58,6 +56,9 @@ public class StepProfile {
             int newMaxCount = Math.toIntExact(Math.round(stepTargetCount.get(step) * multiplier));
             stepTargetCount.set(step, newMaxCount);
         }
+        totalTargetCount = stepTargetCount.stream()
+                .mapToInt(c -> c)
+                .sum();
     }
 
     private static void computeProbabilitiesPerStep() {
@@ -86,7 +87,7 @@ public class StepProfile {
         return totalTargetCount;
     }
 
-    public static StepActionProfile getActionForStep(int step, String action){
+    public static StepActionProfile getActionForStep(int step, String action) {
         return profilePerStep.get(step).get(action);
     }
 }
