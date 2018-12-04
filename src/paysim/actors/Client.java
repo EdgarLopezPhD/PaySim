@@ -76,9 +76,15 @@ public class Client extends SuperActor implements Steppable {
         for (Map.Entry<String, Double> clientEntry : clientProbabilities.entrySet()) {
             String action = clientEntry.getKey();
             double clientProbability = clientEntry.getValue();
-            double stepProbability = stepActionProb.get(action);
+            double finalProbability;
 
-            double finalProbability = (clientProbability + stepProbability) / 2;
+            if (stepActionProb.containsKey(action)) {
+                double stepProbability = stepActionProb.get(action);
+
+                finalProbability = (clientProbability + stepProbability) / 2;
+            } else {
+                finalProbability = clientProbability;
+            }
             actionPicker.add(finalProbability, action);
         }
 
@@ -88,9 +94,15 @@ public class Client extends SuperActor implements Steppable {
     private double pickAmount(MersenneTwisterFast random, String action, StepActionProfile stepAmountProfile) {
         ClientActionProfile clientAmountProfile = clientProfile.getProfilePerAction(action);
 
-        // We take the mean between the two distributions
-        double average = (clientAmountProfile.getAvgAmount() + stepAmountProfile.getAvgAmount()) / 2;
-        double std = Math.sqrt((Math.pow(clientAmountProfile.getStdAmount(), 2) + Math.pow(stepAmountProfile.getStdAmount(), 2))) / 2;
+        double average, std;
+        if (stepAmountProfile != null) {
+            // We take the mean between the two distributions
+            average = (clientAmountProfile.getAvgAmount() + stepAmountProfile.getAvgAmount()) / 2;
+            std = Math.sqrt((Math.pow(clientAmountProfile.getStdAmount(), 2) + Math.pow(stepAmountProfile.getStdAmount(), 2))) / 2;
+        } else {
+            average = clientAmountProfile.getAvgAmount();
+            std = clientAmountProfile.getStdAmount();
+        }
 
         double amount = -1;
         while (amount <= 0) {
@@ -116,7 +128,7 @@ public class Client extends SuperActor implements Steppable {
                 break;
             // For transfer transaction there is a limit so we have to split big transactions in smaller chunks
             case TRANSFER:
-                Client clientTo = state.getRandomClient();
+                Client clientTo = state.pickRandomClient(getName());
                 double reducedAmount = amount;
                 while (reducedAmount > Parameters.transferLimit) {
                     handleTransfer(state, step, Parameters.transferLimit, clientTo);
@@ -135,7 +147,7 @@ public class Client extends SuperActor implements Steppable {
     }
 
     private void handleCashIn(PaySim paysim, int step, double amount) {
-        Merchant merchantTo = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.pickRandomMerchant();
         String nameOrig = this.getName();
         String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();
@@ -152,7 +164,7 @@ public class Client extends SuperActor implements Steppable {
     }
 
     private void handleCashOut(PaySim paysim, int step, double amount) {
-        Merchant merchantTo = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.pickRandomMerchant();
         String nameOrig = this.getName();
         String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();
@@ -187,7 +199,7 @@ public class Client extends SuperActor implements Steppable {
     }
 
     private void handlePayment(PaySim paysim, int step, double amount) {
-        Merchant merchantTo = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.pickRandomMerchant();
 
         String nameOrig = this.getName();
         String nameDest = merchantTo.getName();

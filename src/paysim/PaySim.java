@@ -38,6 +38,7 @@ public class PaySim extends SimState {
 
     private Map<ClientActionProfile, Integer> countProfileAssignment = new HashMap<>();
 
+
     public static void main(String[] args) {
         System.out.println("PAYSIM: Financial Simulator v" + PAYSIM_VERSION);
         if (args.length < 4) {
@@ -60,7 +61,7 @@ public class PaySim extends SimState {
     public PaySim() {
         super(Parameters.getSeed());
         BalancesClients.setRandom(random);
-        ClientsProfiles.setRandom(random);
+        Parameters.clientsProfiles.setRandom(random);
 
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         Date currentTime = new Date();
@@ -81,7 +82,6 @@ public class PaySim extends SimState {
 
         initCounters();
         initActors();
-
 
         while ((currentStep = (int) schedule.getSteps()) < Parameters.nbSteps) {
             if (!schedule.step(this))
@@ -107,7 +107,7 @@ public class PaySim extends SimState {
 
     private void initCounters() {
         for (String action : ActionTypes.getActions()) {
-            for (ClientActionProfile clientActionProfile : ClientsProfiles.getProfilesFromAction(action)) {
+            for (ClientActionProfile clientActionProfile : Parameters.clientsProfiles.getProfilesFromAction(action)) {
                 countProfileAssignment.put(clientActionProfile, 0);
             }
         }
@@ -142,11 +142,11 @@ public class PaySim extends SimState {
         System.out.println("NbClients: " + (int) (Parameters.nbClients * Parameters.multiplier));
         for (int i = 0; i < Parameters.nbClients * Parameters.multiplier; i++) {
             Client c = new Client(generateId(),
-                    getRandomBank(),
+                    pickRandomBank(),
                     pickNextClientProfile(),
                     BalancesClients.getNextBalance(random),
                     random,
-                    StepsProfiles.getTotalTargetCount());
+                    Parameters.stepsProfiles.getTotalTargetCount());
             clients.add(c);
         }
 
@@ -159,7 +159,7 @@ public class PaySim extends SimState {
     private Map<String, ClientActionProfile> pickNextClientProfile() {
         Map<String, ClientActionProfile> profile = new HashMap<>();
         for (String action : ActionTypes.getActions()) {
-            ClientActionProfile clientActionProfile = ClientsProfiles.pickNextActionProfile(action);
+            ClientActionProfile clientActionProfile = Parameters.clientsProfiles.pickNextActionProfile(action);
 
             profile.put(action, clientActionProfile);
 
@@ -206,16 +206,23 @@ public class PaySim extends SimState {
         return idBuilder.toString();
     }
 
-    public Merchant getRandomMerchant() {
+    public Merchant pickRandomMerchant() {
         return merchants.get(random.nextInt(merchants.size()));
     }
 
-    public Bank getRandomBank() {
+    public Bank pickRandomBank() {
         return banks.get(random.nextInt(banks.size()));
     }
 
-    public Client getRandomClient() {
-        return clients.get(random.nextInt(clients.size()));
+    public Client pickRandomClient(String nameOrig) {
+        Client clientDest = null;
+
+        String nameDest = nameOrig;
+        while (nameOrig.equals(nameDest)){
+            clientDest = clients.get(random.nextInt(clients.size()));
+            nameDest = clientDest.getName();
+        }
+        return clientDest;
     }
 
     public int getTotalTransactions() {
@@ -235,14 +242,14 @@ public class PaySim extends SimState {
     }
 
     public int getStepTargetCount() {
-        return StepsProfiles.getTargetCount(currentStep);
+        return Parameters.stepsProfiles.getTargetCount(currentStep);
     }
 
     public Map<String, Double> getStepProbabilities(){
-        return StepsProfiles.getProbabilitiesPerStep(currentStep);
+        return Parameters.stepsProfiles.getProbabilitiesPerStep(currentStep);
     }
 
     public StepActionProfile getStepAction(String action){
-        return StepsProfiles.getActionForStep(currentStep, action);
+        return Parameters.stepsProfiles.getActionForStep(currentStep, action);
     }
 }

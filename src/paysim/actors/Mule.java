@@ -13,7 +13,7 @@ public class Mule extends Client {
     void fraudulentCashOut(PaySim paysim, int step, double amount) {
         String action = "CASH_OUT";
 
-        Merchant merchantTo = paysim.getRandomMerchant();
+        Merchant merchantTo = paysim.pickRandomMerchant();
         String nameOrig = this.getName();
         String nameDest = merchantTo.getName();
         double oldBalanceOrig = this.getBalance();

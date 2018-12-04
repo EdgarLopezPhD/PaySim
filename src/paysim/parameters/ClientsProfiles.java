@@ -13,13 +13,13 @@ import paysim.utils.RandomCollection;
 
 public class ClientsProfiles {
     private static final int COLUMN_ACTION = 0, COLUMN_LOW = 1, COLUMN_HIGH = 2, COLUMN_AVG = 3, COLUMN_STD = 4, COLUMN_FREQ = 5;
-    private static Map<String, RandomCollection<ClientActionProfile>> profilePickerPerAction = new HashMap<>();
+    private Map<String, RandomCollection<ClientActionProfile>> profilePickerPerAction = new HashMap<>();
 
-    public static void loadClientProfiles(String filename) {
+    public ClientsProfiles(String filename) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
 
         for (String action : ActionTypes.getActions()) {
-            ClientsProfiles.profilePickerPerAction.put(action, new RandomCollection<>());
+            profilePickerPerAction.put(action, new RandomCollection<>());
         }
 
         for (String[] profileString : parameters) {
@@ -42,15 +42,15 @@ public class ClientsProfiles {
         }
     }
 
-    public static Collection<ClientActionProfile> getProfilesFromAction(String action) {
+    public Collection<ClientActionProfile> getProfilesFromAction(String action) {
         return profilePickerPerAction.get(action).getCollection();
     }
 
-    public static ClientActionProfile pickNextActionProfile(String action) {
+    public ClientActionProfile pickNextActionProfile(String action) {
         return profilePickerPerAction.get(action).next();
     }
 
-    public static void setRandom(MersenneTwisterFast random){
+    public void setRandom(MersenneTwisterFast random){
         for (RandomCollection profilePicker : profilePickerPerAction.values()){
             profilePicker.setRandom(random);
         }

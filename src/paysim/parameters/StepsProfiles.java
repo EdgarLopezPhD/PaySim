@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import paysim.utils.CSVReader;
+
 import static paysim.parameters.ActionTypes.isValidAction;
 
 import paysim.base.StepActionProfile;
@@ -15,15 +17,19 @@ import paysim.base.StepActionProfile;
 public class StepsProfiles {
     private static final int COLUMN_ACTION = 0, COLUMN_MONTH = 1, COLUMN_DAY = 2, COLUMN_HOUR = 3, COLUMN_COUNT = 4,
             COLUMN_SUM = 5, COLUMN_AVERAGE = 6, COLUMN_STD = 7, COLUMN_STEP = 8;
-    private static ArrayList<Map<String, StepActionProfile>> profilePerStep;
-    private static ArrayList<Map<String, Double>> probabilitiesPerStep = new ArrayList<>();
-    private static ArrayList<Integer> stepTargetCount = new ArrayList<>();
-    private static int totalTargetCount;
+    private ArrayList<HashMap<String, StepActionProfile>> profilePerStep;
+    private ArrayList<Map<String, Double>> probabilitiesPerStep = new ArrayList<>();
+    private ArrayList<Integer> stepTargetCount;
+    private int totalTargetCount;
 
-    public static void initStepsProfiles(String filename, double multiplier, int nbSteps) {
+    public StepsProfiles(String filename, double multiplier, int nbSteps) {
         ArrayList<String[]> parameters = CSVReader.read(filename);
 
-        profilePerStep = new ArrayList<>(Collections.nCopies(nbSteps, new HashMap<>()));
+        profilePerStep = new ArrayList<>();
+        for (int i = 0; i < nbSteps; i++) {
+            profilePerStep.add(new HashMap<>());
+        }
+
         stepTargetCount = new ArrayList<>(Collections.nCopies(nbSteps, 0));
 
         for (String[] line : parameters) {
@@ -47,11 +53,12 @@ public class StepsProfiles {
                 }
             }
         }
+
         modifyWithMultiplier(multiplier);
         computeProbabilitiesPerStep();
     }
 
-    private static void modifyWithMultiplier(double multiplier) {
+    private void modifyWithMultiplier(double multiplier) {
         for (int step = 0; step < stepTargetCount.size(); step++) {
             int newMaxCount = Math.toIntExact(Math.round(stepTargetCount.get(step) * multiplier));
             stepTargetCount.set(step, newMaxCount);
@@ -61,7 +68,7 @@ public class StepsProfiles {
                 .sum();
     }
 
-    private static void computeProbabilitiesPerStep() {
+    private void computeProbabilitiesPerStep() {
         for (int i = 0; i < profilePerStep.size(); i++) {
             Map<String, StepActionProfile> stepProfile = profilePerStep.get(i);
             int stepCount = stepTargetCount.get(i);
@@ -75,19 +82,37 @@ public class StepsProfiles {
         }
     }
 
-    public static int getTargetCount(int step) {
+    public int getTargetCount(int step) {
         return stepTargetCount.get(step);
     }
 
-    public static Map<String, Double> getProbabilitiesPerStep(int step) {
+    public Map<String, Double> getProbabilitiesPerStep(int step) {
         return probabilitiesPerStep.get(step);
     }
 
-    public static int getTotalTargetCount() {
+    public int getTotalTargetCount() {
         return totalTargetCount;
     }
 
-    public static StepActionProfile getActionForStep(int step, String action) {
+    public StepActionProfile getActionForStep(int step, String action) {
         return profilePerStep.get(step).get(action);
+    }
+
+    public Map<String, ArrayList<Double>> computeSeries(Function<StepActionProfile, Double> getter) {
+        Map<String, ArrayList<Double>> series = new HashMap<>();
+        for (String action : ActionTypes.getActions()) {
+            series.put(action, new ArrayList<>());
+        }
+
+        for (Map<String, StepActionProfile> profileStep : profilePerStep) {
+            for (String action : ActionTypes.getActions()) {
+                if (profileStep.containsKey(action)) {
+                    series.get(action).add(getter.apply(profileStep.get(action)));
+                } else {
+                    series.get(action).add(0d);
+                }
+            }
+        }
+        return series;
     }
 }

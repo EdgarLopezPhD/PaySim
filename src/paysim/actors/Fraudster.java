@@ -23,14 +23,14 @@ public class Fraudster extends SuperActor implements Steppable {
         PaySim paysim = (PaySim) state;
         int step = (int) state.schedule.getSteps();
         if (paysim.random.nextDouble() < Parameters.fraudProbability) {
-            Client c = paysim.getRandomClient();
+            Client c = paysim.pickRandomClient(getName());
             c.setFraud(true);
             double balance = c.getBalance();
             // create mule client
             if (balance > 0) {
                 int nbTransactions = (int) Math.ceil(balance / Parameters.transferLimit);
                 for (int i = 0; i < nbTransactions; i++) {
-                    Mule muleClient = new Mule(paysim.generateId(), paysim.getRandomBank());
+                    Mule muleClient = new Mule(paysim.generateId(), paysim.pickRandomBank());
                     muleClient.setFraud(true);
                     if (balance > Parameters.transferLimit) {
                         c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);

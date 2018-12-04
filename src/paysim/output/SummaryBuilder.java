@@ -1,89 +1,102 @@
 package paysim.output;
 
-import java.util.ArrayList;
-import java.util.Map;
-import static java.lang.Math.abs;
+import java.util.*;
+import java.util.function.Function;
+
+import paysim.base.StepActionProfile;
+import paysim.parameters.ActionTypes;
+import paysim.parameters.StepsProfiles;
 
 class SummaryBuilder {
-    private static final String separator = "---------------------------------------------------------------------";
+    private static final String SEPARATOR = "----------------------------------------------------";
+    private static final String FORMAT_CELL = "| %-15s";
+    private static final List<String> HEADER = Arrays.asList("Estimator", "Action", "Error rate");
 
-    public static double buildSummary(AggregateDumpAnalyzer orig, AggregateDumpAnalyzer simulation, StringBuilder summaryStrBuilder) {
+    public static double buildSummary(StepsProfiles targetStepsProfiles, StepsProfiles simulationStepsProfiles, StringBuilder summaryStrBuilder) {
         double totalErrorRate = 0;
 
-        summaryStrBuilder.append(separator);
-        summaryStrBuilder.append(System.lineSeparator());
+        summaryStrBuilder.append(SEPARATOR);
+        summaryStrBuilder.append(Output.EOL_CHAR);
 
-        summaryStrBuilder.append("|\tIndicator\t|\tOrig\t|\tSynth\t|\tError Rate\t|");
-        summaryStrBuilder.append(System.lineSeparator());
+        buildLineTable(HEADER, summaryStrBuilder);
 
+        totalErrorRate += objectiveFunctionSteps(targetStepsProfiles, simulationStepsProfiles, summaryStrBuilder);
 
-        summaryStrBuilder.append(separator);
-        summaryStrBuilder.append(System.lineSeparator());
-
-        summaryStrBuilder.append(String.format("| %-15s", "NB TRANSAC"));
-        summaryStrBuilder.append(System.lineSeparator());
-
-        Map<String, Double> origCounts = orig.computeCounts();
-        Map<String, Double> simulationCounts = simulation.computeCounts();
-
-        totalErrorRate += buildErrorSummary(origCounts, simulationCounts, summaryStrBuilder);
-
-
-        summaryStrBuilder.append(separator);
-        summaryStrBuilder.append(System.lineSeparator());
-
-        summaryStrBuilder.append(String.format("| %-15s", "AVG AMOUNT"));
-        summaryStrBuilder.append(System.lineSeparator());
-
-        Map<String, Double> origAvgs = orig.computeAvgAvg();
-        Map<String, Double> simulationAvgs = simulation.computeAvgAvg();
-
-        totalErrorRate += buildErrorSummary(origAvgs, simulationAvgs, summaryStrBuilder);
-
-
-        summaryStrBuilder.append(separator);
-        summaryStrBuilder.append(System.lineSeparator());
-
-        summaryStrBuilder.append((String.format("|TOT ERR RATE %-60s",  Output.fastFormatDouble(2, totalErrorRate))));
-        summaryStrBuilder.append(System.lineSeparator());
-
-
-        summaryStrBuilder.append(separator);
-        summaryStrBuilder.append(System.lineSeparator());
-        summaryStrBuilder.append(System.lineSeparator());
+        summaryStrBuilder.append(Output.EOL_CHAR);
 
         System.out.println(summaryStrBuilder);
 
         return totalErrorRate;
     }
 
-    private static double buildErrorSummary(Map<String, Double> orig, Map<String, Double> simulation, StringBuilder summaryBuilder) {
-        double totalErrorRate = 0;
-        for (Map.Entry<String, Double> origActionCount : orig.entrySet()) {
-            ArrayList<String> summaryLine = new ArrayList<>();
 
-            String action = origActionCount.getKey();
-            double origValue = origActionCount.getValue();
-            double simulationValue = simulation.get(action);
-            double errorRate = computeRelativeError(origValue, simulationValue);
-
-            summaryLine.add(action);
-            summaryLine.add(Output.fastFormatDouble(2, origValue));
-            summaryLine.add(Output.fastFormatDouble(2, simulationValue));
-            summaryLine.add(Output.fastFormatDouble(2, errorRate));
-
-            for (String s : summaryLine) {
-                summaryBuilder.append(String.format("| %-15s", s));
-            }
-
-            summaryBuilder.append("|");
-            summaryBuilder.append(System.lineSeparator());
-            totalErrorRate += errorRate;
+    private static double computeNRMSE(ArrayList<Double> targetDistribution, ArrayList<Double> simulatedDistribution) {
+        if (targetDistribution.size() != simulatedDistribution.size()) {
+            throw new IllegalArgumentException("Target & Simulated distributions must be of the same size.");
         }
-        return totalErrorRate;
+
+        int nbDataPoint = targetDistribution.size();
+        Double minTarget = targetDistribution
+                .stream()
+                .min(Double::compareTo)
+                .get();
+        Double maxTarget = targetDistribution
+                .stream()
+                .max(Double::compareTo)
+                .get();
+        double normalizationCoefficient = maxTarget - minTarget;
+
+        double RMSE = 0;
+        for (int i = 0; i < nbDataPoint; i++) {
+            RMSE += Math.pow(simulatedDistribution.get(i) - targetDistribution.get(i), 2);
+        }
+        RMSE = Math.sqrt(RMSE / nbDataPoint);
+
+        return RMSE / normalizationCoefficient;
     }
 
-    private static double computeRelativeError(double valueOrig, double valueSimulation){
-        return abs((valueOrig - valueSimulation) / valueOrig);
+    private static double objectiveFunctionSteps(StepsProfiles targetStepsProfiles, StepsProfiles simulationStepsProfiles, StringBuilder summaryBuilder) {
+        Map<String, Function<StepActionProfile, Double>> statExtractor = new HashMap<>();
+        Function<StepActionProfile, Integer>  getCount = StepActionProfile::getCount;
+        Function<StepActionProfile, Double> getCountDouble = getCount.andThen(Integer::doubleValue);
+
+        statExtractor.put("Average amount", StepActionProfile::getAvgAmount);
+        statExtractor.put("Std amount", StepActionProfile::getStdAmount);
+        statExtractor.put("Count", getCountDouble);
+
+        double totalNRMSE = 0;
+        summaryBuilder.append(SEPARATOR);
+        summaryBuilder.append(Output.EOL_CHAR);
+        for (String estimator: statExtractor.keySet()) {
+            Map<String, ArrayList<Double>> targetSeries = targetStepsProfiles.computeSeries(statExtractor.get(estimator));
+            Map<String, ArrayList<Double>> simulationSeries = simulationStepsProfiles.computeSeries(statExtractor.get(estimator));
+            for (String action : ActionTypes.getActions()) {
+                ArrayList<Double> unitTarget = targetSeries.get(action);
+                ArrayList<Double> unitSimulation = simulationSeries.get(action);
+                double NRMSE = computeNRMSE(unitTarget, unitSimulation);
+
+                ArrayList<String> errorLine = new ArrayList<>();
+                errorLine.add(estimator);
+                errorLine.add(action);
+                errorLine.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, NRMSE));
+
+                buildLineTable(errorLine, summaryBuilder);
+
+                totalNRMSE += NRMSE;
+            }
+            summaryBuilder.append(SEPARATOR);
+            summaryBuilder.append(Output.EOL_CHAR);
+        }
+
+        return totalNRMSE;
+    }
+
+    private static void buildLineTable(List<String> line, StringBuilder sb){
+        for (String cellContent : line) {
+            sb.append(String.format(FORMAT_CELL, cellContent));
+        }
+
+        sb.append(FORMAT_CELL.charAt(0));
+        sb.append(Output.EOL_CHAR);
     }
 }

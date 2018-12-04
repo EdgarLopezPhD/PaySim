@@ -13,6 +13,7 @@ import paysim.base.ClientActionProfile;
 import paysim.base.Transaction;
 import paysim.actors.Fraudster;
 import paysim.parameters.Parameters;
+import paysim.parameters.StepsProfiles;
 import paysim.utils.DatabaseHandler;
 
 public class Output {
@@ -22,7 +23,7 @@ public class Output {
             filenameStepAggregate, filenameClientProfiles, filenameFraudsters;
 
     public static void incrementalWriteRawLog(int step, ArrayList<Transaction> transactions) {
-        String rawLogHeader = "step,action,amount,nameOrig,oldBalanceOrg,newBalanceOrig,nameDest,oldBalanceDest,newBalanceDest,isFraud,isFlaggedFraud";
+        String rawLogHeader = "step,action,amount,nameOrig,oldBalanceOrig,newBalanceOrig,nameDest,oldBalanceDest,newBalanceDest,isFraud,isFlaggedFraud";
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(filenameRawLog, true));
             if (step == 0) {
@@ -111,10 +112,9 @@ public class Output {
     }
 
     public static void writeSummarySimulation(PaySim paySim) {
-        AggregateDumpAnalyzer analyzerOrig = new AggregateDumpAnalyzer(Parameters.aggregatedTransactions);
-        AggregateDumpAnalyzer analyzerSynth = new AggregateDumpAnalyzer(Output.filenameStepAggregate);
         StringBuilder errorSummary = new StringBuilder();
-        double totalErrorRate = SummaryBuilder.buildSummary(analyzerOrig, analyzerSynth, errorSummary);
+        StepsProfiles simulationStepsProfiles = new StepsProfiles(Output.filenameStepAggregate, 1 / Parameters.multiplier, Parameters.nbSteps);
+        double totalErrorRate = SummaryBuilder.buildSummary(Parameters.stepsProfiles, simulationStepsProfiles, errorSummary);
 
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(Output.filenameSummary));
@@ -186,8 +186,8 @@ public class Output {
         String outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
         filenameGlobalSummary = Parameters.outputPath + "summary.csv";
 
-        filenameParameters = outputBaseString + "_paramHistory.txt";
-        filenameSummary = outputBaseString + "_Summary.csv";
+        filenameParameters = outputBaseString + "_PaySim.properties";
+        filenameSummary = outputBaseString + "_Summary.txt";
 
         filenameRawLog = outputBaseString + "_rawLog.csv";
         filenameStepAggregate = outputBaseString + "_aggregatedTransactions.csv";

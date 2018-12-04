@@ -11,18 +11,21 @@ public class Parameters {
     public static int nbClients, nbMerchants, nbBanks, nbFraudsters, nbSteps;
     public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
     public static String aggregatedTransactions = "", maxOccurrencesPerClient = "",
-            initialBalancesDistribution = "", clientsProfiles = "", transactionsTypes = "";
+            initialBalancesDistribution = "", clientsProfilesFile = "", transactionsTypes = "";
     public static String outputPath = "";
     public static boolean saveToDB = false;
     public static String dbUrl = "", dbUser = "", dbPassword = "";
+
+    public static StepsProfiles stepsProfiles;
+    public static ClientsProfiles clientsProfiles;
 
     public static void initParameters(String propertiesFile) {
         loadPropertiesFile(propertiesFile);
 
         ActionTypes.loadActionTypes(transactionsTypes);
         BalancesClients.initBalanceClients(initialBalancesDistribution);
-        ClientsProfiles.loadClientProfiles(clientsProfiles);
-        StepsProfiles.initStepsProfiles(aggregatedTransactions, multiplier, nbSteps);
+        clientsProfiles = new ClientsProfiles(clientsProfilesFile);
+        stepsProfiles = new StepsProfiles(aggregatedTransactions, multiplier, nbSteps);
         ActionTypes.loadMaxOccurrencesPerClient(maxOccurrencesPerClient);
     }
 
@@ -47,7 +50,7 @@ public class Parameters {
             aggregatedTransactions = parameters.getProperty("aggregatedTransactions");
             maxOccurrencesPerClient = parameters.getProperty("maxOccurrencesPerClient");
             initialBalancesDistribution = parameters.getProperty("initialBalancesDistribution");
-            clientsProfiles = parameters.getProperty("clientsProfiles");
+            clientsProfilesFile = parameters.getProperty("clientsProfiles");
 
             outputPath = parameters.getProperty("outputPath");
 
@@ -82,7 +85,7 @@ public class Parameters {
         properties.add("transferLimit=" + transferLimit);
         properties.add("transactionsTypes=" + transactionsTypes);
         properties.add("aggregatedTransactions=" + aggregatedTransactions);
-        properties.add("clientsProfiles=" + clientsProfiles);
+        properties.add("clientsProfilesFile=" + clientsProfilesFile);
         properties.add("initialBalancesDistribution=" + initialBalancesDistribution);
         properties.add("maxOccurrencesPerClient=" + maxOccurrencesPerClient);
         properties.add("outputPath=" + outputPath);
