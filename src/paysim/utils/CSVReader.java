@@ -6,15 +6,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class CSVReader {
-    private static final String SPLIT_BY = ",";
+    private static final String CSV_SEPARATOR = ",";
 
     public static ArrayList<String[]> read(String csvFile) {
         ArrayList<String[]> csvContent = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // Skip header
-            String line = br.readLine();
+            br.readLine();
+            String line;
             while ((line = br.readLine()) != null) {
-                csvContent.add(line.split(SPLIT_BY));
+                csvContent.add(line.split(CSV_SEPARATOR));
             }
         } catch (IOException e) {
             e.printStackTrace();

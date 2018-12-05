@@ -1,4 +1,4 @@
-action,high,low,average,std,freq
+action,maxCount,minCount,averageAmount,stdAmount,freq
 CASH_IN,1,1,121136.63,0,0.07869
 CASH_IN,2,2,101944.59,59537.83,0.03256
 CASH_IN,3,3,108129.39,86582.83,0.01928

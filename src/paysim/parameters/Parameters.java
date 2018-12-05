@@ -1,54 +1,58 @@
 package paysim.parameters;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Properties;
+
+import paysim.output.Output;
 
 public class Parameters {
     private static String seedString;
-    public static int nbMerchants = 0, nbBanks = 0, nbFraudsters = 0, nbSteps = 0;
-    public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
-    public static String aggregateTransactionsParams = "", transferMaxPath = "",
-            balanceHandlerFilePath = "", transferFreqMod = "", transferFreqModInit = "";
-    public static String outputPath = "";
-    public static boolean saveToDB = false;
-    public static String dbUrl = "", dbUser = "", dbPassword = "";
+    public static int nbClients, nbMerchants, nbBanks, nbFraudsters, nbSteps;
+    public static double multiplier, fraudProbability, transferLimit;
+    public static String aggregatedTransactions, maxOccurrencesPerClient, initialBalancesDistribution,
+            overdraftLimits, clientsProfilesFile, transactionsTypes;
+    public static String outputPath;
+    public static boolean saveToDB;
+    public static String dbUrl, dbUser, dbPassword;
 
-    public static String filenameOutputAggregate, filenameLog, filenameFraudsters, filenameHistory,
-            filenameErrorTable, filenameSummary, filenameFreqOutput, filenameGlobalSummary;
+    public static StepsProfiles stepsProfiles;
+    public static ClientsProfiles clientsProfiles;
 
     public static void initParameters(String propertiesFile) {
         loadPropertiesFile(propertiesFile);
 
-        BalanceClients.initBalanceClients(Parameters.balanceHandlerFilePath);
-        TransactionParameters.loadTransferFreqModInit(Parameters.transferFreqModInit);
-        TransactionParameters.loadTransferFreqMod(Parameters.transferFreqMod);
-        StepParameters.initRecordList(Parameters.aggregateTransactionsParams, Parameters.multiplier, Parameters.nbSteps);
-        TransactionParameters.loadTransferMax(Parameters.transferMaxPath);
+        ActionTypes.loadActionTypes(transactionsTypes);
+        BalancesClients.initBalanceClients(initialBalancesDistribution);
+        BalancesClients.initOverdraftLimits(overdraftLimits);
+        clientsProfiles = new ClientsProfiles(clientsProfilesFile);
+        stepsProfiles = new StepsProfiles(aggregatedTransactions, multiplier, nbSteps);
+        ActionTypes.loadMaxOccurrencesPerClient(maxOccurrencesPerClient);
     }
 
     private static void loadPropertiesFile(String propertiesFile) {
         try {
             Properties parameters = new Properties();
-            InputStream inputStream = new FileInputStream(new File(propertiesFile));
-            parameters.load(inputStream);
+            parameters.load(new FileInputStream(propertiesFile));
 
             seedString = String.valueOf(parameters.getProperty("seed"));
             nbSteps = Integer.parseInt(parameters.getProperty("nbSteps"));
             multiplier = Double.parseDouble(parameters.getProperty("multiplier"));
 
+            nbClients = Integer.parseInt(parameters.getProperty("nbClients"));
             nbFraudsters = Integer.parseInt(parameters.getProperty("nbFraudsters"));
             nbMerchants = Integer.parseInt(parameters.getProperty("nbMerchants"));
             nbBanks = Integer.parseInt(parameters.getProperty("nbBanks"));
+
             fraudProbability = Double.parseDouble(parameters.getProperty("fraudProbability"));
             transferLimit = Double.parseDouble(parameters.getProperty("transferLimit"));
 
-            aggregateTransactionsParams = parameters.getProperty("aggregateTransactionsParams");
-            transferMaxPath = parameters.getProperty("transferMaxPath");
-            balanceHandlerFilePath = parameters.getProperty("balanceHandler");
-            transferFreqMod = parameters.getProperty("transferFreqMod");
-            transferFreqModInit = parameters.getProperty("transferFreqModInit");
+            transactionsTypes = parameters.getProperty("transactionsTypes");
+            aggregatedTransactions = parameters.getProperty("aggregatedTransactions");
+            maxOccurrencesPerClient = parameters.getProperty("maxOccurrencesPerClient");
+            initialBalancesDistribution = parameters.getProperty("initialBalancesDistribution");
+            overdraftLimits = parameters.getProperty("overdraftLimits");
+            clientsProfilesFile = parameters.getProperty("clientsProfiles");
 
             outputPath = parameters.getProperty("outputPath");
 
@@ -71,16 +75,27 @@ public class Parameters {
         }
     }
 
-    public static void initOutputFilenames(String simulatorName) {
-        String outputBaseString = Parameters.outputPath + simulatorName + "//" + simulatorName;
-        filenameGlobalSummary = Parameters.outputPath + "summary.csv";
+    public static String toString(long seed) {
+        ArrayList<String> properties = new ArrayList<>();
 
-        filenameLog = outputBaseString + "_log.csv";
-        filenameOutputAggregate = outputBaseString + "_AggregateParamDump.csv";
-        filenameFreqOutput = outputBaseString + "_repetitionFrequency.csv";
-        filenameFraudsters = outputBaseString + "_Fraudsters.csv";
-        filenameHistory = outputBaseString + "_ParamHistory.txt";
-        filenameErrorTable = outputBaseString + "_ErrorTable.txt";
-        filenameSummary = outputBaseString + "_Summary.csv";
+        properties.add("seed=" + seed);
+        properties.add("nbSteps=" + nbSteps);
+        properties.add("multiplier=" + multiplier);
+        properties.add("nbFraudsters=" + nbFraudsters);
+        properties.add("nbMerchants=" + nbMerchants);
+        properties.add("fraudProbability=" + fraudProbability);
+        properties.add("transferLimit=" + transferLimit);
+        properties.add("transactionsTypes=" + transactionsTypes);
+        properties.add("aggregatedTransactions=" + aggregatedTransactions);
+        properties.add("clientsProfilesFile=" + clientsProfilesFile);
+        properties.add("initialBalancesDistribution=" + initialBalancesDistribution);
+        properties.add("maxOccurrencesPerClient=" + maxOccurrencesPerClient);
+        properties.add("outputPath=" + outputPath);
+        properties.add("saveToDB=" + saveToDB);
+        properties.add("dbUrl=" + dbUrl);
+        properties.add("dbUser=" + dbUser);
+        properties.add("dbPassword=" + dbPassword);
+
+        return String.join(Output.EOL_CHAR, properties);
     }
 }

@@ -1,4 +1,4 @@
-package paysim.aggregation;
+package paysim.output;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -6,19 +6,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import paysim.parameters.ActionTypes;
+
 import paysim.base.Transaction;
-import paysim.base.ActionProbability;
+import paysim.base.StepActionProfile;
 
-import paysim.parameters.TransactionParameters;
-
-public class AggregateParamFileCreator {
+class Aggregator {
     private static final int DOUBLE_PRECISION = 2;
     private static final int HOURS_IN_DAY = 24, DAYS_IN_MONTH = 30;
 
-    public static Map<String, ActionProbability> generateAggregateParamFile(int step, ArrayList<Transaction> transactionList) {
-        Map<String, ActionProbability> stepRecord = new HashMap<>();
-        for (String action : TransactionParameters.getActions()) {
-            ActionProbability actionRecord = getAggregatedRecord(action, step, transactionList);
+    public static Map<String, StepActionProfile> generateStepAggregate(int step, ArrayList<Transaction> transactionList) {
+        Map<String, StepActionProfile> stepRecord = new HashMap<>();
+        for (String action : ActionTypes.getActions()) {
+            StepActionProfile actionRecord = getAggregatedRecord(action, step, transactionList);
             if (actionRecord != null) {
                 stepRecord.put(action, actionRecord);
             }
@@ -26,22 +26,24 @@ public class AggregateParamFileCreator {
         return stepRecord;
     }
 
-    private static ActionProbability getAggregatedRecord(String action, int step, ArrayList<Transaction> transactionList) {
-        ArrayList<Transaction> subsetTransList = transactionList.stream()
+    private static StepActionProfile getAggregatedRecord(String action, int step, ArrayList<Transaction> transactionsList) {
+        ArrayList<Transaction> actionTransactionsList = transactionsList.stream()
                 .filter(t -> t.getAction().equals(action))
+                .filter(t -> !t.isFailedTransaction())
                 .collect(Collectors.toCollection(ArrayList::new));
 
-        if (subsetTransList.size() > 0) {
-            double sum = getTotalAmount(subsetTransList);
-            int count = subsetTransList.size();
+        if (actionTransactionsList.size() > 0) {
+            double sum = computeTotalAmount(actionTransactionsList);
+            int count = actionTransactionsList.size();
             double average = getTruncatedDouble(sum / (double) count);
-            double std = getTruncatedDouble(getStd(subsetTransList, average));
+            double std = getTruncatedDouble(computeStd(actionTransactionsList, average));
 
             int month = step / (DAYS_IN_MONTH * HOURS_IN_DAY);
             int day = (step % (DAYS_IN_MONTH * HOURS_IN_DAY)) / HOURS_IN_DAY;
             int hour = step % HOURS_IN_DAY;
 
-            ActionProbability recordToReturn = new ActionProbability(action,
+            return new StepActionProfile(step,
+                    action,
                     month,
                     day,
                     hour,
@@ -49,14 +51,13 @@ public class AggregateParamFileCreator {
                     sum,
                     average,
                     std);
-            return recordToReturn;
         } else {
             return null;
         }
 
     }
 
-    private static double getStd(ArrayList<Transaction> list, double average) {
+    private static double computeStd(ArrayList<Transaction> list, double average) {
         // Bessel corrected deviation https://en.wikipedia.org/wiki/Bessel%27s_correction
         return Math.sqrt(list.stream()
                 .map(Transaction::getAmount)
@@ -66,7 +67,7 @@ public class AggregateParamFileCreator {
                 / (list.size() - 1);
     }
 
-    private static double getTotalAmount(ArrayList<Transaction> transactionList) {
+    private static double computeTotalAmount(ArrayList<Transaction> transactionList) {
         return transactionList.stream()
                 .mapToDouble(Transaction::getAmount)
                 .sum();

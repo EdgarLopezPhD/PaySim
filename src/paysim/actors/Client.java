@@ -1,409 +1,272 @@
 package paysim.actors;
 
-import java.util.ArrayList;
 import java.util.Map;
-
 import static java.lang.Math.max;
 
-import paysim.PaySim;
-import paysim.base.ActionProbability;
-import paysim.base.Transaction;
-import paysim.parameters.Parameters;
-import paysim.parameters.StepParameters;
+import ec.util.MersenneTwisterFast;
+import paysim.parameters.ActionTypes;
+import paysim.parameters.BalancesClients;
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.util.distribution.Binomial;
+
+import paysim.PaySim;
+import paysim.base.ClientActionProfile;
+import paysim.base.ClientProfile;
+import paysim.base.StepActionProfile;
+import paysim.base.Transaction;
+import paysim.parameters.Parameters;
+import paysim.utils.RandomCollection;
 
 
 public class Client extends SuperActor implements Steppable {
     private static final String CLIENT_IDENTIFIER = "C";
     private static final int MIN_NB_TRANSFER_FOR_FRAUD = 3;
-    private Bank bank;
-    private double[] normalizedProbabilities;
-    private Map<String, ActionProbability> actionProbabilities;
-    private ArrayList<Integer> stepsToRepeat = new ArrayList<>();
+    private static final String CASH_IN = "CASH_IN", CASH_OUT = "CASH_OUT", DEBIT = "DEBIT",
+            PAYMENT = "PAYMENT", TRANSFER = "TRANSFER", DEPOSIT = "DEPOSIT";
+    private final Bank bank;
+    private ClientProfile clientProfile;
+    private double clientWeight;
     private double balanceMax = 0;
     private int countTransferTransactions = 0;
 
-    public Client(String name, Bank bank) {
+    Client(String name, Bank bank) {
         super(CLIENT_IDENTIFIER + name);
         this.bank = bank;
     }
 
-    public Client(String name, Bank bank, double[] normalizedProbabilities, Map actionProbabilities,
-                  double balance, int step) {
+    public Client(String name, Bank bank, Map<String, ClientActionProfile> profile, double initBalance,
+                  MersenneTwisterFast random, int totalTargetCount) {
         super(CLIENT_IDENTIFIER + name);
         this.bank = bank;
-        this.normalizedProbabilities = normalizedProbabilities;
-        this.actionProbabilities = actionProbabilities;
-        this.balance = balance;
-        this.step = step;
+        this.clientProfile = new ClientProfile(profile, random);
+        this.clientWeight = ((double) clientProfile.getClientTargetCount()) / totalTargetCount;
+        this.balance = initBalance;
+        this.overdraftLimit = pickOverdraftLimit(random);
     }
 
     @Override
     public void step(SimState state) {
-        handleAction(state);
+        PaySim paySim = (PaySim) state;
+        int stepTargetCount = paySim.getStepTargetCount();
+        if (stepTargetCount > 0) {
+            MersenneTwisterFast random = paySim.random;
+            int step = (int) state.schedule.getSteps();
+            Map<String, Double> stepActionProfile = paySim.getStepProbabilities();
 
-        // If the action is to be repeated, then make the repetitions
-        if (cont != null) {
-            handleRepetition(state);
-        }
-    }
+            int count = pickCount(random, stepTargetCount);
 
-    private void handleAction(SimState state) {
-        PaySim paysim = (PaySim) state;
-        int action = -1;
+            for (int t = 0; t < count; t++) {
+                String action = pickAction(random, stepActionProfile);
+                StepActionProfile stepAmountProfile = paySim.getStepAction(action);
+                double amount = pickAmount(random, action, stepAmountProfile);
 
-        while (action == -1) {
-            action = chooseAction(paysim, normalizedProbabilities);
-        }
-
-        ActionProbability prob;
-        switch (action) {
-            case 1:
-                handleCashIn(paysim);
-                break;
-            case 2:
-                handleCashOut(paysim);
-                break;
-            case 3:
-                handleDebit(paysim);
-                break;
-            case 4:
-                handlePayment(paysim);
-                break;
-            case 5:
-                prob = actionProbabilities.get("TRANSFER");
-
-                if (prob != null) {
-                    double amount = getAmount(prob, paysim);
-                    double reducedAmount = amount;
-                    int loops = (int) Math.ceil(amount / Parameters.transferLimit);
-                    Client c = paysim.getRandomClient();
-                    for (int i = 0; i < loops; i++) {
-                        if (reducedAmount > Parameters.transferLimit) {
-                            handleTransfer(paysim, c,
-                                    Parameters.transferLimit);
-                            reducedAmount -= Parameters.transferLimit;
-                        } else {
-                            handleTransfer(paysim, c,
-                                    reducedAmount);
-                        }
-                    }
-                }
-                break;
-            case 6:
-                handleDeposit(paysim);
-                break;
-        }
-    }
-
-    private void handleRepetition(SimState state) {
-        PaySim paysim = (PaySim) state;
-        for (int currentStep : stepsToRepeat) {
-            step = currentStep;
-
-            switch (cont.getAction()) {
-                case "CASH_IN":
-                    handleCashInRepetition(paysim);
-                    break;
-                case "CASH_OUT":
-                    handleCashOutRepetition(paysim);
-                    break;
-                case "DEBIT":
-                    handleDebitRepetition(paysim);
-                    break;
-                case "PAYMENT":
-                    handlePaymentRepetition(paysim);
-                    break;
-                case "TRANSFER":
-                    handleTransferRepetition(paysim);
-                    break;
-                case "DEPOSIT":
-                    handleDepositRepetition(paysim);
-                    break;
+                makeTransaction(paySim, step, action, amount);
             }
         }
-
     }
 
-    private void handleCashIn(PaySim paysim) {
-        String action = "CASH_IN";
-        ActionProbability prob = actionProbabilities.get(action);
+    private int pickCount(MersenneTwisterFast random, int targetStepCount) {
+        // B(n,p): n = targetStepCount & p = clientWeight
+        Binomial transactionNb = new Binomial(targetStepCount, clientWeight, random);
+        return transactionNb.nextInt();
+    }
 
-        if (prob != null) {
-            Merchant merchantTo = paysim.getRandomMerchant();
-            String nameOrig = this.getName();
-            String nameDest = merchantTo.getName();
-            double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = merchantTo.getBalance();
+    private String pickAction(MersenneTwisterFast random, Map<String, Double> stepActionProb) {
+        Map<String, Double> clientProbabilities = clientProfile.getActionProbability();
+        RandomCollection<String> actionPicker = new RandomCollection<>(random);
 
-            double amount = this.getAmount(prob, paysim);
-            this.deposit(amount);
+        for (Map.Entry<String, Double> clientEntry : clientProbabilities.entrySet()) {
+            String action = clientEntry.getKey();
+            double clientProbability = clientEntry.getValue();
+            double finalProbability;
 
-            double newBalanceOrig = this.getBalance();
-            double newBalanceDest = merchantTo.getBalance();
+            if (stepActionProb.containsKey(action)) {
+                double stepProbability = stepActionProb.get(action);
 
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-            paysim.getTransactions().add(t);
+                finalProbability = (clientProbability + stepProbability) / 2;
+            } else {
+                finalProbability = clientProbability;
+            }
+            actionPicker.add(finalProbability, action);
+        }
+
+        return actionPicker.next();
+    }
+
+    private double pickAmount(MersenneTwisterFast random, String action, StepActionProfile stepAmountProfile) {
+        ClientActionProfile clientAmountProfile = clientProfile.getProfilePerAction(action);
+
+        double average, std;
+        if (stepAmountProfile != null) {
+            // We take the mean between the two distributions
+            average = (clientAmountProfile.getAvgAmount() + stepAmountProfile.getAvgAmount()) / 2;
+            std = Math.sqrt((Math.pow(clientAmountProfile.getStdAmount(), 2) + Math.pow(stepAmountProfile.getStdAmount(), 2))) / 2;
+        } else {
+            average = clientAmountProfile.getAvgAmount();
+            std = clientAmountProfile.getStdAmount();
+        }
+
+        double amount = -1;
+        while (amount <= 0) {
+            amount = random.nextGaussian() * std + average;
+        }
+
+        return amount;
+    }
+
+    private void makeTransaction(PaySim state, int step, String action, double amount) {
+        switch (action) {
+            case CASH_IN:
+                handleCashIn(state, step, amount);
+                break;
+            case CASH_OUT:
+                handleCashOut(state, step, amount);
+                break;
+            case DEBIT:
+                handleDebit(state, step, amount);
+                break;
+            case PAYMENT:
+                handlePayment(state, step, amount);
+                break;
+            // For transfer transaction there is a limit so we have to split big transactions in smaller chunks
+            case TRANSFER:
+                Client clientTo = state.pickRandomClient(getName());
+                double reducedAmount = amount;
+                boolean lastTransferFailed = false;
+                while (reducedAmount > Parameters.transferLimit && !lastTransferFailed) {
+                    lastTransferFailed = handleTransfer(state, step, Parameters.transferLimit, clientTo);
+                    reducedAmount -= Parameters.transferLimit;
+                }
+                if (reducedAmount > 0 && !lastTransferFailed) {
+                    handleTransfer(state, step, reducedAmount, clientTo);
+                }
+                break;
+            case DEPOSIT:
+                handleDeposit(state, step, amount);
+                break;
+            default:
+                throw new UnsupportedOperationException("Action not implemented in Client");
         }
     }
 
-    private void handleCashOut(PaySim paysim) {
-        String action = "CASH_OUT";
-        ActionProbability prob = actionProbabilities.get(action);
+    private void handleCashIn(PaySim paysim, int step, double amount) {
+        Merchant merchantTo = paysim.pickRandomMerchant();
+        String nameOrig = this.getName();
+        String nameDest = merchantTo.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
 
-        if (prob != null) {
-            Merchant merchantTo = paysim.getRandomMerchant();
-            String nameOrig = this.getName();
-            String nameDest = merchantTo.getName();
-            double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = merchantTo.getBalance();
+        this.deposit(amount);
 
-            double amount = getAmount(prob, paysim);
-            this.withdraw(amount);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
 
-            double newBalanceOrig = this.getBalance();
-            double newBalanceDest = merchantTo.getBalance();
-
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-            t.setFraud(this.isFraud());
-            paysim.getTransactions().add(t);
-        }
+        Transaction t = new Transaction(step, CASH_IN, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+        paysim.getTransactions().add(t);
     }
 
-    private void handleDebit(PaySim paysim) {
-        String action = "DEBIT";
-        ActionProbability prob = actionProbabilities.get(action);
+    private void handleCashOut(PaySim paysim, int step, double amount) {
+        Merchant merchantTo = paysim.pickRandomMerchant();
+        String nameOrig = this.getName();
+        String nameDest = merchantTo.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
 
-        if (prob != null) {
-            String nameOrig = this.getName();
-            String nameDest = this.bank.getName();
-            double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = this.bank.getBalance();
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
 
-            double amount = this.getAmount(prob, paysim);
-            this.withdraw(amount);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
 
-            double newBalanceOrig = this.getBalance();
-            double newBalanceDest = this.bank.getBalance();
+        Transaction t = new Transaction(step, CASH_OUT, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-            paysim.getTransactions().add(t);
-        }
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
+        t.setFraud(this.isFraud());
+        paysim.getTransactions().add(t);
     }
 
-    private void handlePayment(PaySim paysim) {
-        String action = "PAYMENT";
-        ActionProbability prob = actionProbabilities.get(action);
-        if (prob != null) {
-            Merchant merchantTo = paysim.getRandomMerchant();
+    private void handleDebit(PaySim paysim, int step, double amount) {
+        String nameOrig = this.getName();
+        String nameDest = this.bank.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = this.bank.getBalance();
 
-            String nameOrig = this.getName();
-            String nameDest = merchantTo.getName();
-            double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = merchantTo.getBalance();
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
 
-            double amount = this.getAmount(prob, paysim);
-            this.withdraw(amount);
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = this.bank.getBalance();
+
+        Transaction t = new Transaction(step, DEBIT, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
+        paysim.getTransactions().add(t);
+    }
+
+    private void handlePayment(PaySim paysim, int step, double amount) {
+        Merchant merchantTo = paysim.pickRandomMerchant();
+
+        String nameOrig = this.getName();
+        String nameDest = merchantTo.getName();
+        double oldBalanceOrig = this.getBalance();
+        double oldBalanceDest = merchantTo.getBalance();
+
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
+        if (!isUnauthorizedOverdraft) {
             merchantTo.deposit(amount);
-
-            double newBalanceOrig = this.getBalance();
-            double newBalanceDest = merchantTo.getBalance();
-
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-            paysim.getTransactions().add(t);
         }
+
+        double newBalanceOrig = this.getBalance();
+        double newBalanceDest = merchantTo.getBalance();
+
+        Transaction t = new Transaction(step, PAYMENT, amount, nameOrig, oldBalanceOrig,
+                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
+        paysim.getTransactions().add(t);
     }
 
-    void handleTransfer(PaySim paysim, Client clientTo, double amount) {
-        String action = "TRANSFER";
+    boolean handleTransfer(PaySim paysim, int step, double amount, Client clientTo) {
         String nameOrig = this.getName();
         String nameDest = clientTo.getName();
         double oldBalanceOrig = this.getBalance();
         double oldBalanceDest = clientTo.getBalance();
 
-        if (!this.checkBalanceDropping(Parameters.transferLimit, amount)) {
-
-            this.withdraw(amount);
-            clientTo.deposit(amount);
+        boolean transferFailed;
+        if (!isDetectedAsFraud(amount)) {
+            boolean isUnauthorizedOverdraft = this.withdraw(amount);
+            transferFailed = isUnauthorizedOverdraft;
+            if (!isUnauthorizedOverdraft) {
+                clientTo.deposit(amount);
+            }
 
             double newBalanceOrig = this.getBalance();
             double newBalanceDest = clientTo.getBalance();
 
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
+            Transaction t = new Transaction(step, TRANSFER, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
+            t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
             t.setFraud(this.isFraud());
             paysim.getTransactions().add(t);
-        } else { // create the transaction but don't move any money
+        } else { // create the transaction but don't move any money as the transaction was detected as fraudulent
+            transferFailed = true;
             double newBalanceOrig = this.getBalance();
             double newBalanceDest = clientTo.getBalance();
 
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
+            Transaction t = new Transaction(step, TRANSFER, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
             t.setFlaggedFraud(true);
             t.setFraud(this.isFraud());
             paysim.getTransactions().add(t);
         }
+        return transferFailed;
     }
 
-    private void handleDeposit(PaySim paysim) {
-        String action = "DEPOSIT";
-        ActionProbability prob = actionProbabilities.get(action);
-
-        if (prob != null) {
-            double amount = this.getAmount(prob, paysim);
-
-            String nameOrig = this.getName();
-            String nameDest = this.bank.getName();
-            double oldBalanceOrig = this.getBalance();
-            double oldBalanceDest = this.bank.getBalance();
-
-            this.deposit(amount);
-
-            double newBalanceOrig = this.getBalance();
-            double newBalanceDest = this.bank.getBalance();
-
-            Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                    newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-            paysim.getTransactions().add(t);
-        }
-    }
-
-    private void handleCashInRepetition(PaySim paysim) {
-        String action = "CASH_IN";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-        Merchant merchantTo = paysim.getRandomMerchant();
-
-        String nameOrig = this.getName();
-        String nameDest = merchantTo.getName();
-        double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantTo.getBalance();
-
-        this.deposit(amount);
-
-        double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantTo.getBalance();
-
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-        paysim.getTransactions().add(t);
-    }
-
-    private void handleCashOutRepetition(PaySim paysim) {
-        String action = "CASH_OUT";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-        Merchant merchantTo = paysim.getRandomMerchant();
-
-        String nameOrig = this.getName();
-        String nameDest = merchantTo.getName();
-        double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantTo.getBalance();
-
-        this.withdraw(amount);
-
-        double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantTo.getBalance();
-
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-        t.setFraud(this.isFraud());
-        paysim.getTransactions().add(t);
-    }
-
-    private void handleDebitRepetition(PaySim paysim) {
-        String action = "DEBIT";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-        String nameOrig = this.getName();
-        String nameDest = this.bank.getName();
-        double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = this.bank.getBalance();
-
-        this.withdraw(amount);
-
-        double newBalanceOrig = this.getBalance();
-        double newBalanceDest = this.bank.getBalance();
-
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-        paysim.getTransactions().add(t);
-    }
-
-    private void handlePaymentRepetition(PaySim paysim) {
-        String action = "PAYMENT";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-        Merchant merchantTo = paysim.getRandomMerchant();
-
-        String nameOrig = this.getName();
-        String nameDest = merchantTo.getName();
-        double oldBalanceOrig = this.getBalance();
-        double oldBalanceDest = merchantTo.getBalance();
-
-        this.withdraw(amount);
-        merchantTo.deposit(amount);
-
-        double newBalanceOrig = this.getBalance();
-        double newBalanceDest = merchantTo.getBalance();
-
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
-                newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
-
-        paysim.getTransactions().add(t);
-    }
-
-    private void handleTransferRepetition(PaySim paysim) {
-        String action = "TRANSFER";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-        double reducedAmount = amount;
-        int loops = (int) Math.ceil(amount / Parameters.transferLimit);
-
-        Client clientDest = getRandomClient(amount, paysim);
-
-        for (int i = 0; i < loops; i++) {
-            if (reducedAmount > Parameters.transferLimit) {
-                handleTransfer(paysim, clientDest,
-                        Parameters.transferLimit);
-                reducedAmount -= Parameters.transferLimit;
-            } else {
-                handleTransfer(paysim, clientDest,
-                        reducedAmount);
-            }
-        }
-    }
-
-    private void handleDepositRepetition(PaySim paysim) {
-        String action = "DEPOSIT";
-        double amount = getAmountRepetition(action, step, paysim);
-        if (amount == -1) {
-            return;
-        }
-
+    private void handleDeposit(PaySim paysim, int step, double amount) {
         String nameOrig = this.getName();
         String nameDest = this.bank.getName();
         double oldBalanceOrig = this.getBalance();
@@ -414,16 +277,16 @@ public class Client extends SuperActor implements Steppable {
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = this.bank.getBalance();
 
-        Transaction t = new Transaction(paysim.schedule.getSteps(), action, amount, nameOrig, oldBalanceOrig,
+        Transaction t = new Transaction(step, DEPOSIT, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
         paysim.getTransactions().add(t);
     }
 
-    private boolean checkBalanceDropping(double transLimit, double amount) {
+    private boolean isDetectedAsFraud(double amount) {
         boolean isFraudulentAccount = false;
         if (this.countTransferTransactions >= MIN_NB_TRANSFER_FOR_FRAUD) {
-            if (this.balanceMax - this.balance - amount > transLimit * 2.5) {
+            if (this.balanceMax - this.balance - amount > Parameters.transferLimit * 2.5) {
                 isFraudulentAccount = true;
             }
         } else {
@@ -433,52 +296,19 @@ public class Client extends SuperActor implements Steppable {
         return isFraudulentAccount;
     }
 
-    private Client getRandomClient(double amount, PaySim paysim) {
-        Client clientToTransfer;
-        int counter = 0;
-        do {
-            clientToTransfer = paysim.getClients().get(
-                    paysim.random.nextInt(paysim.getClients().size()));
-            counter++;
-            if (counter > 50000) {
-                break;
-            }
-        } while (clientToTransfer.getBalance() < amount);
+    private double pickOverdraftLimit(MersenneTwisterFast random){
+        double averageTransaction = 0, stdTransaction = 0;
 
-        return clientToTransfer;
-    }
-
-    private double getAmount(ActionProbability prob, PaySim paysim) {
-        double amount = -1;
-
-        while (amount <= 0) {
-            amount = paysim.random.nextGaussian() * prob.getStd()
-                    + prob.getAverage();
+        for (String action: ActionTypes.getActions()){
+            double actionProbability = clientProfile.getActionProbability().get(action);
+            ClientActionProfile actionProfile = clientProfile.getProfilePerAction(action);
+            averageTransaction += actionProfile.getAvgAmount() * actionProbability;
+            stdTransaction += Math.pow(actionProfile.getStdAmount() * actionProbability, 2);
         }
+        stdTransaction = Math.sqrt(stdTransaction);
 
-        return amount;
-    }
+        double randomizedMeanTransaction = random.nextGaussian() * stdTransaction + averageTransaction;
 
-    private double getAmountRepetition(String action, int step, PaySim paysim) {
-        ActionProbability actionProbability = StepParameters.get(step).get(action);
-        if (actionProbability == null) {
-            return -1;
-        }
-        double amount = -1;
-        while (amount <= 0) {
-            amount = paysim.random.nextGaussian()
-                    * actionProbability.getStd()
-                    + actionProbability.getAverage();
-        }
-
-        return amount;
-    }
-
-    public ArrayList<Integer> getStepsToRepeat() {
-        return stepsToRepeat;
-    }
-
-    public void setStepsToRepeat(ArrayList<Integer> stepsToRepeat) {
-        this.stepsToRepeat = stepsToRepeat;
+        return BalancesClients.getOverdraftLimit(randomizedMeanTransaction);
     }
 }

@@ -1,14 +1,18 @@
 package paysim.actors;
 
-import paysim.PaySim;
-import paysim.parameters.Parameters;
+import java.util.ArrayList;
+
 import sim.engine.SimState;
 import sim.engine.Steppable;
+
+import paysim.PaySim;
+import paysim.parameters.Parameters;
+import paysim.output.Output;
 
 public class Fraudster extends SuperActor implements Steppable {
     private static final String FRAUDSTER_IDENTIFIER = "C";
     private double profit = 0;
-    private int clientsAffected = 0;
+    private int nbVictims = 0;
 
     public Fraudster(String name) {
         super(FRAUDSTER_IDENTIFIER + name);
@@ -17,46 +21,46 @@ public class Fraudster extends SuperActor implements Steppable {
     @Override
     public void step(SimState state) {
         PaySim paysim = (PaySim) state;
-        double randNr = paysim.random.nextDouble();
-        if (randNr < Parameters.fraudProbability
-                && paysim.schedule.getSteps() > 0) {
-            Client c = paysim.getRandomClient();
-            if (c == null) {
-                System.out.println("Fraudster tried to act but where was no client, skipping.");
-                return;
-            }
+        int step = (int) state.schedule.getSteps();
+        if (paysim.random.nextDouble() < Parameters.fraudProbability) {
+            Client c = paysim.pickRandomClient(getName());
             c.setFraud(true);
             double balance = c.getBalance();
             // create mule client
             if (balance > 0) {
-                int loops = (int) Math.ceil(balance / Parameters.transferLimit);
-                for (int i = 0; i < loops; i++) {
-                    Mule muleClient = new Mule(paysim.generateIdentifier(), paysim.getRandomBank());
+                int nbTransactions = (int) Math.ceil(balance / Parameters.transferLimit);
+                for (int i = 0; i < nbTransactions; i++) {
+                    boolean transferFailed;
+                    Mule muleClient = new Mule(paysim.generateId(), paysim.pickRandomBank());
                     muleClient.setFraud(true);
                     if (balance > Parameters.transferLimit) {
-                        c.handleTransfer(paysim, muleClient, Parameters.transferLimit);
+                        transferFailed = c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);
                         balance -= Parameters.transferLimit;
                     } else {
-                        c.handleTransfer(paysim, muleClient, balance);
+                        transferFailed = c.handleTransfer(paysim, step, balance, muleClient);
                         balance = 0;
                     }
 
                     profit += muleClient.getBalance();
-                    muleClient.fraudulentCashOut(paysim, muleClient.getBalance());
-                    clientsAffected++;
+                    muleClient.fraudulentCashOut(paysim, step, muleClient.getBalance());
+                    nbVictims++;
                     paysim.getClients().add(muleClient);
-                    if (c.getBalance() <= 0)
+                    if (transferFailed)
                         break;
                 }
             }
+            c.setFraud(false);
         }
     }
 
-    public double getProfit() {
-        return profit;
-    }
+    @Override
+    public String toString() {
+        ArrayList<String> properties = new ArrayList<>();
 
-    public int getClientsAffected() {
-        return clientsAffected;
+        properties.add(getName());
+        properties.add(Integer.toString(nbVictims));
+        properties.add(Output.fastFormatDouble(Output.PRECISION_OUTPUT, profit));
+
+        return String.join(Output.OUTPUT_SEPARATOR, properties);
     }
 }
