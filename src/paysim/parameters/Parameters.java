@@ -9,12 +9,12 @@ import paysim.output.Output;
 public class Parameters {
     private static String seedString;
     public static int nbClients, nbMerchants, nbBanks, nbFraudsters, nbSteps;
-    public static double multiplier = 0, fraudProbability = 0, transferLimit = 0;
-    public static String aggregatedTransactions = "", maxOccurrencesPerClient = "",
-            initialBalancesDistribution = "", clientsProfilesFile = "", transactionsTypes = "";
-    public static String outputPath = "";
-    public static boolean saveToDB = false;
-    public static String dbUrl = "", dbUser = "", dbPassword = "";
+    public static double multiplier, fraudProbability, transferLimit;
+    public static String aggregatedTransactions, maxOccurrencesPerClient, initialBalancesDistribution,
+            overdraftLimits, clientsProfilesFile, transactionsTypes;
+    public static String outputPath;
+    public static boolean saveToDB;
+    public static String dbUrl, dbUser, dbPassword;
 
     public static StepsProfiles stepsProfiles;
     public static ClientsProfiles clientsProfiles;
@@ -24,6 +24,7 @@ public class Parameters {
 
         ActionTypes.loadActionTypes(transactionsTypes);
         BalancesClients.initBalanceClients(initialBalancesDistribution);
+        BalancesClients.initOverdraftLimits(overdraftLimits);
         clientsProfiles = new ClientsProfiles(clientsProfilesFile);
         stepsProfiles = new StepsProfiles(aggregatedTransactions, multiplier, nbSteps);
         ActionTypes.loadMaxOccurrencesPerClient(maxOccurrencesPerClient);
@@ -50,6 +51,7 @@ public class Parameters {
             aggregatedTransactions = parameters.getProperty("aggregatedTransactions");
             maxOccurrencesPerClient = parameters.getProperty("maxOccurrencesPerClient");
             initialBalancesDistribution = parameters.getProperty("initialBalancesDistribution");
+            overdraftLimits = parameters.getProperty("overdraftLimits");
             clientsProfilesFile = parameters.getProperty("clientsProfiles");
 
             outputPath = parameters.getProperty("outputPath");
@@ -73,7 +75,7 @@ public class Parameters {
         }
     }
 
-    public static String toString(long seed){
+    public static String toString(long seed) {
         ArrayList<String> properties = new ArrayList<>();
 
         properties.add("seed=" + seed);

@@ -4,6 +4,7 @@ class SuperActor {
     private final String name;
     private boolean isFraud = false;
     double balance = 0;
+    double overdraftLimit;
 
     SuperActor(String name) {
         this.name = name;
@@ -13,12 +14,16 @@ class SuperActor {
         balance += amount;
     }
 
-    void withdraw(double amount) {
-        if (balance < amount) {
-            balance = 0;
+    boolean withdraw(double amount) {
+        boolean unauthorizedOverdraft = false;
+
+        if (balance - amount < overdraftLimit) {
+            unauthorizedOverdraft = true;
         } else {
             balance -= amount;
         }
+
+        return unauthorizedOverdraft;
     }
 
     boolean isFraud() {

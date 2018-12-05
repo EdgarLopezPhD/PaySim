@@ -4,6 +4,8 @@ import java.util.Map;
 import static java.lang.Math.max;
 
 import ec.util.MersenneTwisterFast;
+import paysim.parameters.ActionTypes;
+import paysim.parameters.BalancesClients;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.util.distribution.Binomial;
@@ -40,6 +42,7 @@ public class Client extends SuperActor implements Steppable {
         this.clientProfile = new ClientProfile(profile, random);
         this.clientWeight = ((double) clientProfile.getClientTargetCount()) / totalTargetCount;
         this.balance = initBalance;
+        this.overdraftLimit = pickOverdraftLimit(random);
     }
 
     @Override
@@ -130,11 +133,12 @@ public class Client extends SuperActor implements Steppable {
             case TRANSFER:
                 Client clientTo = state.pickRandomClient(getName());
                 double reducedAmount = amount;
-                while (reducedAmount > Parameters.transferLimit) {
-                    handleTransfer(state, step, Parameters.transferLimit, clientTo);
+                boolean lastTransferFailed = false;
+                while (reducedAmount > Parameters.transferLimit && !lastTransferFailed) {
+                    lastTransferFailed = handleTransfer(state, step, Parameters.transferLimit, clientTo);
                     reducedAmount -= Parameters.transferLimit;
                 }
-                if (reducedAmount > 0) {
+                if (reducedAmount > 0 && !lastTransferFailed) {
                     handleTransfer(state, step, reducedAmount, clientTo);
                 }
                 break;
@@ -170,13 +174,15 @@ public class Client extends SuperActor implements Steppable {
         double oldBalanceOrig = this.getBalance();
         double oldBalanceDest = merchantTo.getBalance();
 
-        this.withdraw(amount);
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
 
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = merchantTo.getBalance();
 
         Transaction t = new Transaction(step, CASH_OUT, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
+
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
         t.setFraud(this.isFraud());
         paysim.getTransactions().add(t);
     }
@@ -187,7 +193,7 @@ public class Client extends SuperActor implements Steppable {
         double oldBalanceOrig = this.getBalance();
         double oldBalanceDest = this.bank.getBalance();
 
-        this.withdraw(amount);
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
 
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = this.bank.getBalance();
@@ -195,6 +201,7 @@ public class Client extends SuperActor implements Steppable {
         Transaction t = new Transaction(step, DEBIT, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
         paysim.getTransactions().add(t);
     }
 
@@ -206,8 +213,10 @@ public class Client extends SuperActor implements Steppable {
         double oldBalanceOrig = this.getBalance();
         double oldBalanceDest = merchantTo.getBalance();
 
-        this.withdraw(amount);
-        merchantTo.deposit(amount);
+        boolean isUnauthorizedOverdraft = this.withdraw(amount);
+        if (!isUnauthorizedOverdraft) {
+            merchantTo.deposit(amount);
+        }
 
         double newBalanceOrig = this.getBalance();
         double newBalanceDest = merchantTo.getBalance();
@@ -215,18 +224,23 @@ public class Client extends SuperActor implements Steppable {
         Transaction t = new Transaction(step, PAYMENT, amount, nameOrig, oldBalanceOrig,
                 newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
+        t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
         paysim.getTransactions().add(t);
     }
 
-    void handleTransfer(PaySim paysim, int step, double amount, Client clientTo) {
+    boolean handleTransfer(PaySim paysim, int step, double amount, Client clientTo) {
         String nameOrig = this.getName();
         String nameDest = clientTo.getName();
         double oldBalanceOrig = this.getBalance();
         double oldBalanceDest = clientTo.getBalance();
 
+        boolean transferFailed;
         if (!isDetectedAsFraud(amount)) {
-            this.withdraw(amount);
-            clientTo.deposit(amount);
+            boolean isUnauthorizedOverdraft = this.withdraw(amount);
+            transferFailed = isUnauthorizedOverdraft;
+            if (!isUnauthorizedOverdraft) {
+                clientTo.deposit(amount);
+            }
 
             double newBalanceOrig = this.getBalance();
             double newBalanceDest = clientTo.getBalance();
@@ -234,9 +248,11 @@ public class Client extends SuperActor implements Steppable {
             Transaction t = new Transaction(step, TRANSFER, amount, nameOrig, oldBalanceOrig,
                     newBalanceOrig, nameDest, oldBalanceDest, newBalanceDest);
 
+            t.setUnauthorizedOverdraft(isUnauthorizedOverdraft);
             t.setFraud(this.isFraud());
             paysim.getTransactions().add(t);
         } else { // create the transaction but don't move any money as the transaction was detected as fraudulent
+            transferFailed = true;
             double newBalanceOrig = this.getBalance();
             double newBalanceDest = clientTo.getBalance();
 
@@ -247,6 +263,7 @@ public class Client extends SuperActor implements Steppable {
             t.setFraud(this.isFraud());
             paysim.getTransactions().add(t);
         }
+        return transferFailed;
     }
 
     private void handleDeposit(PaySim paysim, int step, double amount) {
@@ -277,5 +294,21 @@ public class Client extends SuperActor implements Steppable {
             this.balanceMax = max(this.balanceMax, this.balance);
         }
         return isFraudulentAccount;
+    }
+
+    private double pickOverdraftLimit(MersenneTwisterFast random){
+        double averageTransaction = 0, stdTransaction = 0;
+
+        for (String action: ActionTypes.getActions()){
+            double actionProbability = clientProfile.getActionProbability().get(action);
+            ClientActionProfile actionProfile = clientProfile.getProfilePerAction(action);
+            averageTransaction += actionProfile.getAvgAmount() * actionProbability;
+            stdTransaction += Math.pow(actionProfile.getStdAmount() * actionProbability, 2);
+        }
+        stdTransaction = Math.sqrt(stdTransaction);
+
+        double randomizedMeanTransaction = random.nextGaussian() * stdTransaction + averageTransaction;
+
+        return BalancesClients.getOverdraftLimit(randomizedMeanTransaction);
     }
 }

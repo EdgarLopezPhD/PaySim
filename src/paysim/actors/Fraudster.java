@@ -30,13 +30,14 @@ public class Fraudster extends SuperActor implements Steppable {
             if (balance > 0) {
                 int nbTransactions = (int) Math.ceil(balance / Parameters.transferLimit);
                 for (int i = 0; i < nbTransactions; i++) {
+                    boolean transferFailed;
                     Mule muleClient = new Mule(paysim.generateId(), paysim.pickRandomBank());
                     muleClient.setFraud(true);
                     if (balance > Parameters.transferLimit) {
-                        c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);
+                        transferFailed = c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);
                         balance -= Parameters.transferLimit;
                     } else {
-                        c.handleTransfer(paysim, step, balance, muleClient);
+                        transferFailed = c.handleTransfer(paysim, step, balance, muleClient);
                         balance = 0;
                     }
 
@@ -44,7 +45,7 @@ public class Fraudster extends SuperActor implements Steppable {
                     muleClient.fraudulentCashOut(paysim, step, muleClient.getBalance());
                     nbVictims++;
                     paysim.getClients().add(muleClient);
-                    if (c.getBalance() <= 0)
+                    if (transferFailed)
                         break;
                 }
             }

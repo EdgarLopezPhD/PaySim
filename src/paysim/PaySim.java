@@ -144,7 +144,7 @@ public class PaySim extends SimState {
             Client c = new Client(generateId(),
                     pickRandomBank(),
                     pickNextClientProfile(),
-                    BalancesClients.getNextBalance(random),
+                    BalancesClients.pickNextBalance(random),
                     random,
                     Parameters.stepsProfiles.getTotalTargetCount());
             clients.add(c);

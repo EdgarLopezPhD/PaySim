@@ -29,6 +29,7 @@ class Aggregator {
     private static StepActionProfile getAggregatedRecord(String action, int step, ArrayList<Transaction> transactionsList) {
         ArrayList<Transaction> actionTransactionsList = transactionsList.stream()
                 .filter(t -> t.getAction().equals(action))
+                .filter(t -> !t.isFailedTransaction())
                 .collect(Collectors.toCollection(ArrayList::new));
 
         if (actionTransactionsList.size() > 0) {

@@ -8,6 +8,7 @@ public class Mule extends Client {
 
     public Mule(String name, Bank bank) {
         super(MULE_IDENTIFIER + name, bank);
+        this.overdraftLimit = 0;
     }
 
     void fraudulentCashOut(PaySim paysim, int step, double amount) {
