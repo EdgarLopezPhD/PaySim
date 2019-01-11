@@ -22,7 +22,7 @@ import org.paysim.paysim.base.StepActionProfile;
 import org.paysim.paysim.output.Output;
 
 public class PaySim extends SimState {
-    public static final double PAYSIM_VERSION = 1.0;
+    public static final double PAYSIM_VERSION = 2.0;
     private static final String[] DEFAULT_ARGS = new String[]{"", "-file", "PaySim.properties", "5"};
 
     public final String simulationName;
