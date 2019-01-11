@@ -34,7 +34,7 @@ class SuperActor {
         this.isFraud = isFraud;
     }
 
-    double getBalance() {
+    protected double getBalance() {
         return balance;
     }
 

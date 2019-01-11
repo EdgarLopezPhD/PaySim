@@ -7,6 +7,7 @@ import sim.engine.Steppable;
 
 import paysim.PaySim;
 import paysim.parameters.Parameters;
+
 import paysim.output.Output;
 
 public class Fraudster extends SuperActor implements Steppable {
@@ -34,17 +35,17 @@ public class Fraudster extends SuperActor implements Steppable {
                     Mule muleClient = new Mule(paysim.generateId(), paysim.pickRandomBank());
                     muleClient.setFraud(true);
                     if (balance > Parameters.transferLimit) {
-                        transferFailed = c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);
+                        transferFailed = !c.handleTransfer(paysim, step, Parameters.transferLimit, muleClient);
                         balance -= Parameters.transferLimit;
                     } else {
-                        transferFailed = c.handleTransfer(paysim, step, balance, muleClient);
+                        transferFailed = !c.handleTransfer(paysim, step, balance, muleClient);
                         balance = 0;
                     }
 
                     profit += muleClient.getBalance();
                     muleClient.fraudulentCashOut(paysim, step, muleClient.getBalance());
                     nbVictims++;
-                    paysim.getClients().add(muleClient);
+                    paysim.addClient(muleClient);
                     if (transferFailed)
                         break;
                 }

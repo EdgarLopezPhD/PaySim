@@ -12,7 +12,7 @@ public class Parameters {
     public static double multiplier, fraudProbability, transferLimit;
     public static String aggregatedTransactions, maxOccurrencesPerClient, initialBalancesDistribution,
             overdraftLimits, clientsProfilesFile, transactionsTypes;
-    public static String outputPath;
+    public static String typologiesFolder, outputPath;
     public static boolean saveToDB;
     public static String dbUrl, dbUser, dbPassword;
 
@@ -54,6 +54,7 @@ public class Parameters {
             overdraftLimits = parameters.getProperty("overdraftLimits");
             clientsProfilesFile = parameters.getProperty("clientsProfiles");
 
+            typologiesFolder = parameters.getProperty("typologiesFolder");
             outputPath = parameters.getProperty("outputPath");
 
             saveToDB = parameters.getProperty("saveToDB").equals("1");

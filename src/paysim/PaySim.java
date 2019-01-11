@@ -13,6 +13,7 @@ import paysim.actors.Bank;
 import paysim.actors.Client;
 import paysim.actors.Fraudster;
 import paysim.actors.Merchant;
+import paysim.actors.networkdrugs.NetworkDrug;
 
 import paysim.base.Transaction;
 import paysim.base.ClientActionProfile;
@@ -141,22 +142,20 @@ public class PaySim extends SimState {
         //Add the clients
         System.out.println("NbClients: " + (int) (Parameters.nbClients * Parameters.multiplier));
         for (int i = 0; i < Parameters.nbClients * Parameters.multiplier; i++) {
-            Client c = new Client(generateId(),
-                    pickRandomBank(),
-                    pickNextClientProfile(),
-                    BalancesClients.pickNextBalance(random),
-                    random,
-                    Parameters.stepsProfiles.getTotalTargetCount());
+            Client c = new Client(this);
             clients.add(c);
         }
 
-        //Schedule clients to act at each step of the simulation
+        NetworkDrug.createNetwork(this, Parameters.typologiesFolder + TypologiesFiles.drugNetworkOne);
+
+        // Do not write code under this part otherwise clients will not be used in simulation
+        // Schedule clients to act at each step of the simulation
         for (Client c : clients) {
             schedule.scheduleRepeating(c);
         }
     }
 
-    private Map<String, ClientActionProfile> pickNextClientProfile() {
+    public Map<String, ClientActionProfile> pickNextClientProfile() {
         Map<String, ClientActionProfile> profile = new HashMap<>();
         for (String action : ActionTypes.getActions()) {
             ClientActionProfile clientActionProfile = Parameters.clientsProfiles.pickNextActionProfile(action);
@@ -218,7 +217,7 @@ public class PaySim extends SimState {
         Client clientDest = null;
 
         String nameDest = nameOrig;
-        while (nameOrig.equals(nameDest)){
+        while (nameOrig.equals(nameDest)) {
             clientDest = clients.get(random.nextInt(clients.size()));
             nameDest = clientDest.getName();
         }
@@ -241,15 +240,19 @@ public class PaySim extends SimState {
         return clients;
     }
 
+    public void addClient(Client c) {
+        clients.add(c);
+    }
+
     public int getStepTargetCount() {
         return Parameters.stepsProfiles.getTargetCount(currentStep);
     }
 
-    public Map<String, Double> getStepProbabilities(){
+    public Map<String, Double> getStepProbabilities() {
         return Parameters.stepsProfiles.getProbabilitiesPerStep(currentStep);
     }
 
-    public StepActionProfile getStepAction(String action){
+    public StepActionProfile getStepAction(String action) {
         return Parameters.stepsProfiles.getActionForStep(currentStep, action);
     }
 }

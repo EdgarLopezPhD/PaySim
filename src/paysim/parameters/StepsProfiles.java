@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import paysim.utils.CSVReader;
 
-import static paysim.parameters.ActionTypes.isValidAction;
-
 import paysim.base.StepActionProfile;
 
 
@@ -33,7 +31,7 @@ public class StepsProfiles {
         stepTargetCount = new ArrayList<>(Collections.nCopies(nbSteps, 0));
 
         for (String[] line : parameters) {
-            if (isValidAction(line[COLUMN_ACTION])) {
+            if (ActionTypes.isValidAction(line[COLUMN_ACTION])) {
                 int step = Integer.parseInt(line[COLUMN_STEP]);
                 int count = Integer.parseInt(line[COLUMN_COUNT]);
 

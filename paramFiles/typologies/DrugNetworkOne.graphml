@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+
+
+  <key id="count" for="node" attr.name="count" attr.type="int"/>
+  <key id="monthlySpending" for="node" attr.name="monthlySpending" attr.type="double"/>
+  <key id="thresholdForCashOut" for="node" attr.name="thresholdForCashOut" attr.type="double"/>
+
+  <key id="action" for="edge" attr.name="action" attr.type="string"/>
+  <key id="amount" for="edge" attr.name="amount" attr.type="double"/>
+  <key id="probAmountProfile" for="edge" attr.name="probAmountProfile" attr.type="string"/>
+
+  <graph id="DrugNetworkOne" edgedefault="directed">
+    <node id="DrugDealer">
+      <data key="thresholdForCashOut">1000</data>
+    </node>
+    <node id="DrugConsumers">
+      <data key="count">60</data>
+      <data key="monthlySpending">100</data>
+    </node>
+    <node id="CashSink"/>
+    <edge id="BuyDrugs" source="DrugConsumers" target="DrugDealer">
+      <data key="action">TRANSFER</data>
+      <data key="probAmountProfile">10:0.25, 20:0.50, 50:0.20, 200:0.05</data>
+    </edge>
+    <edge id="CashOutProfit" source="DrugDealer" target="CashSink">
+      <data key="action">CASH_OUT</data>
+      <data key="amount">1000</data>
+    </edge>
+  </graph>
+</graphml>
