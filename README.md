@@ -25,3 +25,5 @@ Master's thesis: Elmir A. PaySim Financial Simulator : PaySim Financial Simula
 
 PhD Thesis Dr. Edgar Lopez-Rojas
 http://bth.diva-portal.org/smash/record.jsf?pid=diva2%3A955852&dswid=-1552
+
+Latest contribution by Camille Barneaud (https://github.com/gadcam) and the company Flaminem (https://www.flaminem.com/)
