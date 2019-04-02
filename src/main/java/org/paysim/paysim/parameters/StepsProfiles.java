@@ -52,8 +52,9 @@ public class StepsProfiles {
             }
         }
 
-        modifyWithMultiplier(multiplier);
+
         computeProbabilitiesPerStep();
+        modifyWithMultiplier(multiplier);
     }
 
     private void modifyWithMultiplier(double multiplier) {
