@@ -3,9 +3,7 @@
 Dr. Edgar Lopez-Rojas
 http://edgarlopez.net 
 
-More on PaySim: http://edgarlopez.net/simulation-tools/paysim/
-
-Dataset sample: https://www.kaggle.com/ntnu-testimon/paysim1
+Dataset sample: https://www.kaggle.com/ealaxi/paysim1
 
 ## Description
 
